@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+
+<f:view contentType="text/html"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://java.sun.com/jsf/facelets">
+	<h:head />
+	<h:body>
+  	
+   	<h:panelGroup layout="block" id="analyzeTopContentLineShade" styleClass="topLineShade"> 
+   		<h:outputText styleClass="TitleLine" value="ICM Electrocardiograph Tool Kit: Analyze" />
+   	</h:panelGroup>
+	
+	<f:event type="preRenderView" listener="#{analyzeBacking.init}" />
+
+	<h:panelGroup id="mainGroup" layout="block" styleClass="backgroundofContent">
+		<p:layout id="layoutUploadInclude" styleClass="analyzeLayout">
+			<p:layoutUnit position="center"	styleClass="analyzeLayoutUnit">
+
+				<h:form id="formAnalyze">
+					<p:fieldset id="analyzeFieldSet" legend="Select Files That Meet Your Criteria">
+						<h:panelGroup layout="block" id="analyzeTreeHolder"	styleClass="selectFieldset">
+
+							<p:tree id="docTree" 
+								dynamic="true"
+								selection="#{analyzeBacking.fileTree.selectedNodes}"
+								selectionMode="multiple"
+								value="#{analyzeBacking.fileTree.treeRoot}" 
+								var="node">
+								<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
+									<h:outputText value="#{node}" />
+								</p:treeNode>
+							</p:tree>
+
+							<p:commandButton id="btnDisplay"
+								value="Click to Display Files"
+								styleClass="displayButton"
+								update="availableStudy"
+								actionListener="#{analyzeBacking.displaySelectedMultiple}"
+								icon="ui-icon-disk"/>
+
+							<p:separator style="margin-bottom:10px" />
+
+							<p:selectCheckboxMenu value="#{algorithmList.selectedAlgorithms}"
+								label="Choose Algorithm Service from Dropdown List"
+								filter="true" 
+								filterText="Filter" 
+								filterMatchMode="startsWith"
+								panelStyle="width:240px">
+								<f:selectItems value="#{algorithmList.availableAlgorithms}" />
+							</p:selectCheckboxMenu>
+						</h:panelGroup>
+
+						<p:dataTable id="availableStudy"
+							var="studyHolder"
+							styleClass="analyzeDataTable"
+							sortMode="multiple"
+							rowKey="#{studyHolder.subjectID}"
+							value="#{analyzeBacking.tList}"
+							selection="#{analyzeBacking.selectedStudyObject}"
+							selectionMode="single" 
+							paginator="true" 
+							rows="10"
+							resizableColumns="true"
+							paginatorPosition="bottom">
+
+							<f:facet name="header">
+
+								<f:verbatim><br/>Select Record to Analyze or View</f:verbatim>
+							</f:facet>
+
+							<p:column headerText="Subject ID" width="278">
+								<h:outputText value="#{studyHolder.subjectID}" />
+							</p:column>
+
+							<p:column headerText="File Format" width="279">
+								<h:outputText value="#{studyHolder.datatype}" />
+							</p:column>
+
+							<p:column headerText="File Date" width="279">
+								<h:outputText value="#{studyHolder.dateOfRecording}" />
+							</p:column>
+
+							<f:facet name="footer">
+								<p:commandButton value="Start Analysis" 
+									update="displayStart"
+									onclick="pbAjax.start()" 
+									icon="ui-icon-play"
+									actionListener="#{analyzeBacking.startAnalysis}"/>
+									
+							<p:commandButton id="New_div" 
+									value="View ECG"
+									actionListener="#{analyzeBacking.viewLeads}"
+									ajax="true"
+									icon="ui-icon-search"
+									title="View a graph of the selected ECG and its annotations"/>
+
+								<p:dialog widgetVar="dlg" onclose="pbAjax.cancel()">
+									<h:outputText value="Analysis Complete." />
+									<f:verbatim><br /></f:verbatim>
+									<p:dataList id="displayStart"
+										value="#{algorithmList.selectedAlgorithms}" 
+										var="study"
+										rows="4">
+									</p:dataList>
+
+									<p:dataList id="displayMultiStart"
+										value="#{analyzeBacking.selectedStudyEntries}"
+										var="studyHolder" 
+										rows="4">
+									</p:dataList>
+
+									<f:verbatim><br /></f:verbatim>
+
+									<h:outputText value="The files are available in Download Files." />
+								</p:dialog>
+							</f:facet>
+						</p:dataTable>
+					</p:fieldset>
+				</h:form>
+			</p:layoutUnit>
+		</p:layout>
+	</h:panelGroup>
+
+	</h:body>
+</f:view>

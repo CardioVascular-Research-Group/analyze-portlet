@@ -1,0 +1,67 @@
+
+.analyzeLayout {
+	min-height:550px; 
+	top:20px";
+}
+
+.analyzeLayoutUnit {
+	min-width:400px; 
+	min-height:525px; 
+	width:90%; 
+	background-color:#fdf6e3;	
+}
+
+.selectFieldset {
+	position:relative;
+	float:left;
+}
+
+.displayButton {
+	position: relative; 
+	left:2px;
+	top:4px;"
+}
+
+.analyzeDataTable {
+	width:900px;
+	float:right;
+}
+
+ul#css3menu1 li.topmenuAnalyses > a, ul#css3menu1 li.topmenuAnalyses
+{
+border-top-width: 2px;
+border-right-width-value: 1px;
+border-bottom-width: 1px;
+border-left-width-value: 1px;
+border-top-style: solid;
+border-right-style-value: solid;
+border-bottom-style: solid;
+border-left-style-value: solid;
+border-top-color: white;
+border-right-color-value: #2CA1CB;
+border-bottom-color: #CCC;
+border-left-color-value: #2CA1CB;
+-moz-box-shadow: 0 0 10px white,0 3px 0 #0E3871,0 5px 0 white,0 5px 3px #CCC;
+-webkit-box-shadow: 0 0 10px white,0 3px 0 #0E3871,0 5px 0 white,0 5px 3px #CCC;
+box-shadow: 0 0 10px white,0 3px 0 #0E3871,0 5px 0 white,0 5px 3px #CCC;
+background-color: #3DB6E3;
+
+-moz-border-radius: 5px;
+-webkit-border-radius: 5px;
+}
+
+/* dark blue 3DB6E3 blue 3CB6E2 light blue 89f5ff gray 333 */
+
+
+.ui-state-highlight {
+border: 1px solid #c9eefc!important;
+background: #AAA;
+background: #c9eefc  linear-gradient(top, rgba(0, 0, 0, 0.25), transparent)!important;
+background: #c9eefc -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.25)), to(transparent))!important;
+background: #c9eefc -moz-linear-gradient(top, rgba(0, 0, 0, 0.25), transparent)!important;
+color: black!important;
+text-shadow: 1px 1px 1px #FFF!important;
+font-weight:800;
+font-color:#000000!important;
+
+}
