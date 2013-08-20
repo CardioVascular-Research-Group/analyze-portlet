@@ -1,45 +1,55 @@
 package edu.jhu.cvrg.waveform.main;
+/*
+Copyright 2013 Johns Hopkins University Institute for Computational Medicine
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+/**
+* @author Michael Shipway, Chris Jurado, Stephen Granite
+* 
+*/
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
 
-import javax.faces.context.FacesContext;
-
 import org.apache.axiom.om.OMElement;
 
-import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
-import edu.jhu.cvrg.waveform.utility.AlgorithmServiceData;
-import edu.jhu.cvrg.waveform.utility.ProgressBean;
-import edu.jhu.cvrg.waveform.utility.ProgressNotification;
 import edu.jhu.cvrg.waveform.callbacks.FilesAcquiredCallback;
 import edu.jhu.cvrg.waveform.callbacks.SvcAxisCallback;
+import edu.jhu.cvrg.waveform.utility.AlgorithmServiceData;
+import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
-import edu.jhu.cvrg.waveform.utility.CannedAlgorithmList;
+import edu.jhu.cvrg.waveform.utility.ProgressNotification;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
-/** Contains all the functions needed for the new Web Service based analysis algorithms.
- * 
- * @author Michael Shipway, Chris Jurado, Stephen Granite
- *
- */
-public class AnalysisManager {
+public class AnalysisManager implements Serializable{
 
-	FacesContext context = FacesContext.getCurrentInstance();
-//	private ProgressNotification progressNotification;
-	private ProgressBean progressBean;// = (ProgressBean) context.getApplication().evaluateExpressionGet(context, "#{progressBean}", ProgressBean.class);
-	
+	private static final long serialVersionUID = 1L;
+
 	private boolean verbose = false;
 	private AnalysisInProgress aIP;
-	private AnalysisUtility anUtil = new AnalysisUtility();
+	private AnalysisUtility anUtil;
 
-	public AnalysisManager(boolean verbose){		 
+	public AnalysisManager(boolean verbose){	
+		
+		anUtil = new AnalysisUtility(ResourceUtility.getDbUser(), ResourceUtility.getDbPassword(), ResourceUtility.getDbURI(),
+				ResourceUtility.getDbDriver(), ResourceUtility.getDbMainDatabase());
+		
 		this.verbose = verbose;
-		//progressBean = (ProgressBean) context.getApplication().evaluateExpressionGet(context, "#{progressBean}", ProgressBean.class);
 		aIP = new AnalysisInProgress();
 	}
 
@@ -66,8 +76,7 @@ public class AnalysisManager {
 		}
 		this.aIP.setDataFileList(saFilePathNameList);
 		
-		// add actual ftp root for icmv058
-		sFtpRelativePath = "/export/icmv058/cvrgftp" + sFtpRelativePath;
+		sFtpRelativePath = ResourceUtility.getFtpRoot() + sFtpRelativePath;
 
 		String sJobID = anUtil.createAnalysisJob(aIP, alDetails);
 		this.aIP.setJobID(sJobID);
@@ -122,9 +131,12 @@ public class AnalysisManager {
 		parameterMap.put("ftpHost", ftpHost);
 		parameterMap.put("ftpUser", ftpUser);
 		parameterMap.put("ftpPassword", ftpPassword);
-
 		parameterMap.put("jobID", sJobID);
 		parameterMap.put("verbose", String.valueOf(verbose));
+		
+		System.out.println("getCopyFilesMethod: " + ResourceUtility.getCopyFilesMethod());
+		System.out.println("getDataTransferServiceName: " + ResourceUtility.getDataTransferServiceName());
+		System.out.println("getAnalysisServiceURL: " + ResourceUtility.getAnalysisServiceURL());
 
 		SvcAxisCallback callback = new FilesAcquiredCallback();
 
@@ -231,85 +243,5 @@ public class AnalysisManager {
 		return xml;
 	}*/
 
-	public AlgorithmServiceData[] fetchAlgorithmDetailClassArray() throws Exception {
-
-		//String urlLocation = propsUtil.getAnalysisServiceURL();
-
-		//util.debugPrintln("BrokerServiceImpl.fetchAlgorithmDetail() passed brokerURL: "  + urlLocation);
-
-
-		AlgorithmServiceData[] algorithmDetails;
-		String xml="";
-		try {
-			
-			algorithmDetails = CannedAlgorithmList.getAlgorithmList();
-			
-			// Temporarily disabled until the web service is ready - Brandon Benitez
-
-/*			// set up web service call
-			String sServiceURL = propsUtil.getAnalysisServiceURL(); // e.g. "http://icmv058.icm.jhu.edu:8080/axis2/services"
-			String sServiceName = propsUtil.getPhysionetService(); // e.g. "/physionetAnalysisService"
-			String sMethod = propsUtil.getAlgorithmDetailsMethod();
-
-			EndpointReference targetEPR = new EndpointReference(sServiceURL + "/" + sServiceName + "/" + sMethod);
-
-
-			// set up the call to the webservice
-			// the OMElement creation happens here.  These OMElements will be passed in to the 
-			// service as parameters.
-			OMFactory fac = OMAbstractFactory.getOMFactory();
-
-			OMNamespace omNs = fac.createOMNamespace(sServiceURL + "/" + sServiceName , sMethod);
-			OMElement fetchDetails = fac.createOMElement(sMethod, omNs);
-
-
-//*******************************************************list of algorithms***************************************************
-//****************************************************************************************************************************			
-			util.addOMEChild("verbose", String.valueOf(false), fetchDetails, fac, omNs);
-
-			ServiceClient sender = util.getSender(targetEPR, sServiceURL + "/" + sServiceName);
-			// execute up web service call, capturing the result.
-			OMElement result = sender.sendReceive(fetchDetails);
-			// extract the XStream generated XML from the result.
-			StringWriter writer = new StringWriter();
-			result.serialize(XMLOutputFactory.newInstance().createXMLStreamWriter(writer));
-			writer.flush();
-			xml = writer.toString();
-			System.out.println("xml length: " + xml.length());
-
-			// convert the returned XML result into an array of AlgorithmServiceData objects
-			XStream xstream = new XStream();
-
-			//						algorithmDetails = new AlgorithmServiceData[2];
-			//						algorithmDetails[0] = new org.cvrgrid.ecgrid.shared.AlgorithmServiceData();
-			//						algorithmDetails[1] = new org.cvrgrid.ecgrid.shared.AlgorithmServiceData();
-			//						xstream.alias("People", People.class);
-			//						xstream.alias("Organization", Organization.class);
-			//						xstream.alias("FileTypes", FileTypes.class);
-			//						xstream.alias("AdditionalParameters", AdditionalParameters.class);
-			//						xstream.setClassLoader(AlgorithmServiceData.class.getClassLoader());
-			//						xstream.setClassLoader(People.class.getClassLoader());
-			//						xstream.setClassLoader(Organization.class.getClassLoader());
-			//						xstream.setClassLoader(FileTypes.class.getClassLoader());
-			//						xstream.setClassLoader(AdditionalParameters.class.getClassLoader());
-			//						xstream.alias("AlgorithmServiceData", AlgorithmServiceDataECGrid.class);
-			//						ret = (AlgorithmServiceDataECGrid[])xstream.fromXML(xml);
-			//						util.debugPrintln("algorithmDetails length: " + ret.length);
-
-			xstream.alias("AlgorithmServiceData", AlgorithmServiceData.class);
-			algorithmDetails = (AlgorithmServiceData[]) xstream.fromXML(xml);
-			util.debugPrintln("algorithmDetails length: " + algorithmDetails.length);*/
-
-
-		} /*catch (AxisFault axisFault) {
-			axisFault.printStackTrace();
-			throw axisFault;
-		}*/ catch(Exception ex) {
-			ex.printStackTrace();
-			throw ex;
-		}	
-
-		return algorithmDetails;
-	}
 
 }

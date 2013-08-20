@@ -1,5 +1,4 @@
 package edu.jhu.cvrg.waveform.backing;
-
 /*
  Copyright 2013 Johns Hopkins University Institute for Computational Medicine
 
@@ -24,15 +23,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
-import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.primefaces.event.DragDropEvent;
-import org.primefaces.event.SelectEvent;
+import org.apache.log4j.Logger;
 
 import com.liferay.portal.model.User;
 
@@ -52,13 +48,13 @@ public class AnalyzeBacking implements Serializable {
 
 	private StudyEntry[] studyEntryListArray;
 	private StudyEntry[] selectedStudyEntries;
-	private List<StudyEntry> selectedStudyEntry;
-	private StudyEntry selectedStudyObject;
+	private List<String> selectedAlgorithms;
 	private List<StudyEntry> droppedStudy;
 	private ArrayList<StudyEntry> tableList;
-	private AnalysisManager analysisManager = new AnalysisManager(true);
+	private AnalysisManager analysisManager;
 	private FileTree fileTree;
 	private User userModel;
+	protected static org.apache.log4j.Logger logger = Logger.getLogger(AnalyzeBacking.class);
 
 	@ManagedProperty("#{algorithmList}")
 	private AlgorithmList algorithmList;
@@ -71,45 +67,41 @@ public class AnalyzeBacking implements Serializable {
 		fileTree.initialize(userModel.getScreenName());
 	}
 
-	public void startAnalysis(ActionEvent event) {
+	public void startAnalysis() {
 
-		AlgorithmServiceData[] algorithmDetailsList = algorithmList
-				.getAlgorithmDetailsList();
+		AlgorithmServiceData[] algorithmDetailsList = algorithmList.getAlgorithmDetailsList();
+				
+		//Will hold the full selected algorithms
 		ArrayList<AlgorithmServiceData> finalAlgs = new ArrayList<AlgorithmServiceData>();
 
-		for (String algorithm : algorithmList.getSelectedAlgorithms()) {
-
-			for (int i = 0; i < algorithmDetailsList.length; i++) {
-				if (algorithmDetailsList[i].sServiceMethod.equals(algorithm)) {
-					finalAlgs.add(algorithmDetailsList[i]);
-				}
-			}
+		if(selectedAlgorithms == null){
+			logger.info("No items selected.  List is null.");
+			return;
 		}
-
-		for (AlgorithmServiceData algToProcess : finalAlgs)
-			System.out.print(algToProcess.sDisplayShortName + ",");
-
-		for (StudyEntry studyEntry : selectedStudyEntries)
-			System.out.print(studyEntry.getSubjectID() + ",");
+		
+		for (String algorithm : selectedAlgorithms) {
+			for (AlgorithmServiceData datum : algorithmDetailsList) {
+				if (datum.sServiceMethod.equals(algorithm)) {
+					finalAlgs.add(datum);
+				}
+			} 
+		}
 
 		for (AlgorithmServiceData algToProcess : finalAlgs) {
 
-			System.out.println("Algorithm: " + algToProcess.sDisplayShortName);
 			for (StudyEntry studyEntry : selectedStudyEntries) {
 
 				String userID = userModel.getScreenName();
 				String subjectID = studyEntry.getSubjectID();
-				String DatasetName = studyEntry.getRecordName();
-				String[] asFileNameList = extractFilenames(studyEntry
-						.getAllFilenames());
+				String datasetName = studyEntry.getRecordName();
+				String[] asFileNameList = extractFilenames(studyEntry.getAllFilenames());
 				int iFileCount = asFileNameList.length;
 
-				String ftpRelativePath = AnalysisUtility.extractPath(studyEntry
-						.getAllFilenames()[0]);
-
-				if (analysisManager.performAnalysis(subjectID, userID,
-						algToProcess, DatasetName, iFileCount, asFileNameList,
-						ftpRelativePath))
+				String ftpRelativePath = AnalysisUtility.extractPath(studyEntry.getAllFilenames()[0]);
+				
+				analysisManager = new AnalysisManager(true);
+				System.out.println("Got AnalyzizManager");
+				if (analysisManager.performAnalysis(subjectID, userID, algToProcess, datasetName, iFileCount, asFileNameList, ftpRelativePath))
 					System.out
 							.println("analysisManager.performAnalysis call successful for: "
 									+ algToProcess.sDisplayShortName
@@ -148,55 +140,12 @@ public class AnalyzeBacking implements Serializable {
 		return droppedStudy;
 	}
 
-	public void onStudyDrop(DragDropEvent ddEvent) {
-		StudyEntry studyentry = ((StudyEntry) ddEvent.getData());
-		tableList.remove(studyentry);
-		droppedStudy.add(studyentry);
-	}
-
-	public void onStudyCheckBox(SelectEvent event) {
-		StudyEntry studyentry = ((StudyEntry) event.getObject());
-		tableList.remove(studyentry);
-		droppedStudy.add(studyentry);
-	}
-
-	public void onRowSelect(SelectEvent event) {
-		selectedStudyObject = ((StudyEntry) event.getObject());
-		FacesMessage msg = new FacesMessage("Selected Row",
-				((StudyEntry) event.getObject()).getStudy());
-		FacesContext.getCurrentInstance().addMessage(null, msg);
-	}
-
 	public ArrayList<StudyEntry> getTableList() {
 		return tableList;
 	}
 
 	public void refreshStudieList(ActionEvent actionEvent) {
 		tableList.removeAll(tableList);
-	}
-
-	public StudyEntry[] getSelectedStudyEntries() {
-		return selectedStudyEntries;
-	}
-
-	public void setSelectedStudyEntries(StudyEntry[] selectedStudyEntries) {
-		this.selectedStudyEntries = selectedStudyEntries;
-	}
-
-	public List<StudyEntry> getSelectedStudyEntry() {
-		return selectedStudyEntry;
-	}
-
-	public void setSelectedStudyEntry(List<StudyEntry> selectedStudyEntry) {
-		this.selectedStudyEntry = selectedStudyEntry;
-	}
-
-	public void setSelectedStudyObject(StudyEntry selectedStudyObject) {
-		this.selectedStudyObject = selectedStudyObject;
-	}
-
-	public StudyEntry getSelectedStudyObject() {
-		return selectedStudyObject;
 	}
 
 	public AlgorithmList getAlgorithmList() {
@@ -226,4 +175,21 @@ public class AnalyzeBacking implements Serializable {
 	public void setTableList(ArrayList<StudyEntry> tableList) {
 		this.tableList = tableList;
 	}
+
+	public List<String> getSelectedAlgorithms() {
+		return selectedAlgorithms;
+	}
+
+	public void setSelectedAlgorithms(List<String> selectedAlgorithms) {
+		this.selectedAlgorithms = selectedAlgorithms;
+	}
+
+	public StudyEntry[] getSelectedStudyEntries() {
+		return selectedStudyEntries;
+	}
+
+	public void setSelectedStudyEntries(StudyEntry[] selectedStudyEntries) {
+		this.selectedStudyEntries = selectedStudyEntries;
+	}
+
 }

@@ -38,17 +38,18 @@ public class ResultsStorageDBUtility extends XMLUtility {
 	 */
 	
 	public ResultsStorageDBUtility() {
-		super(); 
-		analysisResultBuilder = new AnalysisResultsQueryBuilder(this.dbURI, ResourceUtility.getAnalysisResults());
-	}
-	
-	public ResultsStorageDBUtility(String userName, String userPassword, String uRI, 
-			String driver, String mainDatabase) {
 		super(com.liferay.util.portlet.PortletProps.get("dbUser"),
 				com.liferay.util.portlet.PortletProps.get("dbPassword"), 
 				com.liferay.util.portlet.PortletProps.get("dbURI"),	
 				com.liferay.util.portlet.PortletProps.get("dbDriver"), 
 				com.liferay.util.portlet.PortletProps.get("dbMainDatabase")); 
+		System.out.println("AAAAAAAHHHHHHHHHHHH" + com.liferay.util.portlet.PortletProps.get("dbDriver"));
+		analysisResultBuilder = new AnalysisResultsQueryBuilder(this.dbURI, ResourceUtility.getAnalysisResults());
+	}
+	
+	public ResultsStorageDBUtility(String userName, String userPassword, String uRI, 
+			String driver, String mainDatabase) {
+		super(userName, userPassword, uRI, driver, mainDatabase); 
 		
 		analysisResultBuilder = new AnalysisResultsQueryBuilder(this.dbURI, ResourceUtility.getAnalysisResults());
 	}

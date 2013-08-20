@@ -44,7 +44,7 @@
 
 							<p:separator style="margin-bottom:10px" />
 
-							<p:selectCheckboxMenu value="#{algorithmList.selectedAlgorithms}"
+							<p:selectCheckboxMenu value="#{analyzeBacking.selectedAlgorithms}"
 								label="Choose Algorithm Service from Dropdown List"
 								filter="true" 
 								filterText="Filter" 
@@ -59,9 +59,9 @@
 							styleClass="analyzeDataTable"
 							sortMode="multiple"
 							rowKey="#{studyHolder.subjectID}"
-							value="#{analyzeBacking.tList}"
-							selection="#{analyzeBacking.selectedStudyObject}"
-							selectionMode="single" 
+							value="#{analyzeBacking.tableList}"
+							selection="#{analyzeBacking.selectedStudyEntries}"
+							selectionMode="multiple" 
 							paginator="true" 
 							rows="10"
 							resizableColumns="true"
@@ -87,22 +87,14 @@
 							<f:facet name="footer">
 								<p:commandButton value="Start Analysis" 
 									update="displayStart"
-									onclick="pbAjax.start()" 
 									icon="ui-icon-play"
-									actionListener="#{analyzeBacking.startAnalysis}"/>
-									
-							<p:commandButton id="New_div" 
-									value="View ECG"
-									actionListener="#{analyzeBacking.viewLeads}"
-									ajax="true"
-									icon="ui-icon-search"
-									title="View a graph of the selected ECG and its annotations"/>
+									action="#{analyzeBacking.startAnalysis}"/>
 
 								<p:dialog widgetVar="dlg" onclose="pbAjax.cancel()">
 									<h:outputText value="Analysis Complete." />
 									<f:verbatim><br /></f:verbatim>
 									<p:dataList id="displayStart"
-										value="#{algorithmList.selectedAlgorithms}" 
+										value="#{analyzeBacking.selectedAlgorithms}" 
 										var="study"
 										rows="4">
 									</p:dataList>

@@ -42,6 +42,7 @@ import edu.jhu.cvrg.waveform.utility.AnnotationUtility;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ResultsStorageDBUtility;
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
+import edu.jhu.cvrg.waveform.model.AlgorithmList;
 import edu.jhu.cvrg.waveform.model.AnnotationData;
 import edu.jhu.cvrg.waveform.utility.FTPUtility;
 import edu.jhu.cvrg.waveform.utility.ServerUtility;
@@ -175,9 +176,9 @@ public class ResultsAcquiredCallback extends SvcAxisCallback{
 	private boolean bReturnsWFDBAnnotation(AnalysisInProgress aIP){
 		boolean isWFDBAnnotation = false, bMeth, bSURL, bSName;
 		AlgorithmServiceData[] algorithmDetailsList;
-		AnalysisManager analysisManager = new AnalysisManager(true);
+		AlgorithmList algorithmList = new AlgorithmList();
 		try {
-			algorithmDetailsList = analysisManager.fetchAlgorithmDetailClassArray();
+			algorithmDetailsList = algorithmList.fetchAlgorithmDetailClassArray();
 
 			if (algorithmDetailsList != null) {
 				for (int i = 0; i < algorithmDetailsList.length; i++) {

@@ -1,5 +1,6 @@
 package edu.jhu.cvrg.waveform.utility;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 import org.xmldb.api.base.Resource;
@@ -12,8 +13,9 @@ import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
 import edu.jhu.cvrg.waveform.utility.AlgorithmServiceData;
 import edu.jhu.cvrg.waveform.utility.AnalysisProgressQueryBuilder;
 
-public class AnalysisUtility extends XMLUtility {
+public class AnalysisUtility extends XMLUtility implements Serializable{
 
+	private static final long serialVersionUID = 1L;
 	private AnalysisProgressQueryBuilder analysisInFlightBuilder;
 	private AnalysisProgressQueryBuilder analysisInsertion;
 
@@ -23,8 +25,11 @@ public class AnalysisUtility extends XMLUtility {
 	 * tells the query builder where to find the database URI and collection
 	 */
 	public AnalysisUtility() {
-		// TODO Auto-generated constructor stub
-		super();
+		super(com.liferay.util.portlet.PortletProps.get("dbUser"),
+				com.liferay.util.portlet.PortletProps.get("dbPassword"), 
+				com.liferay.util.portlet.PortletProps.get("dbURI"),	
+				com.liferay.util.portlet.PortletProps.get("dbDriver"), 
+				com.liferay.util.portlet.PortletProps.get("dbMainDatabase"));
 
 		// This is for handling Analyses that are in progress
 		analysisInFlightBuilder = new AnalysisProgressQueryBuilder(this.dbURI, ResourceUtility.getAnalysisDatabase());
@@ -34,6 +39,14 @@ public class AnalysisUtility extends XMLUtility {
 		//analysisResultsBuilder
 	}
 
+	public AnalysisUtility(String dbUserName, String dbUserPassword, String dbURI, String dbDriver, String dbMainDatabase) {
+		super(dbUserName, dbUserPassword, dbURI, dbDriver, dbMainDatabase);
+
+		// This is for handling Analyses that are in progress
+		analysisInFlightBuilder = new AnalysisProgressQueryBuilder(dbURI, dbMainDatabase);
+		analysisInsertion = new AnalysisProgressQueryBuilder(dbURI, this.dbMainCollection);
+	}
+	
 	public static String extractPath(String sHeaderPathName){
 		String sFilePath="";
 		int iIndexLastSlash = sHeaderPathName.lastIndexOf("/");

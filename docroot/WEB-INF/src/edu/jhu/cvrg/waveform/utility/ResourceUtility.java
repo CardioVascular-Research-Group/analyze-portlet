@@ -51,6 +51,26 @@ public class ResourceUtility {
 		return serverName;
 	}
 	
+	public static String getDbMainDatabase(){
+		return com.liferay.util.portlet.PortletProps.get("dbMainDatabase");
+	}
+	
+	public static String getDbDriver(){
+		return com.liferay.util.portlet.PortletProps.get("dbDriver");
+	}
+	
+	public static String getDbURI(){
+		return com.liferay.util.portlet.PortletProps.get("dbURI");
+	}
+	
+	public static String getDbUser(){
+		return com.liferay.util.portlet.PortletProps.get("dbUser");
+	}
+	
+	public static String getDbPassword(){
+		return com.liferay.util.portlet.PortletProps.get("dbPassword");
+	}
+	
 	public static String getStagingFolder(){
 		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
 		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
@@ -59,9 +79,6 @@ public class ResourceUtility {
 
 	public static String getAnalysisServiceURL(){
 		return com.liferay.util.portlet.PortletProps.get("analysisServiceURL");
-//		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-//		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-//		return prefs.getValue("analysisServiceURL", "0");
 	}
 	
 	public static String getNodeConversionService(){

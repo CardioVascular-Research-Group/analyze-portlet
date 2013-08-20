@@ -1,9 +1,13 @@
 package edu.jhu.cvrg.waveform.utility;
 
+import java.io.Serializable;
+
 import edu.jhu.cvrg.dbapi.EnumXMLInsertLocation;
 import edu.jhu.cvrg.dbapi.XQueryBuilder;
 
-public class AnalysisProgressQueryBuilder extends XQueryBuilder {
+public class AnalysisProgressQueryBuilder extends XQueryBuilder implements Serializable{
+
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * The correct constructor to use, which has the URI and collection.

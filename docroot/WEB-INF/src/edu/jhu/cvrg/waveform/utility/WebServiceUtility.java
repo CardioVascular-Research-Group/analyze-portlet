@@ -101,10 +101,11 @@ public class WebServiceUtility {
 	 * @return
 	 */
 	public static OMElement callWebService(LinkedHashMap<String, String> parameterMap, 
-			String serviceMethod, 
-			String serviceName, 
-			String serviceURL,
-			SvcAxisCallback callback){
+			String serviceMethod, String serviceName, String serviceURL, SvcAxisCallback callback){
+		
+		System.out.println("ServiceName is " + serviceName);
+		System.out.println("serviceURL is " + serviceURL);
+		System.out.println("serviceMethod is " + serviceMethod);
 		
 //		serviceURL = propsUtil.getAnalysisServiceURL();
 		String serviceTarget = "";
@@ -115,16 +116,35 @@ public class WebServiceUtility {
 			}else{
 				serviceTarget = serviceMethod;
 			}
-		}		
+		}	
+		
+		System.out.println("serviceTarget is " + serviceTarget);
 		
 		EndpointReference targetEPR = new EndpointReference(serviceURL + "/" + serviceTarget);
 
 		OMFactory omFactory = OMAbstractFactory.getOMFactory();
 
 		OMNamespace omNamespace = omFactory.createOMNamespace(serviceURL + serviceName, serviceName);
+		
+	
+		
 		OMElement omWebService = omFactory.createOMElement(serviceMethod, omNamespace);
+		
+		System.out.println("there are " + parameterMap.size() + " items in parameter map.");
 
 		for(String key : parameterMap.keySet()){
+			System.out.println("key is " + key.toString());
+			System.out.println("value is " + parameterMap.get(key).toString());
+			if(omWebService == null){
+				System.out.println("omWebService is null.");
+			}
+			if(omFactory == null){
+				System.out.println("omFactory is null.");
+			}
+			if(omNamespace == null){
+				System.out.println("omNamespace is null.");
+			}
+			
 			addOMEChild(key.toString(), parameterMap.get(key).toString(), omWebService, omFactory, omNamespace);
 		}
 
