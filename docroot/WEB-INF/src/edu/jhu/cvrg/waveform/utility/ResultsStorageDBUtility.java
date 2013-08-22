@@ -11,8 +11,8 @@ import org.xmldb.api.base.ResourceSet;
 import com.thoughtworks.xstream.XStream;
 
 import edu.jhu.cvrg.dbapi.XMLUtility;
-import edu.jhu.cvrg.waveform.utility.AlgorithmServiceData;
 import edu.jhu.cvrg.waveform.utility.AnalysisResultsQueryBuilder;
+import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.model.AnalysisResult;
 import edu.jhu.cvrg.waveform.utility.CannedAlgorithmList;
 
@@ -231,7 +231,7 @@ public class ResultsStorageDBUtility extends XMLUtility {
 		
 		String displayName = "unsupported algorithm";
 		
-		AlgorithmServiceData[] theBigList = CannedAlgorithmList.getAlgorithmList();
+		Algorithm[] theBigList = CannedAlgorithmList.getAlgorithmList();
 		
 		for(int i=0; i<theBigList.length; i++) {
 			if(theBigList[i].sServiceMethod.equals(webServiceName)) {

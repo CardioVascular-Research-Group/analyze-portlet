@@ -1,5 +1,7 @@
 package edu.jhu.cvrg.waveform.utility;
 
+import java.io.Serializable;
+
 import javax.faces.bean.ManagedProperty;
 
 import com.liferay.portal.model.User;
@@ -7,7 +9,9 @@ import com.liferay.portal.model.User;
 import edu.jhu.cvrg.dbapi.EnumXMLInsertLocation;
 import edu.jhu.cvrg.dbapi.XQueryBuilder;
 
-public class StudyQueryBuilder extends XQueryBuilder {
+public class StudyQueryBuilder extends XQueryBuilder implements Serializable{
+
+	private static final long serialVersionUID = 1L;
 	
 	@ManagedProperty("#{userModel}")
 	private User userBean;

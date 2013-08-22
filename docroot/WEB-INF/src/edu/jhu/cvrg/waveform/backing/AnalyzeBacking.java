@@ -34,9 +34,9 @@ import com.liferay.portal.model.User;
 
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.AlgorithmList;
+import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.model.FileTree;
 import edu.jhu.cvrg.waveform.model.StudyEntry;
-import edu.jhu.cvrg.waveform.utility.AlgorithmServiceData;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 
@@ -46,12 +46,10 @@ public class AnalyzeBacking implements Serializable {
 
 	private static final long serialVersionUID = -4006126553152259063L;
 
-	private StudyEntry[] studyEntryListArray;
 	private StudyEntry[] selectedStudyEntries;
 	private List<String> selectedAlgorithms;
-	private List<StudyEntry> droppedStudy;
 	private ArrayList<StudyEntry> tableList;
-	private AnalysisManager analysisManager;
+	private AnalysisManager analysisManager = new AnalysisManager(true);
 	private FileTree fileTree;
 	private User userModel;
 	protected static org.apache.log4j.Logger logger = Logger.getLogger(AnalyzeBacking.class);
@@ -62,71 +60,44 @@ public class AnalyzeBacking implements Serializable {
 	@PostConstruct
 	public void init() {
 		userModel = ResourceUtility.getCurrentUser();
-		droppedStudy = new ArrayList<StudyEntry>();
-		fileTree = new FileTree();
-		fileTree.initialize(userModel.getScreenName());
+		fileTree = new FileTree(userModel.getScreenName());
 	}
 
 	public void startAnalysis() {
 
-		AlgorithmServiceData[] algorithmDetailsList = algorithmList.getAlgorithmDetailsList();
+		Algorithm[] algorithms = algorithmList.getAlgorithms();
 				
-		//Will hold the full selected algorithms
-		ArrayList<AlgorithmServiceData> finalAlgs = new ArrayList<AlgorithmServiceData>();
+		ArrayList<Algorithm> selectedAlgorithmList = new ArrayList<Algorithm>();
 
 		if(selectedAlgorithms == null){
 			logger.info("No items selected.  List is null.");
 			return;
 		}
 		
-		for (String algorithm : selectedAlgorithms) {
-			for (AlgorithmServiceData datum : algorithmDetailsList) {
-				if (datum.sServiceMethod.equals(algorithm)) {
-					finalAlgs.add(datum);
+		for (String algorithmName : selectedAlgorithms) {
+			for (Algorithm algorithm : algorithms) {
+				if (algorithm.sServiceMethod.equals(algorithmName)) {
+					selectedAlgorithmList.add(algorithm);
 				}
 			} 
 		}
 
-		for (AlgorithmServiceData algToProcess : finalAlgs) {
-
+		for (Algorithm algorithm : selectedAlgorithmList) {
 			for (StudyEntry studyEntry : selectedStudyEntries) {
 
-				String userID = userModel.getScreenName();
-				String subjectID = studyEntry.getSubjectID();
-				String datasetName = studyEntry.getRecordName();
 				String[] asFileNameList = extractFilenames(studyEntry.getAllFilenames());
-				int iFileCount = asFileNameList.length;
-
-				String ftpRelativePath = AnalysisUtility.extractPath(studyEntry.getAllFilenames()[0]);
 				
-				analysisManager = new AnalysisManager(true);
-				System.out.println("Got AnalyzizManager");
-				if (analysisManager.performAnalysis(subjectID, userID, algToProcess, datasetName, iFileCount, asFileNameList, ftpRelativePath))
-					System.out
-							.println("analysisManager.performAnalysis call successful for: "
-									+ algToProcess.sDisplayShortName
-									+ " on "
-									+ subjectID);
+				analysisManager.performAnalysis(studyEntry.getSubjectID(), userModel.getScreenName(), 
+						algorithm, studyEntry.getRecordName(), asFileNameList.length, asFileNameList, 
+						AnalysisUtility.extractPath(studyEntry.getAllFilenames()[0]));
 			}
-
 		}
 	}
 
 	public void displaySelectedMultiple(ActionEvent event) {
-
 		setTableList(fileTree.getSelectedFileNodes());
-
 	}
 
-	/**
-	 * Given an array of filepaths/filenames, returns an array containing only
-	 * the filename portion of each string.<BR>
-	 * Calls AnalysisUtility.extractName(), which assumes that the file
-	 * separator is "/" (e.g. Unix file system, not Windows)
-	 * 
-	 * @param filepaths
-	 * @return - array of bare filenames.
-	 */
 	private String[] extractFilenames(String[] filepaths) {
 		String[] results = new String[filepaths.length];
 		for (int i = 0; i < filepaths.length; i++) {
@@ -134,10 +105,6 @@ public class AnalyzeBacking implements Serializable {
 		}
 
 		return results;
-	}
-
-	public List<StudyEntry> getDroppedStudy() {
-		return droppedStudy;
 	}
 
 	public ArrayList<StudyEntry> getTableList() {
@@ -164,14 +131,6 @@ public class AnalyzeBacking implements Serializable {
 		this.fileTree = fileTree;
 	}
 
-	public StudyEntry[] getStudyEntryListArray() {
-		return studyEntryListArray;
-	}
-
-	public void setStudyEntryListArray(StudyEntry[] studyEntryListArray) {
-		this.studyEntryListArray = studyEntryListArray;
-	}
-
 	public void setTableList(ArrayList<StudyEntry> tableList) {
 		this.tableList = tableList;
 	}
@@ -191,5 +150,4 @@ public class AnalyzeBacking implements Serializable {
 	public void setSelectedStudyEntries(StudyEntry[] selectedStudyEntries) {
 		this.selectedStudyEntries = selectedStudyEntries;
 	}
-
 }

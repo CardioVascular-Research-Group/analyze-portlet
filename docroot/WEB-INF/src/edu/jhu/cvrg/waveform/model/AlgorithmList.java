@@ -18,15 +18,32 @@ limitations under the License.
 * @author Chris Jurado, Mike Shipway
 * 
 */
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLOutputFactory;
 
-import edu.jhu.cvrg.waveform.utility.AlgorithmServiceData;
+import org.apache.axiom.om.OMElement;
+import org.apache.axis2.AxisFault;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.thoughtworks.xstream.XStream;
+
+import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
 import edu.jhu.cvrg.waveform.utility.CannedAlgorithmList;
+import edu.jhu.cvrg.waveform.utility.FileTypes;
+import edu.jhu.cvrg.waveform.utility.ResourceUtility;
+import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
 @ManagedBean(name = "algorithmList")
 @ViewScoped
@@ -35,115 +52,123 @@ public class AlgorithmList implements Serializable {
 	private static final long serialVersionUID = 8596023632774091195L;
 
 	private Map<String, String> availableAlgorithms;
-	private AlgorithmServiceData[] algorithmDetailsList;
+	private Algorithm[] algorithms;
 
 	public AlgorithmList() {
 
 		availableAlgorithms = new LinkedHashMap<String, String>();
-
 		try {
-			algorithmDetailsList = fetchAlgorithmDetailClassArray();
-
-			if (algorithmDetailsList != null) {
-				for (AlgorithmServiceData item : algorithmDetailsList) {
-					availableAlgorithms.put(item.sDisplayShortName,	item.sServiceMethod);
-				}
-			}
-
+			fetchAlgorithms();
 		} catch (Exception e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+//
+//		try {
+//			algorithms = fetchAlgorithms();
+//
+//			if (algorithms != null) {
+//				for (Algorithm item : algorithms) {
+//					availableAlgorithms.put(item.sDisplayShortName,	item.sServiceMethod);
+//				}
+//			}
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 	}
 	
 
-	public AlgorithmServiceData[] fetchAlgorithmDetailClassArray() throws Exception {
+	public Algorithm[] fetchAlgorithms() throws Exception {
 
-//		String urlLocation = propsUtil.getAnalysisServiceURL();
-
-		//util.debugPrintln("BrokerServiceImpl.fetchAlgorithmDetail() passed brokerURL: "  + urlLocation);
-
-
-		AlgorithmServiceData[] algorithmDetails;
+		Algorithm[] algorithms;
 		String xml="";
 		try {
+
+			String sServiceURL = ResourceUtility.getAnalysisServiceURL(); // e.g. "http://icmv058.icm.jhu.edu:8080/axis2/services"
+			String sServiceName = ResourceUtility.getPhysionetAnalysisService(); // e.g. "/physionetAnalysisService"
+			String sMethod = ResourceUtility.getAlgorithmDetailsMethod();
+			LinkedHashMap<String, String> parameterMap = new LinkedHashMap<String, String>();
+			parameterMap.put("verbose", String.valueOf(false));
 			
-			algorithmDetails = CannedAlgorithmList.getAlgorithmList();
+			OMElement result = WebServiceUtility.callWebService(parameterMap, sMethod, sServiceName, 
+					sServiceURL, null);
 
-/*			// set up web service call
-			String sServiceURL = propsUtil.getAnalysisServiceURL(); // e.g. "http://icmv058.icm.jhu.edu:8080/axis2/services"
-			String sServiceName = propsUtil.getPhysionetService(); // e.g. "/physionetAnalysisService"
-			String sMethod = propsUtil.getAlgorithmDetailsMethod();
-
-			EndpointReference targetEPR = new EndpointReference(sServiceURL + "/" + sServiceName + "/" + sMethod);
-
-
-			// set up the call to the webservice
-			// the OMElement creation happens here.  These OMElements will be passed in to the 
-			// service as parameters.
-			OMFactory fac = OMAbstractFactory.getOMFactory();
-
-			OMNamespace omNs = fac.createOMNamespace(sServiceURL + "/" + sServiceName , sMethod);
-			OMElement fetchDetails = fac.createOMElement(sMethod, omNs);
-
-
-//*******************************************************list of algorithms***************************************************
-//****************************************************************************************************************************			
-			util.addOMEChild("verbose", String.valueOf(false), fetchDetails, fac, omNs);
-
-			ServiceClient sender = util.getSender(targetEPR, sServiceURL + "/" + sServiceName);
-			// execute up web service call, capturing the result.
-			OMElement result = sender.sendReceive(fetchDetails);
-			// extract the XStream generated XML from the result.
 			StringWriter writer = new StringWriter();
 			result.serialize(XMLOutputFactory.newInstance().createXMLStreamWriter(writer));
 			writer.flush();
 			xml = writer.toString();
-			System.out.println("xml length: " + xml.length());
 
-			// convert the returned XML result into an array of AlgorithmServiceData objects
-			XStream xstream = new XStream();
+			System.out.println("XML String is " + xml.toString());
+			
+			InputStream inStream = new ByteArrayInputStream(xml.getBytes("UTF-8"));
+			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+			Document document = docBuilder.parse(inStream);
+			
+			document.getDocumentElement().normalize();
+			
+			NodeList algorithmNodes = document.getElementsByTagName("AlgorithmServiceData");
+			
+			for(int i = 0; i < algorithmNodes.getLength(); i++){
+				
+				Node node = algorithmNodes.item(i);
+				String name = "";
+				String method = "";
+				
+				for(int s = 0; s < node.getChildNodes().getLength(); s++){
+					Node childNode = node.getChildNodes().item(s);
 
-			//						algorithmDetails = new AlgorithmServiceData[2];
-			//						algorithmDetails[0] = new org.cvrgrid.ecgrid.shared.AlgorithmServiceData();
-			//						algorithmDetails[1] = new org.cvrgrid.ecgrid.shared.AlgorithmServiceData();
-			//						xstream.alias("People", People.class);
-			//						xstream.alias("Organization", Organization.class);
-			//						xstream.alias("FileTypes", FileTypes.class);
-			//						xstream.alias("AdditionalParameters", AdditionalParameters.class);
-			//						xstream.setClassLoader(AlgorithmServiceData.class.getClassLoader());
-			//						xstream.setClassLoader(People.class.getClassLoader());
-			//						xstream.setClassLoader(Organization.class.getClassLoader());
-			//						xstream.setClassLoader(FileTypes.class.getClassLoader());
-			//						xstream.setClassLoader(AdditionalParameters.class.getClassLoader());
-			//						xstream.alias("AlgorithmServiceData", AlgorithmServiceDataECGrid.class);
-			//						ret = (AlgorithmServiceDataECGrid[])xstream.fromXML(xml);
-			//						util.debugPrintln("algorithmDetails length: " + ret.length);
+					if(childNode.getNodeName().equals("sDisplayShortName")){
+						System.out.println("Node sServiceName has " + " a value of " + node.getChildNodes().item(s).getFirstChild().getNodeValue());
+						name = childNode.getFirstChild().getNodeValue();
+					}
+					if(childNode.getNodeName().equals("sServiceMethod")){
+						method = childNode.getFirstChild().getNodeValue();
+					}
+				}
+				System.out.println("Adding algorithm name " + name + " and method " + method);
+				availableAlgorithms.put(name, method);
+			}
+			
+			System.out.println("Map includes " + availableAlgorithms.size() + " items.");
+//
+//			XStream xstream = new XStream();
+//
+//				algorithms = new Algorithm[2];
+//				algorithms[0] = new Algorithm();
+//				algorithms[1] = new Algorithm();
+//				xstream.alias("People", People.class);
+//				xstream.alias("Organization", Organization.class);
+//				xstream.alias("FileTypes", FileTypes.class);
+//				xstream.alias("AdditionalParameters", AdditionalParameters.class);
+//				xstream.setClassLoader(Algorithm.class.getClassLoader());
+//				xstream.setClassLoader(People.class.getClassLoader());
+//				xstream.setClassLoader(Organization.class.getClassLoader());
+//				xstream.setClassLoader(FileTypes.class.getClassLoader());
+//				xstream.setClassLoader(AdditionalParameters.class.getClassLoader());
+//				xstream.alias("AlgorithmServiceData", Algorithm.class);
+//				System.out.println("XML is " + xml.toString());
+//				algorithms = (Algorithm[])xstream.fromXML(xml);
 
-			xstream.alias("AlgorithmServiceData", AlgorithmServiceData.class);
-			algorithmDetails = (AlgorithmServiceData[]) xstream.fromXML(xml);
-			util.debugPrintln("algorithmDetails length: " + algorithmDetails.length);*/
-
-
-		} /*catch (AxisFault axisFault) {
-			axisFault.printStackTrace();
-			throw axisFault;
-		}*/ catch(Exception ex) {
+		} catch(Exception ex) {
 			ex.printStackTrace();
 			throw ex;
 		}	
 
-		return algorithmDetails;
+//		return algorithms;
+		return null;
 	}
 
 	public Map<String, String> getAvailableAlgorithms() {
 		return availableAlgorithms;
 	}
 
-	public AlgorithmServiceData[] getAlgorithmDetailsList() {
-		return algorithmDetailsList;
+	public Algorithm[] getAlgorithms() {
+		return algorithms;
 	}
 
-	public void setAlgorithmDetailsList(AlgorithmServiceData[] algorithmDetailsList) {
-		this.algorithmDetailsList = algorithmDetailsList;
+	public void setAlgorithms(Algorithm[] algorithms) {
+		this.algorithms = algorithms;
 	}
 }

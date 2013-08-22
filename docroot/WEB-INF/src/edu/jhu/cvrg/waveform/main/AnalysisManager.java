@@ -29,7 +29,7 @@ import org.apache.axiom.om.OMElement;
 
 import edu.jhu.cvrg.waveform.callbacks.FilesAcquiredCallback;
 import edu.jhu.cvrg.waveform.callbacks.SvcAxisCallback;
-import edu.jhu.cvrg.waveform.utility.AlgorithmServiceData;
+import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
 import edu.jhu.cvrg.waveform.utility.ProgressNotification;
@@ -58,7 +58,7 @@ public class AnalysisManager implements Serializable{
 	 * then calls step 1A, to transfer the data files.
 	 * 
 	 */
-	public boolean performAnalysis(String sSubjectId, String sUserId, AlgorithmServiceData alDetails,
+	public boolean performAnalysis(String sSubjectId, String sUserId, Algorithm alDetails,
 			String DatasetName, int iFileCount, String[] saFileNameList, String sFtpRelativePath){
 
 		this.aIP.setUserId(sUserId);

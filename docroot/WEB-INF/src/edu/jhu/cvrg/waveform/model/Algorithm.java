@@ -1,10 +1,11 @@
-package edu.jhu.cvrg.waveform.utility;
+package edu.jhu.cvrg.waveform.model;
 
 import java.io.Serializable;
 
-//import java.io.Serializable;
-//import com.google.gwt.user.client.rpc.IsSerializable;
-
+import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
+import edu.jhu.cvrg.waveform.utility.FileTypes;
+import edu.jhu.cvrg.waveform.utility.Organization;
+import edu.jhu.cvrg.waveform.utility.People;
 
 /** Data in this class describes a single analysis algorithm service method.
  * It also will generate an OMElement containing all this data, so that the User Interface code 
@@ -13,7 +14,7 @@ import java.io.Serializable;
  * @author mshipwa1@jhu.edu
  *
  */
-public class AlgorithmServiceData implements Serializable{
+public class Algorithm implements Serializable{
 	/**
 	 * 
 	 */

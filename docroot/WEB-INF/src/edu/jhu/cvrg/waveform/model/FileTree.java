@@ -1,5 +1,4 @@
 package edu.jhu.cvrg.waveform.model;
-
 /*
  Copyright 2013 Johns Hopkins University Institute for Computational Medicine
 
@@ -39,6 +38,10 @@ public class FileTree implements Serializable{
 	private String username;
 	StudyEntryUtility theDB;
 
+	public FileTree (String username){
+		initialize(username);
+	}
+	
 	public void initialize(String username) {
 		
 		System.out.println("Initializing tree...");

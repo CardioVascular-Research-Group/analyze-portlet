@@ -1,5 +1,7 @@
 package edu.jhu.cvrg.waveform.utility;
 
+import edu.jhu.cvrg.waveform.model.Algorithm;
+
 
 public class CannedAlgorithmList {
 	
@@ -20,15 +22,15 @@ public class CannedAlgorithmList {
 		
 	 * @return
 	 */
-	public static AlgorithmServiceData[] getAlgorithmList() {
+	public static Algorithm[] getAlgorithmList() {
 		
-		AlgorithmServiceData[] algorithmDetails = new AlgorithmServiceData[7];
+		Algorithm[] algorithmDetails = new Algorithm[7];
 		
 		int iParamCount = 1;
 		
 		for(int i=0;i<algorithmDetails.length;i++) {
 			
-			algorithmDetails[i] = new AlgorithmServiceData();
+			algorithmDetails[i] = new Algorithm();
 			
 			switch(i) {
 

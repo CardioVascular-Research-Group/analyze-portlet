@@ -8,9 +8,9 @@ import org.xmldb.api.base.ResourceIterator;
 import org.xmldb.api.base.ResourceSet;
 
 import edu.jhu.cvrg.dbapi.XMLUtility;
+import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
 import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
-import edu.jhu.cvrg.waveform.utility.AlgorithmServiceData;
 import edu.jhu.cvrg.waveform.utility.AnalysisProgressQueryBuilder;
 
 public class AnalysisUtility extends XMLUtility implements Serializable{
@@ -19,11 +19,6 @@ public class AnalysisUtility extends XMLUtility implements Serializable{
 	private AnalysisProgressQueryBuilder analysisInFlightBuilder;
 	private AnalysisProgressQueryBuilder analysisInsertion;
 
-	/**
-	 * Default Constructor
-	 * 
-	 * tells the query builder where to find the database URI and collection
-	 */
 	public AnalysisUtility() {
 		super(com.liferay.util.portlet.PortletProps.get("dbUser"),
 				com.liferay.util.portlet.PortletProps.get("dbPassword"), 
@@ -299,7 +294,7 @@ public class AnalysisUtility extends XMLUtility implements Serializable{
 	}
 
 //	public  String createAnalysisJob(String sSubjectId, String sUserId,  String[] asFileNameList, AlgorithmServiceData alDetails, String sServiceName){
-	public  String createAnalysisJob(AnalysisInProgress aIP, AlgorithmServiceData alDetails){
+	public  String createAnalysisJob(AnalysisInProgress aIP, Algorithm alDetails){
 		UUID uuid = UUID.randomUUID();
 		String sJobID = uuid.toString();
 		String sSubjectId  = aIP.getSubjectId();
@@ -343,7 +338,7 @@ public class AnalysisUtility extends XMLUtility implements Serializable{
 		return filesToProcess;
 	}
 
-	public  String createAlgorithmToProcessWith(AlgorithmServiceData alDetails){
+	public  String createAlgorithmToProcessWith(Algorithm alDetails){
 		String AlgorithmToProcess = "	<algorithmToProcessWith>\n" + 
 		"		<algorithm>\n" +
 		"			<algorithmName>" + alDetails.sServiceName + "</algorithmName>\n" +

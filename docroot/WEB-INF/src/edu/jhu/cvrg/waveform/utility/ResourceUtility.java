@@ -51,6 +51,14 @@ public class ResourceUtility {
 		return serverName;
 	}
 	
+	public static String getAlgorithmDetailsMethod(){
+		return com.liferay.util.portlet.PortletProps.get("algorithmDetailsMethod");
+	}
+	
+	public static String getPhysionetAnalysisService(){
+		return com.liferay.util.portlet.PortletProps.get("physionetAnalysisService");
+	}
+	
 	public static String getDbMainDatabase(){
 		return com.liferay.util.portlet.PortletProps.get("dbMainDatabase");
 	}

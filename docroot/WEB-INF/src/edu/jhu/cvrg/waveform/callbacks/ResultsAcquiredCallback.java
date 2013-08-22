@@ -34,7 +34,6 @@ import javax.faces.context.FacesContext;
 import org.apache.axiom.om.OMElement;
 
 import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
-import edu.jhu.cvrg.waveform.utility.AlgorithmServiceData;
 import edu.jhu.cvrg.waveform.utility.FileTypes;
 import edu.jhu.cvrg.waveform.utility.ProgressNotification;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
@@ -43,6 +42,7 @@ import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ResultsStorageDBUtility;
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.AlgorithmList;
+import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.model.AnnotationData;
 import edu.jhu.cvrg.waveform.utility.FTPUtility;
 import edu.jhu.cvrg.waveform.utility.ServerUtility;
@@ -175,18 +175,18 @@ public class ResultsAcquiredCallback extends SvcAxisCallback{
 	
 	private boolean bReturnsWFDBAnnotation(AnalysisInProgress aIP){
 		boolean isWFDBAnnotation = false, bMeth, bSURL, bSName;
-		AlgorithmServiceData[] algorithmDetailsList;
+		Algorithm[] algorithms;
 		AlgorithmList algorithmList = new AlgorithmList();
 		try {
-			algorithmDetailsList = algorithmList.fetchAlgorithmDetailClassArray();
+			algorithms = algorithmList.fetchAlgorithms();
 
-			if (algorithmDetailsList != null) {
-				for (int i = 0; i < algorithmDetailsList.length; i++) {
-					bSURL = algorithmDetailsList[i].sAnalysisServiceURL.compareTo(aIP.getAnalysisServiceURL()) == 0;
-					bSName = algorithmDetailsList[i].sServiceName.compareTo(aIP.getServiceName()) == 0;
-					bMeth = algorithmDetailsList[i].sServiceMethod.compareTo(aIP.getWebServiceMethod()) == 0;
+			if (algorithms != null) {
+				for (Algorithm algorithm : algorithms) {
+					bSURL = algorithm.sAnalysisServiceURL.compareTo(aIP.getAnalysisServiceURL()) == 0;
+					bSName = algorithm.sServiceName.compareTo(aIP.getServiceName()) == 0;
+					bMeth = algorithm.sServiceMethod.compareTo(aIP.getWebServiceMethod()) == 0;
 					if(bSURL & bSName & bMeth){ // must match all three values, in case multiple servers have matching method names.
-						for(FileTypes ftOutput:algorithmDetailsList[i].afOutFileTypes){
+						for(FileTypes ftOutput : algorithm.afOutFileTypes){
 							if(ftOutput.sName == "WFDBqrsAnnotation"){
 								isWFDBAnnotation = true;
 							}
