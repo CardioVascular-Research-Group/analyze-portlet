@@ -227,21 +227,21 @@ public class ResultsStorageDBUtility extends XMLUtility {
 	//			That must be put in place when an Analysis is executed.  Once provided, this method will no longer be needed.
 	//
 	//			bbenite1 - 4/12/2013
-	private String setDisplayName(String webServiceName) {		
-		
-		String displayName = "unsupported algorithm";
-		
-		Algorithm[] theBigList = CannedAlgorithmList.getAlgorithmList();
-		
-		for(int i=0; i<theBigList.length; i++) {
-			if(theBigList[i].sServiceMethod.equals(webServiceName)) {
-				displayName = theBigList[i].sDisplayShortName;
-				break;
-			}
-		}
-		
-		theBigList = null;
-		return displayName;
-	}
+//	private String setDisplayName(String webServiceName) {		
+//		
+//		String displayName = "unsupported algorithm";
+//		
+//		Algorithm[] theBigList = CannedAlgorithmList.getAlgorithmList();
+//		
+//		for(int i=0; i<theBigList.length; i++) {
+//			if(theBigList[i].getsServiceMethod().equals(webServiceName)) {
+//				displayName = theBigList[i].getsDisplayShortName();
+//				break;
+//			}
+//		}
+//		
+//		theBigList = null;
+//		return displayName;
+//	}
 
 }

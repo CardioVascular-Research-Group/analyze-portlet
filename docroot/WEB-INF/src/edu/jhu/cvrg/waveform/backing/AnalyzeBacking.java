@@ -21,6 +21,7 @@ package edu.jhu.cvrg.waveform.backing;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
@@ -33,8 +34,8 @@ import org.apache.log4j.Logger;
 import com.liferay.portal.model.User;
 
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
-import edu.jhu.cvrg.waveform.model.AlgorithmList;
 import edu.jhu.cvrg.waveform.model.Algorithm;
+import edu.jhu.cvrg.waveform.model.AlgorithmList;
 import edu.jhu.cvrg.waveform.model.FileTree;
 import edu.jhu.cvrg.waveform.model.StudyEntry;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
@@ -53,9 +54,10 @@ public class AnalyzeBacking implements Serializable {
 	private FileTree fileTree;
 	private User userModel;
 	protected static org.apache.log4j.Logger logger = Logger.getLogger(AnalyzeBacking.class);
-
-	@ManagedProperty("#{algorithmList}")
 	private AlgorithmList algorithmList;
+
+	@ManagedProperty("#{algorithmMap}")
+	private AlgorithmMap algorithmMap;
 
 	@PostConstruct
 	public void init() {
@@ -65,25 +67,23 @@ public class AnalyzeBacking implements Serializable {
 
 	public void startAnalysis() {
 
-		Algorithm[] algorithms = algorithmList.getAlgorithms();
-				
-		ArrayList<Algorithm> selectedAlgorithmList = new ArrayList<Algorithm>();
-
-		if(selectedAlgorithms == null){
-			logger.info("No items selected.  List is null.");
+		if(tableList.isEmpty()){
+			logger.info("No items selected.  List is empty.");
 			return;
 		}
 		
+		algorithmList = new AlgorithmList();
+		ArrayList<Algorithm> selectedAlgorithmList = new ArrayList<Algorithm>();
+		
 		for (String algorithmName : selectedAlgorithms) {
-			for (Algorithm algorithm : algorithms) {
-				if (algorithm.sServiceMethod.equals(algorithmName)) {
-					selectedAlgorithmList.add(algorithm);
-				}
-			} 
+			Algorithm algorithm = algorithmList.getAlgorithmByName(algorithmName);
+			if(algorithm != null){
+				selectedAlgorithmList.add(algorithm);
+			}
 		}
 
 		for (Algorithm algorithm : selectedAlgorithmList) {
-			for (StudyEntry studyEntry : selectedStudyEntries) {
+			for (StudyEntry studyEntry : tableList) {
 
 				String[] asFileNameList = extractFilenames(studyEntry.getAllFilenames());
 				
@@ -106,6 +106,13 @@ public class AnalyzeBacking implements Serializable {
 
 		return results;
 	}
+	
+	public void updateAlgorithmSelection(ActionEvent event){
+		System.out.println("Changed Selection.");
+		for(String entry : selectedAlgorithms){
+			System.out.println(entry);
+		}
+	}
 
 	public ArrayList<StudyEntry> getTableList() {
 		return tableList;
@@ -113,14 +120,6 @@ public class AnalyzeBacking implements Serializable {
 
 	public void refreshStudieList(ActionEvent actionEvent) {
 		tableList.removeAll(tableList);
-	}
-
-	public AlgorithmList getAlgorithmList() {
-		return algorithmList;
-	}
-
-	public void setAlgorithmList(AlgorithmList algorithmList) {
-		this.algorithmList = algorithmList;
 	}
 
 	public FileTree getFileTree() {
@@ -149,5 +148,13 @@ public class AnalyzeBacking implements Serializable {
 
 	public void setSelectedStudyEntries(StudyEntry[] selectedStudyEntries) {
 		this.selectedStudyEntries = selectedStudyEntries;
+	}
+
+	public AlgorithmMap getAlgorithmMap() {
+		return algorithmMap;
+	}
+
+	public void setAlgorithmMap(AlgorithmMap algorithmMap) {
+		this.algorithmMap = algorithmMap;
 	}
 }

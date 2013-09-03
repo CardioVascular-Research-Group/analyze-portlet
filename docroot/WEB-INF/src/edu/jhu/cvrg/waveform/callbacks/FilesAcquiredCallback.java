@@ -78,8 +78,8 @@ public class FilesAcquiredCallback extends SvcAxisCallback{
 			//**** create the parameter subnodes of the "parameterlist" node. ************			
 			LinkedHashMap<String, String> parameterlistMap = new LinkedHashMap<String, String>();
 			int p=0;
-			for(AdditionalParameters parameter:aIP.getaParameterList()){
-				parameterlistMap.put(parameter.sParameterFlag, parameter.sParameterUserSpecifiedValue);
+			for(AdditionalParameters parameter : aIP.getaParameterList()){
+				parameterlistMap.put(parameter.getsParameterFlag(), parameter.getsParameterUserSpecifiedValue());
 				p++;
 			} 
 //			parameterlistMap.put("fakeParam", "fake");

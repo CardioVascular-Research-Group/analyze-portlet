@@ -1,87 +1,49 @@
 package edu.jhu.cvrg.waveform.model;
-/*
-Copyright 2013 Johns Hopkins University Institute for Computational Medicine
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-/**
-* @author Chris Jurado, Mike Shipway
-* 
-*/
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLOutputFactory;
 
 import org.apache.axiom.om.OMElement;
-import org.apache.axis2.AxisFault;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.thoughtworks.xstream.XStream;
-
 import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
-import edu.jhu.cvrg.waveform.utility.CannedAlgorithmList;
-import edu.jhu.cvrg.waveform.utility.FileTypes;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
-@ManagedBean(name = "algorithmList")
-@ViewScoped
-public class AlgorithmList implements Serializable {
-
-	private static final long serialVersionUID = 8596023632774091195L;
-
-	private Map<String, String> availableAlgorithms;
-	private Algorithm[] algorithms;
+public class AlgorithmList {
+	
+	private ArrayList<Algorithm> availableAlgorithms;
 
 	public AlgorithmList() {
 
-		availableAlgorithms = new LinkedHashMap<String, String>();
+		availableAlgorithms = new ArrayList<Algorithm>();
 		try {
-			fetchAlgorithms();
+			populateAlgorithms();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-//
-//		try {
-//			algorithms = fetchAlgorithms();
-//
-//			if (algorithms != null) {
-//				for (Algorithm item : algorithms) {
-//					availableAlgorithms.put(item.sDisplayShortName,	item.sServiceMethod);
-//				}
-//			}
-//
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
 	}
 	
+	public Algorithm getAlgorithmByName(String name){
+		for(Algorithm algorithm : availableAlgorithms){
+			if(algorithm.getsDisplayShortName().equals(name)){
+				return algorithm;
+			}
+		}
+		return null;
+	}
+	
+	private void populateAlgorithms(){
 
-	public Algorithm[] fetchAlgorithms() throws Exception {
-
-		Algorithm[] algorithms;
 		String xml="";
 		try {
 
@@ -98,8 +60,6 @@ public class AlgorithmList implements Serializable {
 			result.serialize(XMLOutputFactory.newInstance().createXMLStreamWriter(writer));
 			writer.flush();
 			xml = writer.toString();
-
-			System.out.println("XML String is " + xml.toString());
 			
 			InputStream inStream = new ByteArrayInputStream(xml.getBytes("UTF-8"));
 			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -111,64 +71,62 @@ public class AlgorithmList implements Serializable {
 			NodeList algorithmNodes = document.getElementsByTagName("AlgorithmServiceData");
 			
 			for(int i = 0; i < algorithmNodes.getLength(); i++){
+				Algorithm algorithm = new Algorithm();
 				
 				Node node = algorithmNodes.item(i);
-				String name = "";
-				String method = "";
 				
 				for(int s = 0; s < node.getChildNodes().getLength(); s++){
 					Node childNode = node.getChildNodes().item(s);
 
-					if(childNode.getNodeName().equals("sDisplayShortName")){
-						System.out.println("Node sServiceName has " + " a value of " + node.getChildNodes().item(s).getFirstChild().getNodeValue());
-						name = childNode.getFirstChild().getNodeValue();
-					}
-					if(childNode.getNodeName().equals("sServiceMethod")){
-						method = childNode.getFirstChild().getNodeValue();
+					algorithm.setsDisplayShortName(getNodeValue(childNode, "sDisplayShortName"));
+					algorithm.setsServiceMethod(getNodeValue(childNode, "sServiceMethod"));
+					algorithm.setsServiceName(getNodeValue(childNode, "sServiceName"));
+					algorithm.setsAnalysisServiceURL(getNodeValue(childNode, "sAnalysisServiceURL"));
+
+					if(childNode.getNodeName().equals("aParameters")){
+						ArrayList<AdditionalParameters> additionalParametersList = new ArrayList<AdditionalParameters>();
+						for(int a = 0; a < childNode.getChildNodes().getLength(); a++){
+							Node pNode = childNode.getChildNodes().item(a);
+							if(pNode.getNodeName().equals("serviceDescriptionData.AdditionalParameters")){
+								AdditionalParameters additionalParameters = new AdditionalParameters();
+								for(int j = 0; j < pNode.getChildNodes().getLength(); j++){
+									Node iNode = pNode.getChildNodes().item(j);
+									additionalParameters.setsParameterFlag(getNodeValue(iNode, "sParameterFlag"));
+									additionalParameters.setsParameterDefaultValue(getNodeValue(iNode, "sParameterDefaultValue"));
+									additionalParameters.setsToolTipDescription(getNodeValue(iNode, "sToolTipDescription"));
+								}
+								additionalParametersList.add(additionalParameters);
+							}
+						}
+						algorithm.setaParameters(additionalParametersList);
 					}
 				}
-				System.out.println("Adding algorithm name " + name + " and method " + method);
-				availableAlgorithms.put(name, method);
+				availableAlgorithms.add(algorithm);
 			}
-			
-			System.out.println("Map includes " + availableAlgorithms.size() + " items.");
-//
-//			XStream xstream = new XStream();
-//
-//				algorithms = new Algorithm[2];
-//				algorithms[0] = new Algorithm();
-//				algorithms[1] = new Algorithm();
-//				xstream.alias("People", People.class);
-//				xstream.alias("Organization", Organization.class);
-//				xstream.alias("FileTypes", FileTypes.class);
-//				xstream.alias("AdditionalParameters", AdditionalParameters.class);
-//				xstream.setClassLoader(Algorithm.class.getClassLoader());
-//				xstream.setClassLoader(People.class.getClassLoader());
-//				xstream.setClassLoader(Organization.class.getClassLoader());
-//				xstream.setClassLoader(FileTypes.class.getClassLoader());
-//				xstream.setClassLoader(AdditionalParameters.class.getClassLoader());
-//				xstream.alias("AlgorithmServiceData", Algorithm.class);
-//				System.out.println("XML is " + xml.toString());
-//				algorithms = (Algorithm[])xstream.fromXML(xml);
 
 		} catch(Exception ex) {
 			ex.printStackTrace();
-			throw ex;
 		}	
-
-//		return algorithms;
-		return null;
+	}
+	
+	private String getNodeValue(Node node, String name){
+		if(node.getNodeName().equals(name)){
+			if(node.getFirstChild() != null){
+				return node.getFirstChild().getNodeValue();
+			}
+			else{
+				return "";
+			}
+		}
+		return "";
 	}
 
-	public Map<String, String> getAvailableAlgorithms() {
+	public ArrayList<Algorithm> getAvailableAlgorithms() {
 		return availableAlgorithms;
 	}
 
-	public Algorithm[] getAlgorithms() {
-		return algorithms;
+	public void setAvailableAlgorithms(ArrayList<Algorithm> availableAlgorithms) {
+		this.availableAlgorithms = availableAlgorithms;
 	}
-
-	public void setAlgorithms(Algorithm[] algorithms) {
-		this.algorithms = algorithms;
-	}
+	
 }

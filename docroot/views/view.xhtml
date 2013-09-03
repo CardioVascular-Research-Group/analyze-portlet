@@ -9,11 +9,7 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets">
 	<h:head />
 	<h:body>
-  	
-   	<h:panelGroup layout="block" id="analyzeTopContentLineShade" styleClass="topLineShade"> 
-   		<h:outputText styleClass="TitleLine" value="ICM Electrocardiograph Tool Kit: Analyze" />
-   	</h:panelGroup>
-	
+
 	<f:event type="preRenderView" listener="#{analyzeBacking.init}" />
 
 	<h:panelGroup id="mainGroup" layout="block" styleClass="backgroundofContent">
@@ -21,7 +17,8 @@
 			<p:layoutUnit position="center"	styleClass="analyzeLayoutUnit">
 
 				<h:form id="formAnalyze">
-					<p:fieldset id="analyzeFieldSet" legend="Select Files That Meet Your Criteria">
+					<h:outputLabel value="Select Files To Be Analyzed" styleClass="treeTitle"/>
+					<p:fieldset id="analyzeFieldSet">
 						<h:panelGroup layout="block" id="analyzeTreeHolder"	styleClass="selectFieldset">
 
 							<p:tree id="docTree" 
@@ -36,7 +33,7 @@
 							</p:tree>
 
 							<p:commandButton id="btnDisplay"
-								value="Click to Display Files"
+								value="Click to Move Files To Analysis"
 								styleClass="displayButton"
 								update="availableStudy"
 								actionListener="#{analyzeBacking.displaySelectedMultiple}"
@@ -44,14 +41,13 @@
 
 							<p:separator style="margin-bottom:10px" />
 
-							<p:selectCheckboxMenu value="#{analyzeBacking.selectedAlgorithms}"
-								label="Choose Algorithm Service from Dropdown List"
-								filter="true" 
-								filterText="Filter" 
-								filterMatchMode="startsWith"
+							<p:selectManyCheckbox value="#{analyzeBacking.selectedAlgorithms}"
+								layout="pageDirection"
 								panelStyle="width:240px">
-								<f:selectItems value="#{algorithmList.availableAlgorithms}" />
-							</p:selectCheckboxMenu>
+								<f:selectItems value="#{algorithmMap.availableAlgorithms}" />
+							</p:selectManyCheckbox>
+							
+							
 						</h:panelGroup>
 
 						<p:dataTable id="availableStudy"
@@ -68,8 +64,7 @@
 							paginatorPosition="bottom">
 
 							<f:facet name="header">
-
-								<f:verbatim><br/>Select Record to Analyze or View</f:verbatim>
+								<f:verbatim><br/>Files to be Analyzed</f:verbatim>
 							</f:facet>
 
 							<p:column headerText="Subject ID" width="278">

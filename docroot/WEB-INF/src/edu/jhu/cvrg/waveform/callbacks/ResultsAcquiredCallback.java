@@ -18,7 +18,11 @@ limitations under the License.
 * @author Chris Jurado, Mike Shipway
 * 
 */
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,25 +34,29 @@ import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
 
 import org.apache.axiom.om.OMElement;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
+import edu.jhu.cvrg.waveform.model.AnnotationData;
 import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
-import edu.jhu.cvrg.waveform.utility.FileTypes;
-import edu.jhu.cvrg.waveform.utility.ProgressNotification;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
 import edu.jhu.cvrg.waveform.utility.AnnotationUtility;
+import edu.jhu.cvrg.waveform.utility.FTPUtility;
+import edu.jhu.cvrg.waveform.utility.ProgressNotification;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ResultsStorageDBUtility;
-import edu.jhu.cvrg.waveform.main.AnalysisManager;
-import edu.jhu.cvrg.waveform.model.AlgorithmList;
-import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.model.AnnotationData;
-import edu.jhu.cvrg.waveform.utility.FTPUtility;
 import edu.jhu.cvrg.waveform.utility.ServerUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
-
-//import deprecated.ExistAnalyzeDatabase;
 
 /** Step 3B Results Acquired Callback Step 4A Saves the result files.<BR>
  * Callback function to by called by copyDataFilesToAnalysis web service when it has finished.
@@ -174,28 +182,98 @@ public class ResultsAcquiredCallback extends SvcAxisCallback{
 	}
 	
 	private boolean bReturnsWFDBAnnotation(AnalysisInProgress aIP){
-		boolean isWFDBAnnotation = false, bMeth, bSURL, bSName;
-		Algorithm[] algorithms;
-		AlgorithmList algorithmList = new AlgorithmList();
-		try {
-			algorithms = algorithmList.fetchAlgorithms();
+		boolean isWFDBAnnotation = false;
+		boolean bMeth = false;
+		boolean bSURL = false;
+		boolean bSName = false;
 
-			if (algorithms != null) {
-				for (Algorithm algorithm : algorithms) {
-					bSURL = algorithm.sAnalysisServiceURL.compareTo(aIP.getAnalysisServiceURL()) == 0;
-					bSName = algorithm.sServiceName.compareTo(aIP.getServiceName()) == 0;
-					bMeth = algorithm.sServiceMethod.compareTo(aIP.getWebServiceMethod()) == 0;
-					if(bSURL & bSName & bMeth){ // must match all three values, in case multiple servers have matching method names.
-						for(FileTypes ftOutput : algorithm.afOutFileTypes){
-							if(ftOutput.sName == "WFDBqrsAnnotation"){
-								isWFDBAnnotation = true;
+		String xml = "";
+		String sServiceURL = ResourceUtility.getAnalysisServiceURL(); // e.g. "http://icmv058.icm.jhu.edu:8080/axis2/services"
+		String sServiceName = ResourceUtility.getPhysionetAnalysisService(); // e.g. "/physionetAnalysisService"
+		String sMethod = ResourceUtility.getAlgorithmDetailsMethod();
+		LinkedHashMap<String, String> parameterMap = new LinkedHashMap<String, String>();
+		parameterMap.put("verbose", String.valueOf(false));
+		
+		OMElement result = WebServiceUtility.callWebService(parameterMap, sMethod, sServiceName, sServiceURL, null);
+
+		StringWriter writer = new StringWriter();
+		try {
+			result.serialize(XMLOutputFactory.newInstance().createXMLStreamWriter(writer));
+
+			writer.flush();
+			xml = writer.toString();
+			InputStream inStream = new ByteArrayInputStream(xml.getBytes("UTF-8"));
+			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+			Document document = docBuilder.parse(inStream);
+
+			document.getDocumentElement().normalize();
+
+			NodeList algorithmNodes = document.getElementsByTagName("AlgorithmServiceData");
+
+			for (int i = 0; i < algorithmNodes.getLength(); i++) {
+
+				Node node = algorithmNodes.item(i);
+				String analysisServiceURL = "";
+				String serviceName = "";
+				String serviceMethod = "";
+
+				for (int s = 0; s < node.getChildNodes().getLength(); s++) {
+					Node childNode = node.getChildNodes().item(s);
+
+					if (childNode.getNodeName().equals("sAnalysisServiceURL")) {
+						analysisServiceURL = childNode.getFirstChild().getNodeValue();
+					}
+					if (childNode.getNodeName().equals("sServiceName")) {
+						serviceName = childNode.getFirstChild().getNodeValue();
+					}
+					if (childNode.getNodeName().equals("sServiceMethod")) {
+						serviceMethod = childNode.getFirstChild().getNodeValue();
+					}
+
+					bSURL = analysisServiceURL.equals(aIP.getAnalysisServiceURL());
+					bSName = serviceName.equals(aIP.getServiceName());
+					bMeth = serviceMethod.equals(aIP.getWebServiceMethod());
+				}
+				
+				if(bSURL & bSName & bMeth){
+					for (int j = 0; j < node.getChildNodes().getLength(); j++) {
+						Node childNode = node.getChildNodes().item(j);
+					
+						if (childNode.getNodeName().equals("afOutFileTypes")) {
+							NodeList fileTypeNodes = childNode.getChildNodes();
+							String sName = "";
+							for (int f = 0; f < fileTypeNodes.getLength(); f++) {
+								Node fileTypeNode = fileTypeNodes.item(f);
+								if (fileTypeNode.getNodeName().equals("serviceDescriptionData.FileTypes")) {
+									sName = fileTypeNode.getFirstChild().getFirstChild().getNodeValue();
+								}
+								if (sName.equals("WFDBqrsAnnotation")) {
+									isWFDBAnnotation = true;
+								}
 							}
 						}
 					}
 				}
 			}
-
-		} catch (Exception e) {
+		
+		} catch (XMLStreamException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (FactoryConfigurationError e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

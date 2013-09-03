@@ -341,19 +341,19 @@ public class AnalysisUtility extends XMLUtility implements Serializable{
 	public  String createAlgorithmToProcessWith(Algorithm alDetails){
 		String AlgorithmToProcess = "	<algorithmToProcessWith>\n" + 
 		"		<algorithm>\n" +
-		"			<algorithmName>" + alDetails.sServiceName + "</algorithmName>\n" +
-		"			<algorithmDisplayText>" + alDetails.sDisplayShortName + "</algorithmDisplayText>\n" +
-		"			<algorithmMethod>" + alDetails.sServiceMethod + "</algorithmMethod>\n" +
-		"			<algorithmLocation>" + alDetails.sAnalysisServiceURL + "</algorithmLocation>\n" +
+		"			<algorithmName>" + alDetails.getsServiceName() + "</algorithmName>\n" +
+		"			<algorithmDisplayText>" + alDetails.getsDisplayShortName() + "</algorithmDisplayText>\n" +
+		"			<algorithmMethod>" + alDetails.getsServiceMethod()+ "</algorithmMethod>\n" +
+		"			<algorithmLocation>" + alDetails.getsAnalysisServiceURL() + "</algorithmLocation>\n" +
 		"		</algorithm>\n";
 
-		for(int p=0;p<alDetails.aParameters.length;p++){
+		for(AdditionalParameters parameter : alDetails.getaParameters()){
 			AlgorithmToProcess +=
 				"		<parameters>\n" +
-				"			<name>" + alDetails.aParameters[p].sParameterFlag + "</name>\n" +
+				"			<name>" + parameter.getsParameterFlag() + "</name>\n" +
 				//FIXME: when annotation parameters are implemented			"			<value>" + alDetails.aParameters[p].sParameterUserSpecifiedValue + "</value>\n" +
-				"			<value>" + alDetails.aParameters[p].sParameterDefaultValue + "</value>\n" +
-				"			<description>" + alDetails.aParameters[p].sToolTipDescription + "</description>\n" +
+				"			<value>" + parameter.getsParameterDefaultValue() + "</value>\n" +
+				"			<description>" + parameter.getsToolTipDescription() + "</description>\n" +
 				"		</parameters>\n";
 		}
 
@@ -678,14 +678,14 @@ public class AnalysisUtility extends XMLUtility implements Serializable{
 		int descEnd   = paramXML.indexOf("</description>");
 
 		if((nameStart != -1) & (nameEnd != -1) & (descStart != -1)  & (descEnd != -1) ){
-			param.sParameterFlag = paramXML.substring(nameStart, nameEnd).trim();
+			param.setsParameterFlag(paramXML.substring(nameStart, nameEnd).trim());
 			if ((valueStart != -1)  & (valueEnd != -1)){
-				param.sParameterUserSpecifiedValue = paramXML.substring(valueStart, valueEnd).trim();
+				param.setsParameterUserSpecifiedValue(paramXML.substring(valueStart, valueEnd).trim());
 			}else{
-				param.sParameterUserSpecifiedValue = ""; // blank value has only <value/>, not <value></value>
+				param.setsParameterUserSpecifiedValue(""); // blank value has only <value/>, not <value></value>
 			}
 
-			param.sDisplayShortName = paramXML.substring(descStart, descEnd).trim();
+			param.setsDisplayShortName(paramXML.substring(descStart, descEnd).trim());
 		}
 		return param;
 	}

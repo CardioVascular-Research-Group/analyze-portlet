@@ -63,7 +63,7 @@ public class AnalysisManager implements Serializable{
 
 		this.aIP.setUserId(sUserId);
 		this.aIP.setSubjectId(sSubjectId);
-		this.aIP.setServiceName( alDetails.sServiceName);
+		this.aIP.setServiceName( alDetails.getsServiceName());
 		this.aIP.setDatasetName(DatasetName);
 		this.aIP.setAnalysisServiceURL(ResourceUtility.getAnalysisServiceURL());		
 		String ftpHost = ResourceUtility.getFtpHost();
@@ -71,8 +71,8 @@ public class AnalysisManager implements Serializable{
 		String ftpPassword = ResourceUtility.getFtpPassword();
 
 		String[] saFilePathNameList = new String[saFileNameList.length];
-		for(int f=0;f < saFileNameList.length;f++){
-			saFilePathNameList[f] = sFtpRelativePath + "/" + saFileNameList[f];
+		for(String fileName : saFileNameList){
+			fileName = sFtpRelativePath + "/" + fileName;
 		}
 		this.aIP.setDataFileList(saFilePathNameList);
 		

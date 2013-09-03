@@ -9,28 +9,89 @@ import java.io.Serializable;
  */
 public class AdditionalParameters implements Serializable{
 	/** Command line flag indication that value follows, e.g. "-r " preceeds the record-name. */
-	public String sParameterFlag; 
+	private String sParameterFlag; 
 	/** If the parameter equals this value, don't need to pass the parameter on the command line.*/
-	public String sParameterDefaultValue; 
+	private String sParameterDefaultValue; 
 	 /** Parameter value chosen by the user, to be validated with validator and compared with sParameterDefaultValue. */
-	public String sParameterUserSpecifiedValue; 
+	private String sParameterUserSpecifiedValue; 
 	/** Human friendly name to be used by the UI when listing services.*/
-	public String sDisplayShortName; 
+	private String sDisplayShortName; 
 	/** Short summary description (under 150 characters) suitable for displaying is a tooltip.*/
-	public String sToolTipDescription;
+	private String sToolTipDescription;
 	/** Complete description suitable for using in a manual/help file.*/
-	public String sLongDescription; 
+	private String sLongDescription; 
 	
 	/** MUST BE text, integer, float, boolean, select, data_column, or drill_down  BUT NOT genomebuild, hidden, baseurl, file, data.
 	**** Modeled after Galaxy's tool config XML http://wiki.g2.bx.psu.edu/Admin/Tools/Tool%20Config%20Syntax#Admin.2BAC8-Tools.2BAC8-Tool_Config_Syntax.A.3Cparam.3E_tag_set
 	* https://bitbucket.org/galaxy/galaxy-central/src/tip/lib/galaxy/tools/parameters/basic.py  */
-	public String sType; 
+	private String sType; 
 	/** "true"/"false" If false, parameter must have a value */
-	public String bOptional; 
+	private String bOptional; 
 	/** Input validation (as a Regular Expression) to be executed during input at User Interface. */
-	public ParameterValidator validator; 
+	private ParameterValidator validator; 
 	/** list of options; only valid when type is "select" or "drill_down" */
-	public ParameterOption aOptionList[]; 
+	private ParameterOption aOptionList[];
+	
+	public String getsParameterFlag() {
+		return sParameterFlag;
+	}
+	public void setsParameterFlag(String sParameterFlag) {
+		this.sParameterFlag = sParameterFlag;
+	}
+	public String getsParameterDefaultValue() {
+		return sParameterDefaultValue;
+	}
+	public void setsParameterDefaultValue(String sParameterDefaultValue) {
+		this.sParameterDefaultValue = sParameterDefaultValue;
+	}
+	public String getsParameterUserSpecifiedValue() {
+		return sParameterUserSpecifiedValue;
+	}
+	public void setsParameterUserSpecifiedValue(String sParameterUserSpecifiedValue) {
+		this.sParameterUserSpecifiedValue = sParameterUserSpecifiedValue;
+	}
+	public String getsDisplayShortName() {
+		return sDisplayShortName;
+	}
+	public void setsDisplayShortName(String sDisplayShortName) {
+		this.sDisplayShortName = sDisplayShortName;
+	}
+	public String getsToolTipDescription() {
+		return sToolTipDescription;
+	}
+	public void setsToolTipDescription(String sToolTipDescription) {
+		this.sToolTipDescription = sToolTipDescription;
+	}
+	public String getsLongDescription() {
+		return sLongDescription;
+	}
+	public void setsLongDescription(String sLongDescription) {
+		this.sLongDescription = sLongDescription;
+	}
+	public String getsType() {
+		return sType;
+	}
+	public void setsType(String sType) {
+		this.sType = sType;
+	}
+	public String getbOptional() {
+		return bOptional;
+	}
+	public void setbOptional(String bOptional) {
+		this.bOptional = bOptional;
+	}
+	public ParameterValidator getValidator() {
+		return validator;
+	}
+	public void setValidator(ParameterValidator validator) {
+		this.validator = validator;
+	}
+	public ParameterOption[] getaOptionList() {
+		return aOptionList;
+	}
+	public void setaOptionList(ParameterOption[] aOptionList) {
+		this.aOptionList = aOptionList;
+	} 
 }
 
 /** DEFINITIONs of sType OPTIONS WHICH WAS COPIED FROM GALAXY's PYTHON CODE as I could not find enough stand-alone documentation as of August 2012.
