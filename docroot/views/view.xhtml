@@ -40,14 +40,27 @@
 								icon="ui-icon-disk"/>
 
 							<p:separator style="margin-bottom:10px" />
-
-							<p:selectManyCheckbox value="#{analyzeBacking.selectedAlgorithms}"
-								layout="pageDirection"
-								panelStyle="width:240px">
-								<f:selectItems value="#{algorithmMap.availableAlgorithms}" />
-							</p:selectManyCheckbox>
 							
+							<p:dataTable id="availableAlgorithmTable"
+								var="algorithm"
+								value="#{algorithmList.availableAlgorithms}"
+								paginator="true"
+								rows="10"
+								rowKey="#{algorithm.sDisplayShortName}"
+								selection="#{analyzeBacking.selectedAlgorithms}"
+								selectionMode="multiple">
+								
+							<p:column selectionMode="multiple" style="width:2%"/>
+							<p:column headerText="Name" style="width:25%">  
+            					<h:outputText value="#{algorithm.sDisplayShortName}"/>  
+        					</p:column> 
 							
+							<p:column headerText="Description" style="width:73%">  
+            					<h:outputText value="#{algorithm.sDisplayLongDescription}"/>   
+        					</p:column> 	
+							</p:dataTable>
+								
+	
 						</h:panelGroup>
 
 						<p:dataTable id="availableStudy"
@@ -56,12 +69,10 @@
 							sortMode="multiple"
 							rowKey="#{studyHolder.subjectID}"
 							value="#{analyzeBacking.tableList}"
-							selection="#{analyzeBacking.selectedStudyEntries}"
-							selectionMode="multiple" 
+
 							paginator="true" 
-							rows="10"
 							resizableColumns="true"
-							paginatorPosition="bottom">
+							paginatorPosition="top">
 
 							<f:facet name="header">
 								<f:verbatim><br/>Files to be Analyzed</f:verbatim>

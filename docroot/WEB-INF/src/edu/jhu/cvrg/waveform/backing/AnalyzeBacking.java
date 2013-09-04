@@ -35,7 +35,6 @@ import com.liferay.portal.model.User;
 
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.model.AlgorithmList;
 import edu.jhu.cvrg.waveform.model.FileTree;
 import edu.jhu.cvrg.waveform.model.StudyEntry;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
@@ -50,19 +49,23 @@ public class AnalyzeBacking implements Serializable {
 	private StudyEntry[] selectedStudyEntries;
 	private List<String> selectedAlgorithms;
 	private ArrayList<StudyEntry> tableList;
+
 	private AnalysisManager analysisManager = new AnalysisManager(true);
 	private FileTree fileTree;
 	private User userModel;
 	protected static org.apache.log4j.Logger logger = Logger.getLogger(AnalyzeBacking.class);
-	private AlgorithmList algorithmList;
-
+	
 	@ManagedProperty("#{algorithmMap}")
 	private AlgorithmMap algorithmMap;
+	
+	@ManagedProperty("#{algorithmList}")
+	private AlgorithmList algorithmList;
 
 	@PostConstruct
 	public void init() {
 		userModel = ResourceUtility.getCurrentUser();
 		fileTree = new FileTree(userModel.getScreenName());
+		algorithmList = new AlgorithmList();
 	}
 
 	public void startAnalysis() {
@@ -72,7 +75,6 @@ public class AnalyzeBacking implements Serializable {
 			return;
 		}
 		
-		algorithmList = new AlgorithmList();
 		ArrayList<Algorithm> selectedAlgorithmList = new ArrayList<Algorithm>();
 		
 		for (String algorithmName : selectedAlgorithms) {
@@ -95,6 +97,9 @@ public class AnalyzeBacking implements Serializable {
 	}
 
 	public void displaySelectedMultiple(ActionEvent event) {
+		System.out.println("Time to move files.");
+		System.out.println("File tree exists... right? " + (fileTree != null));
+		System.out.println("And it has " + fileTree.getSelectedFileNodes().size() + " selected files.");
 		setTableList(fileTree.getSelectedFileNodes());
 	}
 
@@ -156,5 +161,13 @@ public class AnalyzeBacking implements Serializable {
 
 	public void setAlgorithmMap(AlgorithmMap algorithmMap) {
 		this.algorithmMap = algorithmMap;
+	}
+
+	public AlgorithmList getAlgorithmList() {
+		return algorithmList;
+	}
+
+	public void setAlgorithmList(AlgorithmList algorithmList) {
+		this.algorithmList = algorithmList;
 	}
 }

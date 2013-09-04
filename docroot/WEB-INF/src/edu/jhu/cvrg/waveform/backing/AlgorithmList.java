@@ -1,30 +1,36 @@
-package edu.jhu.cvrg.waveform.model;
+package edu.jhu.cvrg.waveform.backing;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLOutputFactory;
 
 import org.apache.axiom.om.OMElement;
+import org.primefaces.model.SelectableDataModel;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
-public class AlgorithmList {
+@ManagedBean(name = "algorithmList")
+@ViewScoped
+public class AlgorithmList{
 	
-	private ArrayList<Algorithm> availableAlgorithms;
+	private List<Algorithm> availableAlgorithms;
 
 	public AlgorithmList() {
-
 		availableAlgorithms = new ArrayList<Algorithm>();
 		try {
 			populateAlgorithms();
@@ -32,7 +38,7 @@ public class AlgorithmList {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public Algorithm getAlgorithmByName(String name){
 		for(Algorithm algorithm : availableAlgorithms){
 			if(algorithm.getsDisplayShortName().equals(name)){
@@ -82,6 +88,7 @@ public class AlgorithmList {
 					algorithm.setsServiceMethod(getNodeValue(childNode, "sServiceMethod"));
 					algorithm.setsServiceName(getNodeValue(childNode, "sServiceName"));
 					algorithm.setsAnalysisServiceURL(getNodeValue(childNode, "sAnalysisServiceURL"));
+					algorithm.setsLongDescription(getNodeValue(childNode, "sLongDescription"));
 
 					if(childNode.getNodeName().equals("aParameters")){
 						ArrayList<AdditionalParameters> additionalParametersList = new ArrayList<AdditionalParameters>();
@@ -121,12 +128,13 @@ public class AlgorithmList {
 		return "";
 	}
 
-	public ArrayList<Algorithm> getAvailableAlgorithms() {
+	public List<Algorithm> getAvailableAlgorithms() {
+		System.out.println("Returning Algorithm List with " + availableAlgorithms.size() + " items.");
 		return availableAlgorithms;
 	}
 
-	public void setAvailableAlgorithms(ArrayList<Algorithm> availableAlgorithms) {
+	public void setAvailableAlgorithms(List<Algorithm> availableAlgorithms) {
 		this.availableAlgorithms = availableAlgorithms;
 	}
-	
+
 }

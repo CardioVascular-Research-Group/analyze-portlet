@@ -38,6 +38,7 @@ public class Algorithm implements Serializable{
 	private String sDateWebService = "n/a"; // Date of the last web service update.
 	private String sURLreference = "n/a"; // URL of a web page about this algorithm.
 	private String sLicence = "n/a"; // license of this algorithm, or URL of license e.g. "GPL".
+	private String sDisplayLongDescription = "";
 	
 	private People[] apAlgorithmProgrammers; // list of programmers and authors of the algorithm
 	private People[] apWebServiceProgrammers;// list of programmers and authors of the WebService
@@ -192,6 +193,14 @@ public class Algorithm implements Serializable{
 
 	public void setsServiceMethod(String sServiceMethod) {
 		this.sServiceMethod = sServiceMethod;
+	}
+
+	public String getsDisplayLongDescription() {
+		return sDisplayLongDescription;
+	}
+
+	public void setsDisplayLongDescription(String sDisplayLongDescription) {
+		this.sDisplayLongDescription = sDisplayLongDescription;
 	}
 
 }
