@@ -198,6 +198,14 @@ public class Algorithm implements Serializable{
 	public String getsDisplayLongDescription() {
 		return sDisplayLongDescription;
 	}
+	
+	public String getLongDescription(){
+		return sDisplayLongDescription;
+	}
+	
+	public String getShortName(){
+		return sDisplayShortName;
+	}
 
 	public void setsDisplayLongDescription(String sDisplayLongDescription) {
 		this.sDisplayLongDescription = sDisplayLongDescription;

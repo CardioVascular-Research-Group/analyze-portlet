@@ -2,13 +2,16 @@ package edu.jhu.cvrg.waveform.backing;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
 import javax.faces.bean.ViewScoped;
+import javax.faces.model.ListDataModel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLOutputFactory;
@@ -26,19 +29,20 @@ import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
 @ManagedBean(name = "algorithmList")
 @ViewScoped
-public class AlgorithmList{
+public class AlgorithmList implements Serializable{
 	
-	private List<Algorithm> availableAlgorithms;
+	private static final long serialVersionUID = -4006126323152259063L;
+	private List<Algorithm> availableAlgorithms = new ArrayList<Algorithm>();
 
 	public AlgorithmList() {
-		availableAlgorithms = new ArrayList<Algorithm>();
+
 		try {
 			populateAlgorithms();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public Algorithm getAlgorithmByName(String name){
 		for(Algorithm algorithm : availableAlgorithms){
 			if(algorithm.getsDisplayShortName().equals(name)){
@@ -84,11 +88,16 @@ public class AlgorithmList{
 				for(int s = 0; s < node.getChildNodes().getLength(); s++){
 					Node childNode = node.getChildNodes().item(s);
 
-					algorithm.setsDisplayShortName(getNodeValue(childNode, "sDisplayShortName"));
-					algorithm.setsServiceMethod(getNodeValue(childNode, "sServiceMethod"));
-					algorithm.setsServiceName(getNodeValue(childNode, "sServiceName"));
-					algorithm.setsAnalysisServiceURL(getNodeValue(childNode, "sAnalysisServiceURL"));
-					algorithm.setsLongDescription(getNodeValue(childNode, "sLongDescription"));
+					if(childNode.getNodeName().equals("sDisplayShortName"))
+						algorithm.setsDisplayShortName(getNodeValue(childNode, "sDisplayShortName").trim());
+					if(childNode.getNodeName().equals("sServiceMethod"))
+						algorithm.setsServiceMethod(getNodeValue(childNode, "sServiceMethod").trim());
+					if(childNode.getNodeName().equals("sServiceName"))
+						algorithm.setsServiceName(getNodeValue(childNode, "sServiceName").trim());
+					if(childNode.getNodeName().equals("sAnalysisServiceURL"))
+						algorithm.setsAnalysisServiceURL(getNodeValue(childNode, "sAnalysisServiceURL").trim());
+					if(childNode.getNodeName().equals("sLongDescription"))
+						algorithm.setsDisplayLongDescription(getNodeValue(childNode, "sLongDescription").trim());
 
 					if(childNode.getNodeName().equals("aParameters")){
 						ArrayList<AdditionalParameters> additionalParametersList = new ArrayList<AdditionalParameters>();
@@ -129,12 +138,12 @@ public class AlgorithmList{
 	}
 
 	public List<Algorithm> getAvailableAlgorithms() {
-		System.out.println("Returning Algorithm List with " + availableAlgorithms.size() + " items.");
 		return availableAlgorithms;
 	}
 
 	public void setAvailableAlgorithms(List<Algorithm> availableAlgorithms) {
 		this.availableAlgorithms = availableAlgorithms;
 	}
+
 
 }

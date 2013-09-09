@@ -30,6 +30,8 @@ import javax.faces.bean.ViewScoped;
 import javax.faces.event.ActionEvent;
 
 import org.apache.log4j.Logger;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.event.UnselectEvent;
 
 import com.liferay.portal.model.User;
 
@@ -47,7 +49,7 @@ public class AnalyzeBacking implements Serializable {
 	private static final long serialVersionUID = -4006126553152259063L;
 
 	private StudyEntry[] selectedStudyEntries;
-	private List<String> selectedAlgorithms;
+	private Algorithm[] selectedAlgorithms;
 	private ArrayList<StudyEntry> tableList;
 
 	private AnalysisManager analysisManager = new AnalysisManager(true);
@@ -71,20 +73,17 @@ public class AnalyzeBacking implements Serializable {
 	public void startAnalysis() {
 
 		if(tableList.isEmpty()){
-			logger.info("No items selected.  List is empty.");
+			logger.info("No files selected.  List is empty.");
 			return;
 		}
 		
-		ArrayList<Algorithm> selectedAlgorithmList = new ArrayList<Algorithm>();
-		
-		for (String algorithmName : selectedAlgorithms) {
-			Algorithm algorithm = algorithmList.getAlgorithmByName(algorithmName);
-			if(algorithm != null){
-				selectedAlgorithmList.add(algorithm);
-			}
+		if(selectedAlgorithms == null){
+			System.out.println("Algorithms selected is null.");
+			return;
 		}
 
-		for (Algorithm algorithm : selectedAlgorithmList) {
+		System.out.println("Selected Algorithms has " + selectedAlgorithms.length + " item(s).");
+		for (Algorithm algorithm : selectedAlgorithms) {
 			for (StudyEntry studyEntry : tableList) {
 
 				String[] asFileNameList = extractFilenames(studyEntry.getAllFilenames());
@@ -97,9 +96,6 @@ public class AnalyzeBacking implements Serializable {
 	}
 
 	public void displaySelectedMultiple(ActionEvent event) {
-		System.out.println("Time to move files.");
-		System.out.println("File tree exists... right? " + (fileTree != null));
-		System.out.println("And it has " + fileTree.getSelectedFileNodes().size() + " selected files.");
 		setTableList(fileTree.getSelectedFileNodes());
 	}
 
@@ -112,12 +108,17 @@ public class AnalyzeBacking implements Serializable {
 		return results;
 	}
 	
-	public void updateAlgorithmSelection(ActionEvent event){
-		System.out.println("Changed Selection.");
-		for(String entry : selectedAlgorithms){
-			System.out.println(entry);
-		}
+	public void go(){
+		System.out.println("WOWOWO");
 	}
+	
+    public void onRowSelect(SelectEvent event) {  
+    	System.out.println("YAY!");
+    }  
+  
+    public void onRowUnselect(UnselectEvent event) {  
+    	System.out.println("YAY!");
+    }  
 
 	public ArrayList<StudyEntry> getTableList() {
 		return tableList;
@@ -139,11 +140,11 @@ public class AnalyzeBacking implements Serializable {
 		this.tableList = tableList;
 	}
 
-	public List<String> getSelectedAlgorithms() {
+	public Algorithm[] getSelectedAlgorithms() {
 		return selectedAlgorithms;
 	}
 
-	public void setSelectedAlgorithms(List<String> selectedAlgorithms) {
+	public void setSelectedAlgorithms(Algorithm[] selectedAlgorithms) {
 		this.selectedAlgorithms = selectedAlgorithms;
 	}
 

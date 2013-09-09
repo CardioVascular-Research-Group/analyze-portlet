@@ -41,24 +41,7 @@
 
 							<p:separator style="margin-bottom:10px" />
 							
-							<p:dataTable id="availableAlgorithmTable"
-								var="algorithm"
-								value="#{algorithmList.availableAlgorithms}"
-								paginator="true"
-								rows="10"
-								rowKey="#{algorithm.sDisplayShortName}"
-								selection="#{analyzeBacking.selectedAlgorithms}"
-								selectionMode="multiple">
-								
-							<p:column selectionMode="multiple" style="width:2%"/>
-							<p:column headerText="Name" style="width:25%">  
-            					<h:outputText value="#{algorithm.sDisplayShortName}"/>  
-        					</p:column> 
-							
-							<p:column headerText="Description" style="width:73%">  
-            					<h:outputText value="#{algorithm.sDisplayLongDescription}"/>   
-        					</p:column> 	
-							</p:dataTable>
+	
 								
 	
 						</h:panelGroup>
@@ -118,6 +101,30 @@
 							</f:facet>
 						</p:dataTable>
 					</p:fieldset>
+				</h:form>
+				<h:form id="algorithmTable">
+					<p:dataTable id="availableAlgorithmTable"
+						var="algorithm"
+						value="#{algorithmList.availableAlgorithms}"
+						rowKey="#{algorithm.shortName}"
+						selection="#{analyzeBacking.selectedAlgorithms}"
+						scrollable="true"
+						scrollHeight="150">
+						
+						<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update=":algorithmTable"/>  
+        				<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update=":algorithmTable"/>  
+								
+						<p:column selectionMode="multiple" style="width:2%"/>
+						
+						<p:column headerText="Name" style="width:25%">  
+            				<h:outputLabel value="#{algorithm.shortName}"/> 
+        				</p:column> 
+							
+						<p:column headerText="Description" style="width:73%">  
+            				<h:outputLabel value="#{algorithm.longDescription}"/>  
+        				</p:column> 	
+					</p:dataTable>
+					<p:commandButton id="testbutton" actionListener="#{analyzeBacking.go}"/>
 				</h:form>
 			</p:layoutUnit>
 		</p:layout>
