@@ -23,6 +23,7 @@ import java.util.ArrayList;
 
 import javax.faces.event.ActionEvent;
 
+import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
 
 import edu.jhu.cvrg.waveform.utility.StudyEntryUtility;
@@ -31,7 +32,7 @@ public class FileTree implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	private TreeNode treeRoot;
-	private FileNode selectedNode;
+	private TreeNode selectedNode;
 	private TreeNode[] selectedNodes;
 	private String newFolderName = "";
 	private ArrayList<StudyEntry> studyEntryList;
@@ -43,9 +44,7 @@ public class FileTree implements Serializable{
 	}
 	
 	public void initialize(String username) {
-		
-		System.out.println("Initializing tree...");
-		
+		System.out.println("Initializing tree..");
 		this.username = username;
 		
 		theDB = new StudyEntryUtility(com.liferay.util.portlet.PortletProps.get("dbUser"),
@@ -61,14 +60,12 @@ public class FileTree implements Serializable{
 
 	private void buildTree() {
 
-		System.out.println("Getting files for user " + username);
 		studyEntryList = theDB.getEntries(this.username);
 
-		treeRoot = new FileNode("Root", null, true, null);
+		treeRoot = new DefaultTreeNode("root", null);
 
 		if (studyEntryList.isEmpty()) {
-			@SuppressWarnings("unused")
-			TreeNode newNode = new FileNode("Default", treeRoot, true, null);
+			TreeNode newNode = new DefaultTreeNode("document", null, treeRoot);
 			return;
 		}
 
@@ -82,15 +79,17 @@ public class FileTree implements Serializable{
 				TreeNode newNode = getNodeByName(workNode, step);
 
 				if (newNode == null) {
-					newNode = new FileNode(step, workNode, true, null);
+					StudyEntry entryFolder = new StudyEntry();
+					entryFolder.setSubjectID(step);
+					newNode = new DefaultTreeNode("default", entryFolder, workNode);
 				}
 				newNode.setExpanded(true);
+				
 				workNode = newNode;
-
 			}
 
 			@SuppressWarnings("unused")
-			TreeNode recordNode = new FileNode(studyEntry.getRecordName(), workNode, false, studyEntry);
+			TreeNode recordNode = new DefaultTreeNode("document", studyEntry, workNode);
 		}
 	}
 
@@ -111,7 +110,7 @@ public class FileTree implements Serializable{
 	private TreeNode getNodeByName(TreeNode searchNode, String name) {
 
 		for (TreeNode node : searchNode.getChildren()) {
-			if (node.getData().toString().equals(name)) {
+			if (((StudyEntry)node.getData()).getSubjectID().equals(name)) {
 				return node;
 			}
 		}
@@ -120,30 +119,16 @@ public class FileTree implements Serializable{
 
 	public void addFolder(ActionEvent event) {
 		
-		System.out.println("Selected node " + selectedNode.getData().toString());
-		
 		if (selectedNode == null) {
-			selectedNode = (FileNode) treeRoot;
+			selectedNode = (DefaultTreeNode) treeRoot;
 		}
 
 		if (!newFolderName.equals("")) {
-			TreeNode newNode = new FileNode(newFolderName, selectedNode, true, null);
+			StudyEntry entryFolder = new StudyEntry();
+			entryFolder.setSubjectID(newFolderName);
+			TreeNode newNode = new DefaultTreeNode(newFolderName, entryFolder, selectedNode);
 			selectedNode.setExpanded(true);
-			selectedNode = (FileNode) newNode;
-		}
-	}
-
-	public void removeFolder(ActionEvent event) {
-
-		selectedNode.getChildren().clear();
-		selectedNode.getParent().getChildren().remove(selectedNode);
-		selectedNode.setParent(null);
-		selectedNode = null;
-	}
-
-	public void renameFolder(ActionEvent event) {
-		if (!newFolderName.equals("")) {
-			selectedNode.setData(newFolderName);
+			selectedNode = (DefaultTreeNode) newNode;
 		}
 	}
 
@@ -158,10 +143,29 @@ public class FileTree implements Serializable{
 
 		for (TreeNode selectedNode : selectedNodes) {
 			if (selectedNode.isLeaf()) {
-				fileEntries.add(((FileNode) selectedNode).getStudyEntry());
+				fileEntries.add((StudyEntry)selectedNode.getData());
 			}
 		}
 		return fileEntries;
+	}
+	
+	public void selectAllChildNodes(TreeNode startingNode){
+
+		for(TreeNode node : startingNode.getChildren()){
+			node.setSelected(true);
+			if(!node.getType().equals("document")){
+				selectAllChildNodes(node);
+			}
+		}
+	}
+	
+	public void unSelectAllChildNodes(TreeNode startingNode){
+		for(TreeNode node : startingNode.getChildren()){
+			node.setSelected(false);
+			if(!node.getType().equals("document")){
+				unSelectAllChildNodes(node);
+			}
+		}
 	}
 
 	public TreeNode getTreeRoot() {

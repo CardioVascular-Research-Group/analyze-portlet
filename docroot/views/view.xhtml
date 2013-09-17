@@ -17,7 +17,7 @@
 			<p:layoutUnit position="center"	styleClass="analyzeLayoutUnit">
 
 				<h:form id="formAnalyze">
-					<h:outputLabel value="Select Files To Be Analyzed" styleClass="treeTitle"/>
+					<h:outputLabel value="Click folders or files to be Analyzed (Ctrl + Click to un-select)" styleClass="treeTitle"/>
 					<p:fieldset id="analyzeFieldSet">
 						<h:panelGroup layout="block" id="analyzeTreeHolder"	styleClass="selectFieldset">
 
@@ -27,8 +27,16 @@
 								selectionMode="multiple"
 								value="#{analyzeBacking.fileTree.treeRoot}" 
 								var="node">
+								
+								<p:ajax event="select" listener="#{analyzeBacking.folderSelect}" update="docTree"/>
+								<p:ajax event="unselect" listener="#{analyzeBacking.folderUnSelect}" update="docTree"/>
+								
 								<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
-									<h:outputText value="#{node}" />
+									<h:outputText value="#{node.subjectID}" />
+								</p:treeNode>
+								
+								<p:treeNode type="document" icon="ui-icon ui-icon-document">
+									<h:outputText value="#{node.subjectID}"/>
 								</p:treeNode>
 							</p:tree>
 
@@ -107,9 +115,7 @@
 						var="algorithm"
 						value="#{algorithmList.availableAlgorithms}"
 						rowKey="#{algorithm.shortName}"
-						selection="#{analyzeBacking.selectedAlgorithms}"
-						scrollable="true"
-						scrollHeight="150">
+						selection="#{analyzeBacking.selectedAlgorithms}">
 						
 						<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update=":algorithmTable"/>  
         				<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update=":algorithmTable"/>  
@@ -124,7 +130,6 @@
             				<h:outputLabel value="#{algorithm.longDescription}"/>  
         				</p:column> 	
 					</p:dataTable>
-					<p:commandButton id="testbutton" actionListener="#{analyzeBacking.go}"/>
 				</h:form>
 			</p:layoutUnit>
 		</p:layout>

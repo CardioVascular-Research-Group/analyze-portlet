@@ -30,13 +30,18 @@ import javax.faces.bean.ViewScoped;
 import javax.faces.event.ActionEvent;
 
 import org.apache.log4j.Logger;
+import org.primefaces.event.NodeSelectEvent;
+import org.primefaces.event.NodeUnselectEvent;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
+import org.primefaces.model.DefaultTreeNode;
+import org.primefaces.model.TreeNode;
 
 import com.liferay.portal.model.User;
 
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.Algorithm;
+import edu.jhu.cvrg.waveform.model.FileNode;
 import edu.jhu.cvrg.waveform.model.FileTree;
 import edu.jhu.cvrg.waveform.model.StudyEntry;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
@@ -57,16 +62,15 @@ public class AnalyzeBacking implements Serializable {
 	private User userModel;
 	protected static org.apache.log4j.Logger logger = Logger.getLogger(AnalyzeBacking.class);
 	
-	@ManagedProperty("#{algorithmMap}")
-	private AlgorithmMap algorithmMap;
-	
 	@ManagedProperty("#{algorithmList}")
 	private AlgorithmList algorithmList;
 
 	@PostConstruct
 	public void init() {
 		userModel = ResourceUtility.getCurrentUser();
-		fileTree = new FileTree(userModel.getScreenName());
+		if(fileTree == null){
+			fileTree = new FileTree(userModel.getScreenName());
+		}
 		algorithmList = new AlgorithmList();
 	}
 
@@ -78,11 +82,10 @@ public class AnalyzeBacking implements Serializable {
 		}
 		
 		if(selectedAlgorithms == null){
-			System.out.println("Algorithms selected is null.");
+			logger.info("Algorithms selected is null.");
 			return;
 		}
-
-		System.out.println("Selected Algorithms has " + selectedAlgorithms.length + " item(s).");
+		
 		for (Algorithm algorithm : selectedAlgorithms) {
 			for (StudyEntry studyEntry : tableList) {
 
@@ -108,16 +111,29 @@ public class AnalyzeBacking implements Serializable {
 		return results;
 	}
 	
-	public void go(){
-		System.out.println("WOWOWO");
+	public void folderSelect(NodeSelectEvent event){
+		TreeNode node = event.getTreeNode();
+		if(!node.getType().equals("document")){
+			fileTree.selectAllChildNodes(node);
+		}
+	}
+	
+	public void folderUnSelect(NodeUnselectEvent event){
+		TreeNode node = event.getTreeNode();
+		node.setSelected(false);
+		if(!node.getType().equals("document")){
+			fileTree.unSelectAllChildNodes(node);
+		}
 	}
 	
     public void onRowSelect(SelectEvent event) {  
-    	System.out.println("YAY!");
+    	//Do not delete this method.  The listener is present to force a form submit on select.
+    	return;
     }  
   
     public void onRowUnselect(UnselectEvent event) {  
-    	System.out.println("YAY!");
+    	//Do not delete this method.  The listener is present to force a form submit on un-select.
+    	return;
     }  
 
 	public ArrayList<StudyEntry> getTableList() {
@@ -154,14 +170,6 @@ public class AnalyzeBacking implements Serializable {
 
 	public void setSelectedStudyEntries(StudyEntry[] selectedStudyEntries) {
 		this.selectedStudyEntries = selectedStudyEntries;
-	}
-
-	public AlgorithmMap getAlgorithmMap() {
-		return algorithmMap;
-	}
-
-	public void setAlgorithmMap(AlgorithmMap algorithmMap) {
-		this.algorithmMap = algorithmMap;
 	}
 
 	public AlgorithmList getAlgorithmList() {
