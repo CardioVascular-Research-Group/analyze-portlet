@@ -2,12 +2,13 @@ package edu.jhu.cvrg.waveform.utility;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.xmldb.api.base.Resource;
 import org.xmldb.api.base.ResourceIterator;
@@ -15,6 +16,7 @@ import org.xmldb.api.base.ResourceSet;
 import org.xmldb.api.base.XMLDBException;
 
 import edu.jhu.cvrg.dbapi.XMLUtility;
+import edu.jhu.cvrg.waveform.utility.AnnotationQueryBuilder;
 import edu.jhu.cvrg.waveform.model.AnnotationData;
 
 public class AnnotationUtility extends XMLUtility {
@@ -26,6 +28,13 @@ public class AnnotationUtility extends XMLUtility {
 	 * 
 	 * tells the query builder where to find the database URI and collection
 	 */
+	public AnnotationUtility(String userName, String userPassword, String uRI, 
+			String driver, String mainDatabase) {
+		
+		super(userName, userPassword, uRI, driver, mainDatabase);
+		annotationBuilder = new AnnotationQueryBuilder(this.dbURI, this.dbMainCollection);
+	}
+	
 	public AnnotationUtility() {
 		// TODO Auto-generated constructor stub
 		super();
@@ -125,11 +134,7 @@ public class AnnotationUtility extends XMLUtility {
 	}
 	
 	/** Gets the annotation from the metadata storage database and puts it into the AnnotationData bean.
-	 *  Calls the database insert routine.
-	 * 
-	 * @param annData -  the bean containing all the necessary data about the annotation
-	 * @return - success/fail for the data storage.
-	 */
+	 */ 
 	private AnnotationData[] getAnnotationNode(String sUserID, String sStudyID, String sSubjectID, String sLeadName, int iLeadIndex, String sRecordName, boolean isPhenotype, boolean isComment){
 		
 		AnnotationData[] theAnnotations = new AnnotationData[0];
@@ -145,10 +150,12 @@ public class AnnotationUtility extends XMLUtility {
 				sReturnClause  = annotationBuilder.returnCommentAnnotation();
 			}
 			else {
-				sReturnClause  = annotationBuilder.returnLeadAnnotation(sLeadName);
+//				sReturnClause  = annotationBuilder.returnLeadAnnotation(sLeadName);
+				sReturnClause  = annotationBuilder.returnLeadAnnotation(String.valueOf(iLeadIndex+1));  // The code uses a zero based lead index, but the database uses a one based index.
 			}
 
 			String sQuery = sLetClause + sForCollection + sWhereClause + sOrderByClause + sReturnClause;
+			System.out.println("AnnotationUtility.getAnnotationNode(), sQuery:\"" + sQuery + "\"");
 			// The EnumCollection enumeration will tell the execute method which collection to use
 			ResourceSet resultSet = executeQuery(sQuery);
 			ResourceIterator iter = resultSet.getIterator();
@@ -156,12 +163,13 @@ public class AnnotationUtility extends XMLUtility {
 			
 			long resultSizeLong = resultSet.getSize();
 			
-			// While a long can be converted to an int, if the size of it is bigger than what an int can hold it will be
+			// While a long can be converted to an int, if the size of it is bigger than what an int can hold it will be++++++++
 			// a serious problem
 		    if (resultSizeLong < Integer.MIN_VALUE || resultSizeLong > Integer.MAX_VALUE) {
 		        throw new IllegalArgumentException
 		            (resultSizeLong + " cannot be cast to int without changing its value.");
 		    }
+		    System.out.println("AnnotationUtility.getAnnotationNode(), resultSizeLong:\"" + resultSizeLong + "\"");
 		    
 		    int resultSizeInt = (int)resultSizeLong;
 			
@@ -252,7 +260,7 @@ public class AnnotationUtility extends XMLUtility {
 						}
 						// The unique ID will usually be a timestamp.  However, it may be formatted to a human readable for in the case of a comment
 						else if (theMatches.group(2).equals("<ID>")) {
-							System.out.println("for annotation at index " + index + ", the ID = " + theMatches.group(3));
+							System.out.println("AnnotationUtility.getAnnotationNode(), for annotation at index " + index + ", the ID = " + theMatches.group(3));
 							theAnnotations[index].setUniqueID(theMatches.group(3));
 						}
 						else if(theMatches.group(2).equals("<yCoordinate>")) {
@@ -338,6 +346,7 @@ public class AnnotationUtility extends XMLUtility {
 			String sReturnClause = annotationBuilder.returnLeadAnnotationCount();
 
 			String sQuery = sForCollection + sWhereClause + sOrderByClause + sReturnClause;
+			System.out.println(sQuery);
 			// The EnumCollection enumeration will tell the execute method which collection to use
 			ResourceSet resultSet = executeQuery(sQuery);
 			ResourceIterator iter = resultSet.getIterator();
@@ -466,7 +475,7 @@ public class AnnotationUtility extends XMLUtility {
 		
 		return node;
 	}
-	/** Creates a new AnnotationData object with many of the values filled in with values from userModel and StudyEntry.<BR>
+	/** Creates a new AnnotationData object 
 	 * Required values that need to be filled in are:<BR>
 	 * <BR>
 	 * created by (x) - the source of this annotation (whether it came from an algorithm or was entered manually)<BR>
@@ -484,16 +493,11 @@ public class AnnotationUtility extends XMLUtility {
 	 * @return
 	 */
 	public AnnotationData createAnnotationData(){
-//		FacesContext context = FacesContext.getCurrentInstance();
-//		UserModel userBean = (UserModel) context.getApplication().evaluateExpressionGet(context, "#{userModel}", UserModel.class);
-//		StudyEntry studyEntry = (StudyEntry) context.getApplication().evaluateExpressionGet(context, "#{StudyEntry}", StudyEntry.class);
+
 		AnnotationData annotationToInsert = new AnnotationData();
 		String ms = String.valueOf(java.lang.System.currentTimeMillis());  // used for GUID
 		
 		annotationToInsert.setUniqueID(ms);
-//		annotationToInsert.setUserID(userBean.getUsername());
-//		annotationToInsert.setSubjectID(studyEntry.getSubjectID());
-//		annotationToInsert.setDatasetName(studyEntry.getRecordName());
 		annotationToInsert.setConceptRestURL("");
 		annotationToInsert.setOnsetLabel("Onset");
 		annotationToInsert.setOnsetRestURL("");
