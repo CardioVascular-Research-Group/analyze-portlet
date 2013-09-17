@@ -20,8 +20,6 @@ package edu.jhu.cvrg.waveform.backing;
  */
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
@@ -34,14 +32,12 @@ import org.primefaces.event.NodeSelectEvent;
 import org.primefaces.event.NodeUnselectEvent;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
-import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
 
 import com.liferay.portal.model.User;
 
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.model.FileNode;
 import edu.jhu.cvrg.waveform.model.FileTree;
 import edu.jhu.cvrg.waveform.model.StudyEntry;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;

@@ -177,7 +177,7 @@ public class FileTree implements Serializable{
 	}
 
 	public void setSelectedNode(TreeNode selectedNode) {
-		this.selectedNode = (FileNode) selectedNode;
+		this.selectedNode = selectedNode;
 	}
 
 	public String getNewFolderName() {

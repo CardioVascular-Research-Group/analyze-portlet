@@ -5,8 +5,6 @@ import java.util.ArrayList;
 
 import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
 import edu.jhu.cvrg.waveform.utility.FileTypes;
-import edu.jhu.cvrg.waveform.utility.Organization;
-import edu.jhu.cvrg.waveform.utility.People;
 
 /** Data in this class describes a single analysis algorithm service method.
  * It also will generate an OMElement containing all this data, so that the User Interface code 
@@ -40,9 +38,9 @@ public class Algorithm implements Serializable{
 	private String sLicence = "n/a"; // license of this algorithm, or URL of license e.g. "GPL".
 	private String sDisplayLongDescription = "";
 	
-	private People[] apAlgorithmProgrammers; // list of programmers and authors of the algorithm
-	private People[] apWebServiceProgrammers;// list of programmers and authors of the WebService
-	private Organization[] aoAffiliatedOrgs; // list of affiliated organizations.
+//	private People[] apAlgorithmProgrammers; // list of programmers and authors of the algorithm
+//	private People[] apWebServiceProgrammers;// list of programmers and authors of the WebService
+//	private Organization[] aoAffiliatedOrgs; // list of affiliated organizations.
 
 	// input and output paramters and files
 	private FileTypes[] afInFileTypes; // all possible input data files
@@ -131,29 +129,29 @@ public class Algorithm implements Serializable{
 		this.sLicence = sLicence;
 	}
 
-	public People[] getApAlgorithmProgrammers() {
-		return apAlgorithmProgrammers;
-	}
-
-	public void setApAlgorithmProgrammers(People[] apAlgorithmProgrammers) {
-		this.apAlgorithmProgrammers = apAlgorithmProgrammers;
-	}
-
-	public People[] getApWebServiceProgrammers() {
-		return apWebServiceProgrammers;
-	}
-
-	public void setApWebServiceProgrammers(People[] apWebServiceProgrammers) {
-		this.apWebServiceProgrammers = apWebServiceProgrammers;
-	}
-
-	public Organization[] getAoAffiliatedOrgs() {
-		return aoAffiliatedOrgs;
-	}
-
-	public void setAoAffiliatedOrgs(Organization[] aoAffiliatedOrgs) {
-		this.aoAffiliatedOrgs = aoAffiliatedOrgs;
-	}
+//	public People[] getApAlgorithmProgrammers() {
+//		return apAlgorithmProgrammers;
+//	}
+//
+//	public void setApAlgorithmProgrammers(People[] apAlgorithmProgrammers) {
+//		this.apAlgorithmProgrammers = apAlgorithmProgrammers;
+//	}
+//
+//	public People[] getApWebServiceProgrammers() {
+//		return apWebServiceProgrammers;
+//	}
+//
+//	public void setApWebServiceProgrammers(People[] apWebServiceProgrammers) {
+//		this.apWebServiceProgrammers = apWebServiceProgrammers;
+//	}
+//
+//	public Organization[] getAoAffiliatedOrgs() {
+//		return aoAffiliatedOrgs;
+//	}
+//
+//	public void setAoAffiliatedOrgs(Organization[] aoAffiliatedOrgs) {
+//		this.aoAffiliatedOrgs = aoAffiliatedOrgs;
+//	}
 
 	public FileTypes[] getAfInFileTypes() {
 		return afInFileTypes;
