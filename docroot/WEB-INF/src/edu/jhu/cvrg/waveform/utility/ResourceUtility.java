@@ -30,6 +30,7 @@ import com.liferay.faces.portal.context.LiferayFacesContext;
 import com.liferay.faces.util.helper.LongHelper;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.User;
@@ -40,6 +41,7 @@ import com.liferay.portal.theme.ThemeDisplay;
 public class ResourceUtility {
 	
 	public static String getServerName(){
+		
 		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
 		PortletRequest request = (PortletRequest)liferayFacesContext.getExternalContext().getRequest();
 		
@@ -51,200 +53,124 @@ public class ResourceUtility {
 		return serverName;
 	}
 	
+	private static String getValue(String key){
+		String value = "";
+		try {
+			value = PrefsPropsUtil.getString(key);
+		} catch (SystemException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return value;
+	}
+	
 	public static String getAlgorithmDetailsMethod(){
-		return com.liferay.util.portlet.PortletProps.get("algorithmDetailsMethod");
+		return getValue("algorithmDetailsMethod");
 	}
 	
 	public static String getPhysionetAnalysisService(){
-		return com.liferay.util.portlet.PortletProps.get("physionetAnalysisService");
+		return getValue("physionetAnalysisService");
 	}
 	
 	public static String getDbMainDatabase(){
-		return com.liferay.util.portlet.PortletProps.get("dbMainDatabase");
+		return getValue("dbMainDatabase");
 	}
 	
 	public static String getDbDriver(){
-		return com.liferay.util.portlet.PortletProps.get("dbDriver");
+		return getValue("dbDriver");
 	}
 	
 	public static String getDbURI(){
-		return com.liferay.util.portlet.PortletProps.get("dbURI");
+		return getValue("dbURI");
 	}
 	
 	public static String getDbUser(){
-		return com.liferay.util.portlet.PortletProps.get("dbUser");
+		return getValue("dbUser");
 	}
 	
 	public static String getDbPassword(){
-		return com.liferay.util.portlet.PortletProps.get("dbPassword");
+		return getValue("dbPassword");
 	}
 	
 	public static String getStagingFolder(){
-		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-		return prefs.getValue("stagingFolder", "0");
+		return getValue("stagingFolder");
 	}
 
 	public static String getAnalysisServiceURL(){
-		return com.liferay.util.portlet.PortletProps.get("analysisServiceURL");
+		return getValue("analysisServiceURL");
 	}
 	
 	public static String getNodeConversionService(){
-		
-		return com.liferay.util.portlet.PortletProps.get("nodeConversionService");
-		
-//		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-//		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-//		return prefs.getValue("nodeConversionService", "0");
+		return getValue("nodeConversionService");
 	}
 	
 	public static String getStagingServiceMethod(){
-		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-		return prefs.getValue("stagingServiceMethod", "0");
+		return getValue("stagingServiceMethod");
 	}
 
 	public static String getStagingService(){
-		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-		return prefs.getValue("stagingService", "0");
+		return getValue("stagingService");
 	}
 	
 	public static String getDataTransferClass(){
-		return com.liferay.util.portlet.PortletProps.get("dataTransferClass");
+		return getValue("dataTransferClass");
 	}
 	
 	public static String getCopyFilesMethod(){
-		return com.liferay.util.portlet.PortletProps.get("copyFilesMethod");
+		return getValue("copyFilesMethod");
 	}
 	
 	public static String getDataTransferServiceName(){
-		return com.liferay.util.portlet.PortletProps.get("dataTransferServiceName");
+		return getValue("dataTransferServiceName");
 	}
 	
 	public static String getConsolidatePrimaryAndDerivedDataMethod(){
-		return com.liferay.util.portlet.PortletProps.get("consolidatePrimaryAndDerivedDataMethod");
+		return getValue("consolidatePrimaryAndDerivedDataMethod");
 	}
 	
 	public static String getNodeDataServiceName(){
-		return com.liferay.util.portlet.PortletProps.get("nodeDataServiceName");
+		return getValue("nodeDataServiceName");
 	}
 	
 	public static String getAnalysisDatabase(){
-		return com.liferay.util.portlet.PortletProps.get("dbAnalysisDatabase");
+		return getValue("dbAnalysisDatabase");
 	}
 	
 	public static String getAnalysisResults(){
-		return com.liferay.util.portlet.PortletProps.get("dbAnalysisResults");
+		return getValue("dbAnalysisResults");
 	}
 	
 	
 	public static String getCopyResultFilesFromAnalysis(){
-		return com.liferay.util.portlet.PortletProps.get("copyResultFilesFromAnalysis");
+		return getValue("copyResultFilesFromAnalysis");
 	}
 	
 	public static String getDeleteFilesFromAnalysis(){
-		return com.liferay.util.portlet.PortletProps.get("deleteFilesFromAnalysis");
+		return getValue("deleteFilesFromAnalysis");
 	}
 	
-	public static String getFtpHost(){
-		
-		return com.liferay.util.portlet.PortletProps.get("ftpHost");
-		
-//		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-//		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-//		return prefs.getValue("ftpHost", "0");
+	public static String getFtpHost(){		
+		return getValue("ftpHost");
 	}
 	
-	public static String getFtpUser(){
-		
-		return com.liferay.util.portlet.PortletProps.get("ftpUser");
-		
-//		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-//		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-//		return prefs.getValue("ftpUser", "0");
+	public static String getFtpUser(){		
+		return getValue("ftpUser");
 	}
 	
 	public static String getFtpPassword(){
-		
-		return com.liferay.util.portlet.PortletProps.get("ftpPassword");
-		
-//		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-//		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-//		return prefs.getValue("ftpPassword", "0");
+		return getValue("ftpPassword");
 	}
 	
 	public static String getFtpRoot(){
-		
-		return com.liferay.util.portlet.PortletProps.get("ftpRoot");
-		
-//		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-//		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-//		return prefs.getValue("ftpRoot", "0");
-	}
-	
-	public static long getPrefFolderId(){
-		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-		return Long.valueOf(prefs.getValue("folderid", "0"));
+		return getValue("ftpRoot");
 	}
 	
 	public static String getLocalDownloadFolder(){
-//		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-//		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-//		return Long.valueOf(prefs.getValue("localDownloadFolder", "0"));
-		
-		return com.liferay.util.portlet.PortletProps.get("localDownloadFolder");
+		return getValue("localDownloadFolder");
 	}	
-	
-	public static long getPrefSurveyId(){
-		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-		return Long.valueOf(prefs.getValue("surveyid", "0"));
-	}
-	
-	public static long getReportPrefSurveyId(){
-		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-		return Long.valueOf(prefs.getValue("reportSurveyid", "0"));
-	}
-	
-	public static long getReportPrefFolderId(){
-		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-		return Long.valueOf(prefs.getValue("reportFolderid", "0"));
-	}	
-
-	public static void savePreferences(long surveyId){
-		System.out.println("In ResourceUtility, saving Survey " + surveyId);
-		storePrefs("surveyid", String.valueOf(surveyId));
-	}
-
-	private static void storePrefs(String prefName, String prefValue){
-		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-		PortletPreferences prefs = liferayFacesContext.getPortletPreferences();
-		try {
-			prefs.setValue(prefName, prefValue);
-			prefs.store();
-		} catch (ReadOnlyException e) {
-			printErrorMessage("Resource Utility");
-			e.printStackTrace();
-		} catch (ValidatorException e) {
-			printErrorMessage("Resource Utility");
-			e.printStackTrace();
-		} catch (IOException e) {
-			printErrorMessage("Resource Utility");
-			e.printStackTrace();
-		}
-	}
 	
 	public static void printErrorMessage(String source){
 		System.err.println("*************************** Error in " + source + " ******************************");
-	}
-	
-	public static long getIdParameter(String param){
-		LiferayFacesContext liferayFacesContext = LiferayFacesContext.getInstance();
-		return LongHelper.toLong(liferayFacesContext.getExternalContext().getRequestParameterMap().get(param), 0L);
 	}
 	
 	public static User getUser(long userId){
