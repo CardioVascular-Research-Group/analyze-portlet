@@ -56,6 +56,7 @@ public class ResourceUtility {
 			printErrorMessage("Resource Utility");
 			e.printStackTrace();
 		}
+		System.out.println("Returning value " + value + " for key " + key);
 		return value;
 	}
 	
