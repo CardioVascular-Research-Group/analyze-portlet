@@ -18,16 +18,11 @@ limitations under the License.
 * @author Chris Jurado
 * 
 */
-import java.io.IOException;
 import java.util.List;
 
-import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
-import javax.portlet.ReadOnlyException;
-import javax.portlet.ValidatorException;
 
 import com.liferay.faces.portal.context.LiferayFacesContext;
-import com.liferay.faces.util.helper.LongHelper;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
@@ -54,11 +49,11 @@ public class ResourceUtility {
 	}
 	
 	private static String getValue(String key){
-		String value = "";
+		String value = "0";
 		try {
 			value = PrefsPropsUtil.getString(key);
 		} catch (SystemException e) {
-			// TODO Auto-generated catch block
+			printErrorMessage("Resource Utility");
 			e.printStackTrace();
 		}
 		return value;
