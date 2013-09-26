@@ -26,6 +26,7 @@ import javax.faces.event.ActionEvent;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
 
+import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.StudyEntryUtility;
 
 public class FileTree implements Serializable{
@@ -47,11 +48,18 @@ public class FileTree implements Serializable{
 		System.out.println("Initializing tree..");
 		this.username = username;
 		
-		theDB = new StudyEntryUtility(com.liferay.util.portlet.PortletProps.get("dbUser"),
-				com.liferay.util.portlet.PortletProps.get("dbPassword"), 
-				com.liferay.util.portlet.PortletProps.get("dbURI"),	
-				com.liferay.util.portlet.PortletProps.get("dbDriver"), 
-				com.liferay.util.portlet.PortletProps.get("dbMainDatabase"));
+//		theDB = new StudyEntryUtility(com.liferay.util.portlet.PortletProps.get("dbUser"),
+//				com.liferay.util.portlet.PortletProps.get("dbPassword"), 
+//				com.liferay.util.portlet.PortletProps.get("dbURI"),	
+//				com.liferay.util.portlet.PortletProps.get("dbDriver"), 
+//				com.liferay.util.portlet.PortletProps.get("dbMainDatabase"));
+		
+		theDB = new StudyEntryUtility(ResourceUtility.getDbUser(),
+				ResourceUtility.getDbPassword(), 
+				ResourceUtility.getDbURI(),	
+				ResourceUtility.getDbDriver(), 
+				ResourceUtility.getDbMainDatabase());
+
 		
 		if (treeRoot == null) {
 			buildTree();
