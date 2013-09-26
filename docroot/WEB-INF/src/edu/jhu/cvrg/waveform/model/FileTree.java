@@ -48,12 +48,6 @@ public class FileTree implements Serializable{
 		System.out.println("Initializing tree..");
 		this.username = username;
 		
-//		theDB = new StudyEntryUtility(com.liferay.util.portlet.PortletProps.get("dbUser"),
-//				com.liferay.util.portlet.PortletProps.get("dbPassword"), 
-//				com.liferay.util.portlet.PortletProps.get("dbURI"),	
-//				com.liferay.util.portlet.PortletProps.get("dbDriver"), 
-//				com.liferay.util.portlet.PortletProps.get("dbMainDatabase"));
-		
 		theDB = new StudyEntryUtility(ResourceUtility.getDbUser(),
 				ResourceUtility.getDbPassword(), 
 				ResourceUtility.getDbURI(),	
