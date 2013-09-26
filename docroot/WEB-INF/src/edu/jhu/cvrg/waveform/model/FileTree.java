@@ -66,11 +66,6 @@ public class FileTree implements Serializable{
 
 		treeRoot = new DefaultTreeNode("root", null);
 
-		if (studyEntryList.isEmpty()) {
-			TreeNode newNode = new DefaultTreeNode("document", null, treeRoot);
-			return;
-		}
-
 		for (StudyEntry studyEntry : studyEntryList) {
 
 			String[] path = studyEntry.getVirtualPath().split("\\|");
