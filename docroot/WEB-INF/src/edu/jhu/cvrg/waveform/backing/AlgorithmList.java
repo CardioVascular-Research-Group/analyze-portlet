@@ -9,15 +9,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.faces.bean.ManagedBean;
-import javax.faces.bean.SessionScoped;
 import javax.faces.bean.ViewScoped;
-import javax.faces.model.ListDataModel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLOutputFactory;
 
 import org.apache.axiom.om.OMElement;
-import org.primefaces.model.SelectableDataModel;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -144,6 +141,4 @@ public class AlgorithmList implements Serializable{
 	public void setAvailableAlgorithms(List<Algorithm> availableAlgorithms) {
 		this.availableAlgorithms = availableAlgorithms;
 	}
-
-
 }

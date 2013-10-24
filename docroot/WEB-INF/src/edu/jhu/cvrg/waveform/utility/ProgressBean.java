@@ -3,23 +3,13 @@ package edu.jhu.cvrg.waveform.utility;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Enumeration;
 
-import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
-import javax.faces.bean.SessionScoped;
 import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
 
 import com.liferay.portal.model.User;
-
-import edu.emory.mathcs.backport.java.util.Collections;
-import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
-import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
 
 @ManagedBean(name="progressBean")
 @ViewScoped

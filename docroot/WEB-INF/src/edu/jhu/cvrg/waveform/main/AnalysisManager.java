@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 
 import org.apache.axiom.om.OMElement;
+import org.apache.log4j.Logger;
 
 import edu.jhu.cvrg.waveform.callbacks.FilesAcquiredCallback;
 import edu.jhu.cvrg.waveform.callbacks.SvcAxisCallback;
@@ -39,15 +40,32 @@ import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 public class AnalysisManager implements Serializable{
 
 	private static final long serialVersionUID = 1L;
+	static org.apache.log4j.Logger logger = Logger.getLogger(AnalysisManager.class);
 
 	private boolean verbose = false;
 	private AnalysisInProgress aIP;
 	private AnalysisUtility anUtil;
+	private String MISSING_VALUE = "0";
 
 	public AnalysisManager(boolean verbose){	
 		
-		anUtil = new AnalysisUtility(ResourceUtility.getDbUser(), ResourceUtility.getDbPassword(), ResourceUtility.getDbURI(),
-				ResourceUtility.getDbDriver(), ResourceUtility.getDbMainDatabase());
+		String dbUser = ResourceUtility.getDbUser();
+		String dbPassword = ResourceUtility.getDbPassword();
+		String dbUri = ResourceUtility.getDbURI();
+		String dbDriver = ResourceUtility.getDbDriver();
+		String dbMainDatabase = ResourceUtility.getDbMainDatabase();
+		
+		if(dbUser.equals(MISSING_VALUE) || 
+				dbPassword.equals(MISSING_VALUE) || 
+				dbUri.equals(MISSING_VALUE) || 
+				dbDriver.equals(MISSING_VALUE) ||
+				dbMainDatabase.equals(MISSING_VALUE)){
+			
+			logger.error("Missing one or more configuration values for the database.");
+			return;	
+		}
+		
+		anUtil = new AnalysisUtility(dbUser, dbPassword, dbUri, dbDriver, dbMainDatabase);
 		
 		this.verbose = verbose;
 		aIP = new AnalysisInProgress();
@@ -69,6 +87,13 @@ public class AnalysisManager implements Serializable{
 		String ftpHost = ResourceUtility.getFtpHost();
 		String ftpUser = ResourceUtility.getFtpUser();
 		String ftpPassword = ResourceUtility.getFtpPassword();
+		String ftpRoot = ResourceUtility.getFtpRoot();
+		
+		if(ftpHost.equals(MISSING_VALUE) || ftpUser.equals(MISSING_VALUE) || 
+				ftpPassword.equals(MISSING_VALUE) || ftpRoot.equals(MISSING_VALUE)){
+			logger.error("Missing one or more configuration values for FTP.");
+			return false;
+		}
 
 		String[] saFilePathNameList = new String[saFileNameList.length];
 		for(String fileName : saFileNameList){
@@ -76,7 +101,7 @@ public class AnalysisManager implements Serializable{
 		}
 		this.aIP.setDataFileList(saFilePathNameList);
 		
-		sFtpRelativePath = ResourceUtility.getFtpRoot() + sFtpRelativePath;
+		sFtpRelativePath = ftpRoot + sFtpRelativePath;
 
 		String sJobID = anUtil.createAnalysisJob(aIP, alDetails);
 		this.aIP.setJobID(sJobID);
@@ -133,14 +158,9 @@ public class AnalysisManager implements Serializable{
 		parameterMap.put("ftpPassword", ftpPassword);
 		parameterMap.put("jobID", sJobID);
 		parameterMap.put("verbose", String.valueOf(verbose));
-		
-		System.out.println("getCopyFilesMethod: " + ResourceUtility.getCopyFilesMethod());
-		System.out.println("getDataTransferServiceName: " + ResourceUtility.getDataTransferServiceName());
-		System.out.println("getAnalysisServiceURL: " + ResourceUtility.getAnalysisServiceURL());
 
 		SvcAxisCallback callback = new FilesAcquiredCallback();
 
-//		WebServiceUtility.callWebServiceComplexParam(parameterMap, 
 		WebServiceUtility.callWebService(parameterMap, 
 				ResourceUtility.getCopyFilesMethod(), // Method of the service which implements the copy. e.g. "copyDataFilesToAnalysis"
 				ResourceUtility.getDataTransferServiceName(), // Name of the web service. e.g. "dataTransferService"
@@ -209,10 +229,8 @@ public class AnalysisManager implements Serializable{
 		parameterMap.put("logindatetime", new Long(System.currentTimeMillis()).toString());
 		parameterMap.put("verbose", String.valueOf(verbose));
 
-
 		omeResult = WebServiceUtility.callWebService(parameterMap, isPublic, ResourceUtility.getConsolidatePrimaryAndDerivedDataMethod(), ResourceUtility.getNodeDataServiceName(), null);
 		return omeResult.getText();
-
 	}	
 
 	/*public String fetchAlgorithmDetail(String brokerURL) throws Exception {

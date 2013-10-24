@@ -61,7 +61,7 @@ public class AnalyzeBacking implements Serializable {
 	@ManagedProperty("#{algorithmList}")
 	private AlgorithmList algorithmList;
 
-	@PostConstruct
+//	@PostConstruct
 	public void init() {
 		userModel = ResourceUtility.getCurrentUser();
 		if(fileTree == null){
