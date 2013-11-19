@@ -1,24 +1,7 @@
-.treeTitle {
-	
-	font-weight:bold;
+.ui-tree{
+	border:0!important;	
 }
 
-.analyzeLayout {
-	min-height:550px; 
-	top:20px";
-}
-
-.analyzeLayoutUnit {
-	min-width:400px; 
-	min-height:525px; 
-	width:90%; 
-	background-color:#fdf6e3;	
-}
-
-.selectFieldset {
-	position:relative;
-	float:left;
-}
 
 .displayButton {
 	position: relative; 

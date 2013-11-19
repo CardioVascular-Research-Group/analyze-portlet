@@ -13,126 +13,116 @@
 	<f:event type="preRenderView" listener="#{analyzeBacking.init}" />
 
 	<h:panelGroup id="mainGroup" layout="block" styleClass="backgroundofContent">
-		<p:layout id="layoutUploadInclude" styleClass="analyzeLayout">
-			<p:layoutUnit position="center"	styleClass="analyzeLayoutUnit">
-
-				<h:form id="formAnalyze">
-					<h:outputLabel value="Click folders or files to be Analyzed (Ctrl + Click to un-select)" styleClass="treeTitle"/>
-					<p:fieldset id="analyzeFieldSet">
-						<h:panelGroup layout="block" id="analyzeTreeHolder"	styleClass="selectFieldset">
-
-							<p:tree id="docTree" 
-								dynamic="true"
-								selection="#{analyzeBacking.fileTree.selectedNodes}"
-								selectionMode="multiple"
-								value="#{analyzeBacking.fileTree.treeRoot}" 
-								var="node">
-								
-								<p:ajax event="select" listener="#{analyzeBacking.folderSelect}" update="docTree"/>
-								<p:ajax event="unselect" listener="#{analyzeBacking.folderUnSelect}" update="docTree"/>
-								
-								<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
-									<h:outputText value="#{node.subjectID}" />
-								</p:treeNode>
-								
-								<p:treeNode type="document" icon="ui-icon ui-icon-document">
-									<h:outputText value="#{node.subjectID}"/>
-								</p:treeNode>
-							</p:tree>
-
-							<p:commandButton id="btnDisplay"
-								value="Click to Move Files To Analysis"
-								styleClass="displayButton"
-								update="availableStudy"
-								actionListener="#{analyzeBacking.displaySelectedMultiple}"
-								icon="ui-icon-disk"/>
-
-							<p:separator style="margin-bottom:10px" />
+		<h:form id="formAnalyze">
+			<p:layout id="layoutAnalyze" style="width:100%;height:700px" >
+		
+				<p:layoutUnit position="west" header="Click folders or files to be Analyzed (Ctrl + Click to un-select)" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
+					<h:panelGroup layout="block" id="analyzeTreeHolder"	>
+	
+						<p:tree id="docTree" 
+							dynamic="true"
+							selection="#{analyzeBacking.fileTree.selectedNodes}"
+							selectionMode="multiple"
+							value="#{analyzeBacking.fileTree.treeRoot}" 
+							var="node"
+							style="width:100%">
 							
+							<p:ajax event="select" listener="#{analyzeBacking.folderSelect}" update="docTree"/>
+							<p:ajax event="unselect" listener="#{analyzeBacking.folderUnSelect}" update="docTree"/>
+							
+							<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
+								<h:outputText value="#{node}" />
+							</p:treeNode>
+							
+							<p:treeNode type="document" icon="ui-icon ui-icon-document">
+								<h:outputText value="#{node}"/>
+							</p:treeNode>
+						</p:tree>
+		
+						<p:commandButton id="btnDisplay"
+							value="Click to Move Files To Analysis"
+							styleClass="displayButton"
+							update="availableStudy"
+							actionListener="#{analyzeBacking.displaySelectedMultiple}"
+							icon="ui-icon-disk"/>
+		
+					</h:panelGroup>
+				</p:layoutUnit>
+			
+				<p:layoutUnit position="center" header="Files to be Analyzed" >		
+					<p:dataTable id="availableStudy"
+						var="studyHolder"
+						styleClass="analyzeDataTable"
+						sortMode="multiple"
+						rowKey="#{studyHolder.subjectID}"
+						value="#{analyzeBacking.tableList}"
+						resizableColumns="true"
+						paginatorPosition="top"
+						style="width:100%">
 	
-								
+						<p:column headerText="Subject ID" width="278">
+							<h:outputText value="#{studyHolder.title}" />
+						</p:column>
 	
-						</h:panelGroup>
-
-						<p:dataTable id="availableStudy"
-							var="studyHolder"
-							styleClass="analyzeDataTable"
-							sortMode="multiple"
-							rowKey="#{studyHolder.subjectID}"
-							value="#{analyzeBacking.tableList}"
-
-							paginator="true" 
-							resizableColumns="true"
-							paginatorPosition="top">
-
-							<f:facet name="header">
-								<f:verbatim><br/>Files to be Analyzed</f:verbatim>
-							</f:facet>
-
-							<p:column headerText="Subject ID" width="278">
-								<h:outputText value="#{studyHolder.subjectID}" />
-							</p:column>
-
-							<p:column headerText="File Format" width="279">
-								<h:outputText value="#{studyHolder.datatype}" />
-							</p:column>
-
-							<p:column headerText="File Date" width="279">
-								<h:outputText value="#{studyHolder.dateOfRecording}" />
-							</p:column>
-
-							<f:facet name="footer">
-								<p:commandButton value="Start Analysis" 
-									update="displayStart"
-									icon="ui-icon-play"
-									action="#{analyzeBacking.startAnalysis}"/>
-
-								<p:dialog widgetVar="dlg" onclose="pbAjax.cancel()">
-									<h:outputText value="Analysis Complete." />
-									<f:verbatim><br /></f:verbatim>
-									<p:dataList id="displayStart"
-										value="#{analyzeBacking.selectedAlgorithms}" 
-										var="study"
-										rows="4">
-									</p:dataList>
-
-									<p:dataList id="displayMultiStart"
-										value="#{analyzeBacking.selectedStudyEntries}"
-										var="studyHolder" 
-										rows="4">
-									</p:dataList>
-
-									<f:verbatim><br /></f:verbatim>
-
-									<h:outputText value="The files are available in Download Files." />
-								</p:dialog>
-							</f:facet>
-						</p:dataTable>
-					</p:fieldset>
-				</h:form>
-				<h:form id="algorithmTable">
+						<p:column headerText="File Format" width="279">
+							<h:outputText value="#{studyHolder.extension}" />
+						</p:column>
+	
+						<p:column headerText="File Date" width="279">
+							<h:outputText value="#{studyHolder.createDate}" />
+						</p:column>
+	
+						<f:facet name="footer">
+							<p:commandButton value="Start Analysis" 
+								update="displayStart"
+								icon="ui-icon-play"
+								action="#{analyzeBacking.startAnalysis}"/>
+	
+							<p:dialog widgetVar="dlg" onclose="pbAjax.cancel()">
+								<h:outputText value="Analysis Complete." />
+								<f:verbatim><br /></f:verbatim>
+								<p:dataList id="displayStart"
+									value="#{analyzeBacking.selectedAlgorithms}" 
+									var="study"
+									rows="4">
+								</p:dataList>
+	
+								<p:dataList id="displayMultiStart"
+									value="#{analyzeBacking.selectedStudyEntries}"
+									var="studyHolder" 
+									rows="4">
+								</p:dataList>
+	
+								<h:outputText value="The files are available in Download Files." />
+							</p:dialog>
+						</f:facet>
+					</p:dataTable>
+						
+				</p:layoutUnit>
+				
+				<p:layoutUnit position="south" size="300" header="Available Algorithms" resizable="true" collapsible="true">
 					<p:dataTable id="availableAlgorithmTable"
 						var="algorithm"
 						value="#{algorithmList.availableAlgorithms}"
 						rowKey="#{algorithm.shortName}"
 						selection="#{analyzeBacking.selectedAlgorithms}">
 						
-						<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update=":algorithmTable"/>  
-        				<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update=":algorithmTable"/>  
+						<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update=":formAnalyze"/>  
+		      				<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update=":formAnalyze"/>  
 								
 						<p:column selectionMode="multiple" style="width:2%"/>
 						
 						<p:column headerText="Name" style="width:25%">  
-            				<h:outputLabel value="#{algorithm.shortName}"/> 
-        				</p:column> 
+		          				<h:outputLabel value="#{algorithm.shortName}"/> 
+		      				</p:column> 
 							
 						<p:column headerText="Description" style="width:73%">  
-            				<h:outputLabel value="#{algorithm.longDescription}"/>  
-        				</p:column> 	
+		          				<h:outputLabel value="#{algorithm.longDescription}"/>  
+		      				</p:column> 	
 					</p:dataTable>
-				</h:form>
-			</p:layoutUnit>
-		</p:layout>
+				</p:layoutUnit>
+			</p:layout>
+		</h:form>
 	</h:panelGroup>
 
 	</h:body>

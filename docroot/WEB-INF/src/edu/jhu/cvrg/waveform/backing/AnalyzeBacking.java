@@ -21,7 +21,6 @@ package edu.jhu.cvrg.waveform.backing;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.ViewScoped;
@@ -34,11 +33,12 @@ import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
 import org.primefaces.model.TreeNode;
 
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.model.User;
 
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.model.FileTree;
+import edu.jhu.cvrg.waveform.model.LocalFileTree;
 import edu.jhu.cvrg.waveform.model.StudyEntry;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
@@ -51,23 +51,24 @@ public class AnalyzeBacking implements Serializable {
 
 	private StudyEntry[] selectedStudyEntries;
 	private Algorithm[] selectedAlgorithms;
-	private ArrayList<StudyEntry> tableList;
+	private ArrayList<FileEntry> tableList;
 
 	private AnalysisManager analysisManager = new AnalysisManager(true);
-	private FileTree fileTree;
+	private LocalFileTree fileTree;
 	private User userModel;
 	protected static org.apache.log4j.Logger logger = Logger.getLogger(AnalyzeBacking.class);
 	
 	@ManagedProperty("#{algorithmList}")
 	private AlgorithmList algorithmList;
 
-//	@PostConstruct
 	public void init() {
 		userModel = ResourceUtility.getCurrentUser();
 		if(fileTree == null){
-			fileTree = new FileTree(userModel.getScreenName());
+			fileTree = new LocalFileTree(userModel.getUserId(), "hea");
 		}
-		algorithmList = new AlgorithmList();
+		if(algorithmList == null){
+			algorithmList = new AlgorithmList();
+		}
 	}
 
 	public void startAnalysis() {
@@ -82,20 +83,20 @@ public class AnalyzeBacking implements Serializable {
 			return;
 		}
 		
-		for (Algorithm algorithm : selectedAlgorithms) {
-			for (StudyEntry studyEntry : tableList) {
-
-				String[] asFileNameList = extractFilenames(studyEntry.getAllFilenames());
-				
-				analysisManager.performAnalysis(studyEntry.getSubjectID(), userModel.getScreenName(), 
-						algorithm, studyEntry.getRecordName(), asFileNameList.length, asFileNameList, 
-						AnalysisUtility.extractPath(studyEntry.getAllFilenames()[0]));
-			}
-		}
+		
+		analysisManager.performAnalysis(tableList,  userModel.getScreenName(), selectedAlgorithms);
+		
+		
+//		for (Algorithm algorithm : selectedAlgorithms) {
+//			for (FileEntry studyEntry : tableList) {
+//				// [VILARDO] Working with only one file
+//				analysisManager.performAnalysis(studyEntry, userModel.getScreenName(), algorithm);
+//			}
+//		}
 	}
 
 	public void displaySelectedMultiple(ActionEvent event) {
-		setTableList(fileTree.getSelectedFileNodes());
+		this.setTableList(fileTree.getSelectedFileNodes());
 	}
 
 	private String[] extractFilenames(String[] filepaths) {
@@ -132,7 +133,7 @@ public class AnalyzeBacking implements Serializable {
     	return;
     }  
 
-	public ArrayList<StudyEntry> getTableList() {
+	public ArrayList<FileEntry> getTableList() {
 		return tableList;
 	}
 
@@ -140,15 +141,15 @@ public class AnalyzeBacking implements Serializable {
 		tableList.removeAll(tableList);
 	}
 
-	public FileTree getFileTree() {
+	public LocalFileTree getFileTree() {
 		return fileTree;
 	}
 
-	public void setFileTree(FileTree fileTree) {
+	public void setFileTree(LocalFileTree fileTree) {
 		this.fileTree = fileTree;
 	}
 
-	public void setTableList(ArrayList<StudyEntry> tableList) {
+	public void setTableList(ArrayList<FileEntry> tableList) {
 		this.tableList = tableList;
 	}
 

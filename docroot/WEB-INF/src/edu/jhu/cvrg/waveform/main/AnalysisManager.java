@@ -19,21 +19,25 @@ limitations under the License.
 * 
 */
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.log4j.Logger;
 
-import edu.jhu.cvrg.waveform.callbacks.FilesAcquiredCallback;
-import edu.jhu.cvrg.waveform.callbacks.SvcAxisCallback;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
+
 import edu.jhu.cvrg.waveform.model.Algorithm;
+import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
 import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
-import edu.jhu.cvrg.waveform.utility.ProgressNotification;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
@@ -71,149 +75,188 @@ public class AnalysisManager implements Serializable{
 		aIP = new AnalysisInProgress();
 	}
 
+	public boolean performAnalysis(List<FileEntry> selectedFiles, String userId, Algorithm[] selectedAlgorithms ){
+		
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		
+		Map<String, FileEntry> filesMap = new HashMap<String, FileEntry>();
+		
+		parameterMap.put("userID", userId);
+		parameterMap.put("groupID", ResourceUtility.getCurrentGroupId());
+		
+		Map<String, Object> recordsMap = new HashMap<String, Object>();
+		
+		try {
+			for (FileEntry headerFile : selectedFiles) {
+				
+				Map<String, Object> recMap = new HashMap<String, Object>();
+				
+				String subjectID = headerFile.getFolder().getName();
+				
+				recMap.put("folderID", String.valueOf(headerFile.getFolderId()));
+				recMap.put("subjectID", subjectID);
+					
+			
+				Map<String, Object> algorithmMap = new HashMap<String, Object>();
+				
+				for (Algorithm algorithm : selectedAlgorithms) {
+					
+					Map<String, String> algMap = new HashMap<String, String>();
+					
+					String fileNameString="";//filename.dat^filename.hea^";
+					List<FileEntry> subFiles = DLAppLocalServiceUtil.getFileEntries(ResourceUtility.getCurrentGroupId(), headerFile.getFolderId());
+					ArrayList<FileEntry> fileList = getFileList(headerFile, algorithm, subFiles);
+					for (FileEntry fileEntry : fileList) {
+						fileNameString += fileEntry.getTitle() + "^";
+						filesMap.put(fileEntry.getTitle(), fileEntry);
+					}
+					algMap.put("fileNames", fileNameString); // caret delimited list for backwards compatibility to type1 web services.
+					
+					algMap.put("jobID", this.getJobId());
+					
+					//TODO [VILARDO] Not implemented yet
+	//				LinkedHashMap<String, String> parameterlistMap = new LinkedHashMap<String, String>();
+	//				AdditionalParameters[] commandParameters = null;
+	//				if(commandParameters != null){
+	//					for(AdditionalParameters parameter : commandParameters){
+	//						parameterlistMap.put(parameter.getsParameterFlag(), parameter.getsParameterUserSpecifiedValue());
+	//					}
+	//				}
+	//				algMap.put("parameterList", parameterlistMap);
+					
+					algorithmMap.put(algorithm.getType().toString(), algMap);
+				}
+				
+				recMap.put("algorithms", algorithmMap);
+					
+				recordsMap.put(subjectID, recMap);
+			}
+			
+			parameterMap.put("records", recordsMap);
+			
+			WebServiceUtility.callWebServiceComplexParam(parameterMap, ResourceUtility.getAnalysisMethod() , ResourceUtility.getPhysionetAnalysisService() , ResourceUtility.getAnalysisServiceURL(), null, filesMap);
+		
+			return true;
+		} catch (PortalException e) {
+			e.printStackTrace();
+		} catch (SystemException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	private String getJobId() {
+		return String.valueOf(System.currentTimeMillis());
+	}
+
 	/** Step 0
 	 * The initialization of an analysis Job. Creates an entry in the Jobs-in-Flight database, 
 	 * then calls step 1A, to transfer the data files.
 	 * 
 	 */
-	public boolean performAnalysis(String sSubjectId, String sUserId, Algorithm alDetails,
-			String DatasetName, int iFileCount, String[] saFileNameList, String sFtpRelativePath){
+	public boolean performAnalysis(FileEntry fileEntry, String userId, Algorithm alDetails ){
 
-		this.aIP.setUserId(sUserId);
-		this.aIP.setSubjectId(sSubjectId);
+		Folder folder = fileEntry.getFolder();
+		
+		
+		this.aIP.setUserId(userId);
+		this.aIP.setSubjectId(folder.getName());
 		this.aIP.setServiceName( alDetails.getsServiceName());
-		this.aIP.setDatasetName(DatasetName);
+		this.aIP.setWebServiceMethod(alDetails.getsServiceMethod());
+		this.aIP.setDatasetName(folder.getName());
 		this.aIP.setAnalysisServiceURL(ResourceUtility.getAnalysisServiceURL());		
-		String ftpHost = ResourceUtility.getFtpHost();
-		String ftpUser = ResourceUtility.getFtpUser();
-		String ftpPassword = ResourceUtility.getFtpPassword();
-		String ftpRoot = ResourceUtility.getFtpRoot();
 		
-		if(ftpHost.equals(MISSING_VALUE) || ftpUser.equals(MISSING_VALUE) || 
-				ftpPassword.equals(MISSING_VALUE) || ftpRoot.equals(MISSING_VALUE)){
-			logger.error("Missing one or more configuration values for FTP.");
-			return false;
-		}
-
-		String[] saFilePathNameList = new String[saFileNameList.length];
-		for(String fileName : saFileNameList){
-			fileName = sFtpRelativePath + "/" + fileName;
-		}
-		this.aIP.setDataFileList(saFilePathNameList);
+		try {
+			List<FileEntry> subFiles = DLAppLocalServiceUtil.getFileEntries(ResourceUtility.getCurrentGroupId(), fileEntry.getFolderId());
 		
-		sFtpRelativePath = ftpRoot + sFtpRelativePath;
-
-		String sJobID = anUtil.createAnalysisJob(aIP, alDetails);
-		this.aIP.setJobID(sJobID);
-		DateFormat displayFormat = new SimpleDateFormat("MM/dd/yyyy");
-		Calendar theCalendar = Calendar.getInstance();
-		Date currentTime = theCalendar.getTime();
-		String analysisDate = displayFormat.format(currentTime);
-		ProgressNotification.step0_jobSubmitted(sUserId, analysisDate);
-
-		return importDataFiles(ftpHost, ftpUser, ftpPassword, iFileCount, saFileNameList, sFtpRelativePath, sJobID);
+			ArrayList<FileEntry> fileList = getFileList(fileEntry, alDetails, subFiles);
+			
+			String[] dataFileList = new String[fileList.size()];
+			String fileNameString="";//filename.dat^filename.hea^";
+			LinkedHashMap<String, FileEntry> filesMap = new LinkedHashMap<String, FileEntry>();
+			for (int i = 0; i < fileList.size(); i++) {
+				FileEntry f = fileList.get(i);
+				dataFileList[i] = f.getTitle();
+				fileNameString += f.getTitle() + "^";
+				filesMap.put(f.getTitle(), f);
+			}
+			
+			this.aIP.setDataFileList(dataFileList);
+			
+			//String sJobID = anUtil.createAnalysisJob(aIP, alDetails);
+			//this.aIP.setJobID(sJobID);
+			this.aIP.setJobID("TEST");
+			
+			LinkedHashMap<String, Object> parameterMap = new LinkedHashMap<String, Object>();
+			
+			LinkedHashMap<String, String> parameterlistMap = new LinkedHashMap<String, String>();
+			
+			AdditionalParameters[] commandParameters =  aIP.getaParameterList();
+			int commandParametersCount = 0;
+			if(commandParameters != null){
+				for(AdditionalParameters parameter : commandParameters){
+					parameterlistMap.put(parameter.getsParameterFlag(), parameter.getsParameterUserSpecifiedValue());
+				}
+				commandParametersCount = commandParameters.length;
+			}
+			
+			
+			parameterMap.put("jobID", aIP.getJobID());
+			parameterMap.put("userID", aIP.getUserId());
+			parameterMap.put("folderID", fileEntry.getFolderId());
+			parameterMap.put("groupID", fileEntry.getGroupId());
+			
+			parameterMap.put("parameterCount", String.valueOf(commandParametersCount));
+			parameterMap.put("parameterlist", parameterlistMap);
+			
+			parameterMap.put("fileCount", Integer.toString(fileList.size()));
+			parameterMap.put("fileNames", fileNameString); // caret delimited list for backwards compatibility to type1 web services.
+			
+			WebServiceUtility.callWebServiceComplexParam(parameterMap,aIP.getWebServiceMethod(),aIP.getServiceName(),aIP.getAnalysisServiceURL(),null, filesMap);
+		
+			return true;
+			
+		} catch (PortalException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SystemException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return false;	
 	}
 
-	/** Step 1A Tells analysis server to ftp the data files from the ftpHost. 
-	 * Handles call from ECGridToolkit.processDynamicAnalysisCheckedBoxes() method
-	 * @param ftpHost - ftp server which contains the data files
-	 * @param ftpUser - userID to used by the service when connecting to ftp
-	 * @param ftpPassword - password to used by the service when connecting to ftp
-	 * @param analysisServiceURL - URL of the Analysis Web Service to send data files to.
-	 * @param asFileNameList - files to be uploaded, without path.
-	 * @param ftpRelativePath - path relative to the FTP server's starting directory.
-	 * 
-	 * @return - dummy value, empty NodeBrokerData class.
-	 */ 
-	private boolean importDataFiles(String ftpHost, String ftpUser, String ftpPassword, int fileCount, 
-			String[] asFileNameList, String ftpRelativePath, String sJobID) {
-
-		//******** old version takes a caret delimited list ************
-		String fileNameString="";//filename.dat^filename.hea^";
-		for(String fn:asFileNameList){
-			fileNameString += fn + "^";
-		}
-		//*********************Should be replaced with the following when the Web service is updated *********
-		//**** create the file subnodes of the fileNameList node. ************
-		/*
-		LinkedHashMap<String, String> fileMap = new LinkedHashMap<String, String>();
-		int f=0;
-		for(String fn:asFileNameList){
-//			fileNameList += "\t\t<filename>" + fn + "</filename>\n";
-			fileMap.put("fileName_" + f, fn);
-			f++;
-		} */
-		//************************************
-
-//		LinkedHashMap<String, Object> parameterMap = new LinkedHashMap<String, Object>();
-		LinkedHashMap<String, String> parameterMap = new LinkedHashMap<String, String>();
-
-		parameterMap.put("service", ResourceUtility.getDataTransferClass()); // "DataTransfer"
-		parameterMap.put("fileCount", Integer.toString(fileCount)); // 
-//		parameterMap.put("fileNameList", fileMap);
-		parameterMap.put("fileNameList", fileNameString);
-		parameterMap.put("relativePath", ftpRelativePath);
-		parameterMap.put("ftpHost", ftpHost);
-		parameterMap.put("ftpUser", ftpUser);
-		parameterMap.put("ftpPassword", ftpPassword);
-		parameterMap.put("jobID", sJobID);
-		parameterMap.put("verbose", String.valueOf(verbose));
-
-		SvcAxisCallback callback = new FilesAcquiredCallback();
-
-		WebServiceUtility.callWebService(parameterMap, 
-				ResourceUtility.getCopyFilesMethod(), // Method of the service which implements the copy. e.g. "copyDataFilesToAnalysis"
-				ResourceUtility.getDataTransferServiceName(), // Name of the web service. e.g. "dataTransferService"
-				ResourceUtility.getAnalysisServiceURL(), // URL of the Analysis Web Service to send data files to. e.g. "http://icmv058.icm.jhu.edu:8080/axis2/services/";
-				callback);
+	private ArrayList<FileEntry> getFileList(FileEntry fileEntry, Algorithm algorithm, List<FileEntry> subFiles) {
+		ArrayList<FileEntry> retFiles = new ArrayList<FileEntry>();
+		String needExtentions = "";
 		
-		DateFormat displayFormat = new SimpleDateFormat("MM/dd/yyyy");
-		Calendar theCalendar = Calendar.getInstance();
-		Date currentTime = theCalendar.getTime();
-		String analysisDate = displayFormat.format(currentTime);
-		ProgressNotification.step1A_TransferDataFilesToAnalysisCB(this.aIP.getUserId(), analysisDate);
-		return true;	
+		switch (algorithm.getType()) {
+			case ANN2RR:
+			case NGUESS:
+			case PNNLIST:
+			case TACH:
+				needExtentions = ".atr.qrs.hea.dat"; break;
+			case SQRS:
+			case WQRS:
+			case RDSAMP:
+			case SIGAAMP:
+			case CHESNOKOV:
+				needExtentions = ".hea.dat"; break;
+			case WRSAMP:
+				needExtentions = ".txt"; break;
+			default: break;
+		}
+		
+		for (FileEntry file : subFiles) {
+			if(needExtentions.contains(file.getExtension())){
+				retFiles.add(file);
+			}
+		}
+	
+		return retFiles;
 	}
-
-	/** Calls the web service which copies the data files from the FTP repository to the analysis server (the one containing the analysis algorithm).
-	 * 
-	 * @param analysisBrokerURL - URL of the analysis web service. Should also contain the ICM provided "data-transfer-webservice" service.
-	 * @param subjectId
-	 * @param analysisName
-	 * @param fileCount
-	 * @param fileNameList
-	 * @param ftpRelativePath
-	 * @return
-	 */
-	/*public AnalysisInProgress transferDataFilesToAnalysis(String analysisBrokerURL, 
-			String subjectId, String analysisName, int fileCount, 
-			String fileNameList, String ftpRelativePath) {
-
-		String[] SuccessfullList ={"one","two"};
-		AnalysisInProgress aIP = new AnalysisInProgress();
-		aIP.setSubjectId(subjectId);
-		aIP.setServiceName(analysisName);
-		aIP.setAnalysisServiceURL(analysisBrokerURL);
-
-		OMElement omeResult;
-
-		LinkedHashMap<String, String> parameterMap = new LinkedHashMap<String, String>();
-
-		parameterMap.put("service", propsUtil.getDataTransferClass());
-		parameterMap.put("fileCount", Integer.toString(fileCount));
-		parameterMap.put("fileNameList", fileNameList);
-		parameterMap.put("relativePath", ftpRelativePath);
-		parameterMap.put("verbose", String.valueOf(verbose));
-
-		omeResult = WebServiceUtility.callWebService(parameterMap, false, propsUtil.getTransferToAnalysisMethod(), propsUtil.getDataTransferServiceName(), null);
-
-		Map<String, Object> paramMap = util.buildParamMap(omeResult);
-		OMElement filenamelist = (OMElement) paramMap.get("filenamelist");
-		SuccessfullList = util.buildChildArray(filenamelist);
-
-		aIP.setDataFileList(SuccessfullList);
-		return aIP;		
-	}*/
 
 	public String retrievePrimaryData(String chesnokovSubjectIds, String chesnokovFiles, String uId, boolean isPublic) {
 
@@ -232,34 +275,5 @@ public class AnalysisManager implements Serializable{
 		omeResult = WebServiceUtility.callWebService(parameterMap, isPublic, ResourceUtility.getConsolidatePrimaryAndDerivedDataMethod(), ResourceUtility.getNodeDataServiceName(), null);
 		return omeResult.getText();
 	}	
-
-	/*public String fetchAlgorithmDetail(String brokerURL) throws Exception {
-
-		String xml="";
-
-		try {
-			
-			LinkedHashMap<String, String> parameterMap = new LinkedHashMap<String, String>();
-			parameterMap.put("verbose", "true");
-
-			OMElement result = WebServiceUtility.callWebService(parameterMap, true, propsUtil.getAlgorithmDetailsMethod(), propsUtil.getPhysionetService(), null);
-
-			// extract the XStream generated XML from the result.
-			StringWriter writer = new StringWriter();
-			result.serialize(XMLOutputFactory.newInstance().createXMLStreamWriter(writer));
-			writer.flush();
-			xml = writer.toString();
-
-		} catch (XMLStreamException xe) {
-			xe.printStackTrace();
-			throw xe;
-		}  catch(Exception ex) {
-			ex.printStackTrace();
-			throw ex;
-		}	
-
-		return xml;
-	}*/
-
 
 }

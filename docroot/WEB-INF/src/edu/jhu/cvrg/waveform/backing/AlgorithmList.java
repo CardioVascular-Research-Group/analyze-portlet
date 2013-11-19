@@ -20,6 +20,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import edu.jhu.cvrg.waveform.model.Algorithm;
+import edu.jhu.cvrg.waveform.model.PhysionetMethods;
 import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
@@ -75,7 +76,7 @@ public class AlgorithmList implements Serializable{
 			
 			document.getDocumentElement().normalize();
 			
-			NodeList algorithmNodes = document.getElementsByTagName("AlgorithmServiceData");
+			NodeList algorithmNodes = document.getElementsByTagName("edu.jhu.cvrg.services.physionetAnalysisService.serviceDescriptionData.AlgorithmServiceData");
 			
 			for(int i = 0; i < algorithmNodes.getLength(); i++){
 				Algorithm algorithm = new Algorithm();
@@ -85,8 +86,10 @@ public class AlgorithmList implements Serializable{
 				for(int s = 0; s < node.getChildNodes().getLength(); s++){
 					Node childNode = node.getChildNodes().item(s);
 
-					if(childNode.getNodeName().equals("sDisplayShortName"))
+					if(childNode.getNodeName().equals("sDisplayShortName")){
 						algorithm.setsDisplayShortName(getNodeValue(childNode, "sDisplayShortName").trim());
+						algorithm.setType(PhysionetMethods.getMethodByName(algorithm.getsDisplayShortName()));
+					}
 					if(childNode.getNodeName().equals("sServiceMethod"))
 						algorithm.setsServiceMethod(getNodeValue(childNode, "sServiceMethod").trim());
 					if(childNode.getNodeName().equals("sServiceName"))
