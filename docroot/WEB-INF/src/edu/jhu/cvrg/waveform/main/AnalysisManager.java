@@ -21,9 +21,11 @@ limitations under the License.
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.log4j.Logger;
@@ -51,6 +53,9 @@ public class AnalysisManager implements Serializable{
 	private AnalysisUtility anUtil;
 	private String MISSING_VALUE = "0";
 
+	//TODO [VILARDO] remove this after de persistence layer
+	Integer jobCounter = 0;
+	
 	public AnalysisManager(boolean verbose){	
 		
 		String dbUser = ResourceUtility.getDbUser();
@@ -76,6 +81,83 @@ public class AnalysisManager implements Serializable{
 	}
 
 	public boolean performAnalysis(List<FileEntry> selectedFiles, String userId, Algorithm[] selectedAlgorithms ){
+		
+		try {
+			
+			Set<Map<String, String>> maps = new HashSet<Map<String, String>>();
+			
+			Map<String, Object> jobs = new HashMap<String, Object>();
+			Map<String, FileEntry> filesMap = new HashMap<String, FileEntry>();
+			
+			for (FileEntry headerFile : selectedFiles) {
+				
+				for (Algorithm algorithm : selectedAlgorithms) {
+					
+					Map<String, String> parameterMap = new HashMap<String, String>();
+					
+					parameterMap.put("userID", userId);
+					parameterMap.put("groupID", String.valueOf(ResourceUtility.getCurrentGroupId()));
+					parameterMap.put("folderID", String.valueOf(headerFile.getFolderId()));
+					parameterMap.put("subjectID", headerFile.getFolder().getName());
+					
+					String jobID = this.getJobId();
+					
+					parameterMap.put("jobID", jobID);
+					
+					String fileNameString="";//filename.dat^filename.hea^";
+					List<FileEntry> subFiles = DLAppLocalServiceUtil.getFileEntries(ResourceUtility.getCurrentGroupId(), headerFile.getFolderId());
+					ArrayList<FileEntry> fileList = getFileList(headerFile, algorithm, subFiles);
+					for (FileEntry fileEntry : fileList) {
+						fileNameString += fileEntry.getTitle() + "^";
+						filesMap.put(fileEntry.getTitle(), fileEntry);
+					}
+					parameterMap.put("fileNames", fileNameString); // caret delimited list for backwards compatibility to type1 web services.
+					
+					//TODO [VILARDO] Not implemented yet
+	//				LinkedHashMap<String, String> parameterlistMap = new LinkedHashMap<String, String>();
+	//				AdditionalParameters[] commandParameters = null;
+	//				if(commandParameters != null){
+	//					for(AdditionalParameters parameter : commandParameters){
+	//						parameterlistMap.put(parameter.getsParameterFlag(), parameter.getsParameterUserSpecifiedValue());
+	//					}
+	//				}
+	//				algMap.put("parameterList", parameterlistMap);
+					
+					parameterMap.put("method", algorithm.getsServiceMethod());
+					parameterMap.put("serviceName", algorithm.getsServiceName());
+					parameterMap.put("URL", algorithm.getsAnalysisServiceURL());
+					
+					maps.add(parameterMap);
+					jobs.put(jobID, fileNameString);
+				}
+			}
+			
+			Map<String, Object> parameterMap = new HashMap<String, Object>();
+			
+			parameterMap.put("jobs", jobs);
+			
+			OMElement fileRet = WebServiceUtility.callWebServiceComplexParam(parameterMap, "receiveAnalysisTempFiles", ResourceUtility.getDataTransferServiceName(), ResourceUtility.getAnalysisServiceURL(), null, filesMap);
+			
+			OMElement status  = (OMElement)fileRet.getChildren().next();
+			
+			if(status != null  && Boolean.valueOf(status.getText())){
+				for (Map<String, String> map : maps) {
+					AnalysisThread t = new AnalysisThread(map);
+					t.start();
+				}
+			}
+			
+			return true;
+		} catch (PortalException e) {
+			e.printStackTrace();
+		} catch (SystemException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	public boolean performAnalysisThreadServerSide(List<FileEntry> selectedFiles, String userId, Algorithm[] selectedAlgorithms ){
 		
 		Map<String, Object> parameterMap = new HashMap<String, Object>();
 		
@@ -146,8 +228,9 @@ public class AnalysisManager implements Serializable{
 		return false;
 	}
 	
+	
 	private String getJobId() {
-		return String.valueOf(System.currentTimeMillis());
+		return "job_"+ ++jobCounter;
 	}
 
 	/** Step 0
