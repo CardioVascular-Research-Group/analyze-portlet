@@ -118,36 +118,29 @@ public class ResultsAcquiredCallback extends SvcAxisCallback{
 		String timeStamp = timestampFormat.format(currentTime);
 		
 		util.debugPrintln("asResultFileList.length" + saResultFileList.length);
-		for(String result:saResultFileList){
 
-			
+		for(String result:saResultFileList){
 			// Create an entry in the database for each returned file 
 			
 			// currently missing filesizes and record names
 			// record names can be created with a combination of file name and date
 			// may have to open each file, but there needs to be a better way to get file sizes
-			
 
 			String recordName = subjectID + "_" + timeStamp;
 			result = result.replace("//", "/");
 			util.debugPrintln("StoreAnalysisFileMetadata() starting for " + result);
 			DBStorage.StoreAnalysisFileMetadata(userID, subjectID, analysisDate, timeStamp, recordName, result, serviceMethod, displayText);
 			util.debugPrintln("StoreAnalysisFileMetadata() completed");
-			
-//			if (ServerUtility.isUnix()) {
-//				util.debugPrintln("This is a Unix system, therefore Physionet's rdann program can be run");
-				boolean isWFDBAnnotation = bReturnsWFDBAnnotation(aIP);
-				util.debugPrintln("isWFDBAnnotation: " + isWFDBAnnotation);
-				if(isWFDBAnnotation){
-					storeFileAsAnnotations(result);
-				}else{
-					util.debugPrintln("This analysis does not return a WFDB annotation file.");
-				}
-//			}else{
-//				System.err.println("ERROR, this is not a Unix system, therefore Physionet's rdann program cannot be run to parse WFDB Annotation files.");
-//			}
 
+			boolean isWFDBAnnotation = bReturnsWFDBAnnotation(aIP);
+			util.debugPrintln("isWFDBAnnotation: " + isWFDBAnnotation);
+			if(isWFDBAnnotation){
+				storeFileAsAnnotations(result);
+			}else{
+				util.debugPrintln("This analysis does not return a WFDB annotation file.");
+			}
 		}
+		
 		ProgressNotification.step4_RecordAnalysisResults(aIP.getUserId(), analysisDate);
 	}
 
@@ -409,7 +402,6 @@ public class ResultsAcquiredCallback extends SvcAxisCallback{
 	 */
 	private List<String[]> changePhysioBankToOntology(List<String[]>  alistAnnotation){
 		// TODO STUB METHOD-Needs to be fully implemented.
-//		util.debugPrintln("changePhysioBankToOntology()");
 		System.out.println("- changePhysioBankToOntology() alistAnnotation.size():" + alistAnnotation.size());
 		String sPhysioBankCode="";
 		for(String[] saAnnot : alistAnnotation){
@@ -430,8 +422,6 @@ public class ResultsAcquiredCallback extends SvcAxisCallback{
 	 * @return true if all stored successfully
 	 */	 
 	private boolean storeAnnotationList(List<String[]> alistAnnotation){
-//		System.out.println("storeAnnotationList()");
-//		System.out.println("-alistAnnotation.size():" + alistAnnotation.size());
 	    AnnotationUtility annUtil = new AnnotationUtility();
 		
 //		 * Required values that need to be filled in are:
@@ -449,7 +439,6 @@ public class ResultsAcquiredCallback extends SvcAxisCallback{
 //			 * Note:  If this is an interval, then an offset label, y-coordinate, and t-coordinate are required for that as well.
 		
 		for(String[] saAnnot : alistAnnotation){
-//			System.out.println("-- saAnnot.length:" + saAnnot.length);
 
 			if( (saAnnot != null) & (saAnnot.length>=6)){
 				try {
@@ -457,13 +446,11 @@ public class ResultsAcquiredCallback extends SvcAxisCallback{
 					String sOntologyID = saAnnot[3];
 					int iLeadIndex = Integer.parseInt(saAnnot[5]);
 					double dMicroVolt = lookupVoltage(dMilliSec,iLeadIndex);
-//					System.out.println("-- calling WebServiceUtility.lookupOntologyDefinition()");
+					
 					String[] saOntDetails = WebServiceUtility.lookupOntologyDefinition(sOntologyID); // ECGTermsv1:ECG_000000103
 					String sTermName = saOntDetails[0];
 					String sFullAnnotation=saOntDetails[1];
-//					System.out.println("-- dMilliSec, dMicroVolt, sTermName, sOntologyID: " +  dMilliSec + ", " + dMicroVolt + ", " + sTermName + ", " +  sOntologyID);
-					//****************************
-	//				FacesContext context = FacesContext.getCurrentInstance();
+
 					AnnotationData annotationToInsert = annUtil.createAnnotationData();
 	
 					annotationToInsert.setSubjectID(aIP.getSubjectId());
@@ -480,20 +467,15 @@ public class ResultsAcquiredCallback extends SvcAxisCallback{
 					annotationToInsert.setConceptID(sOntologyID);
 					annotationToInsert.setAnnotation(sFullAnnotation);
 					
-	//			annotationToInsert.setMicroVoltEnd(0.0);
-	//			annotationToInsert.setMilliSecondEnd(0.0);
 					annotationToInsert.setIsSinglePoint(true);
-	
-	 //*****************************************
 					 
 					// Inserting save to XML database
-					 boolean insertionSuccess = annUtil.storeLeadAnnotationNode(annotationToInsert);
-					 if(!insertionSuccess) {
-					        //add facesmessage
-					        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Failure", "Annotation did not save properly"));
-					 }
+					boolean insertionSuccess = annUtil.storeLeadAnnotationNode(annotationToInsert);
+					if(!insertionSuccess) {
+					    //add facesmessage
+						FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Failure", "Annotation did not save properly"));
+					}
 				} catch (NumberFormatException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (Exception e){
 					System.err.println(e.getMessage());

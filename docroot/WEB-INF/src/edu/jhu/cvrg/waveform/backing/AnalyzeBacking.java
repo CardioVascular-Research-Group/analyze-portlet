@@ -36,11 +36,11 @@ import org.primefaces.model.TreeNode;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.model.User;
 
+import edu.jhu.cvrg.dbapi.factory.exists.model.StudyEntry;
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.Algorithm;
+import edu.jhu.cvrg.waveform.model.FileTreeNode;
 import edu.jhu.cvrg.waveform.model.LocalFileTree;
-import edu.jhu.cvrg.waveform.model.StudyEntry;
-import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 
 @ManagedBean(name = "analyzeBacking")
@@ -51,7 +51,7 @@ public class AnalyzeBacking implements Serializable {
 
 	private StudyEntry[] selectedStudyEntries;
 	private Algorithm[] selectedAlgorithms;
-	private ArrayList<FileEntry> tableList;
+	private ArrayList<FileTreeNode> tableList;
 
 	private AnalysisManager analysisManager = new AnalysisManager(true);
 	private LocalFileTree fileTree;
@@ -84,30 +84,14 @@ public class AnalyzeBacking implements Serializable {
 		}
 		
 		
-		analysisManager.performAnalysis(tableList,  userModel.getScreenName(), selectedAlgorithms);
+		analysisManager.performAnalysis(tableList,  userModel.getUserId(), selectedAlgorithms);
 		
-		
-//		for (Algorithm algorithm : selectedAlgorithms) {
-//			for (FileEntry studyEntry : tableList) {
-//				// [VILARDO] Working with only one file
-//				analysisManager.performAnalysis(studyEntry, userModel.getScreenName(), algorithm);
-//			}
-//		}
 	}
 
 	public void displaySelectedMultiple(ActionEvent event) {
 		this.setTableList(fileTree.getSelectedFileNodes());
 	}
 
-	private String[] extractFilenames(String[] filepaths) {
-		String[] results = new String[filepaths.length];
-		for (int i = 0; i < filepaths.length; i++) {
-			results[i] = AnalysisUtility.extractName(filepaths[i]);
-		}
-
-		return results;
-	}
-	
 	public void folderSelect(NodeSelectEvent event){
 		TreeNode node = event.getTreeNode();
 		if(!node.getType().equals("document")){
@@ -133,7 +117,7 @@ public class AnalyzeBacking implements Serializable {
     	return;
     }  
 
-	public ArrayList<FileEntry> getTableList() {
+	public ArrayList<FileTreeNode> getTableList() {
 		return tableList;
 	}
 
@@ -149,7 +133,7 @@ public class AnalyzeBacking implements Serializable {
 		this.fileTree = fileTree;
 	}
 
-	public void setTableList(ArrayList<FileEntry> tableList) {
+	public void setTableList(ArrayList<FileTreeNode> tableList) {
 		this.tableList = tableList;
 	}
 

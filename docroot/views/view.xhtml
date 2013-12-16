@@ -14,21 +14,18 @@
 
 	<h:panelGroup id="mainGroup" layout="block" styleClass="backgroundofContent">
 		<h:form id="formAnalyze">
-			<p:layout id="layoutAnalyze" style="width:100%;height:700px" >
+			<p:layout id="layoutAnalyze" style="width:100%;height:600px" >
 		
 				<p:layoutUnit position="west" header="Click folders or files to be Analyzed (Ctrl + Click to un-select)" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
 					<h:panelGroup layout="block" id="analyzeTreeHolder"	>
 	
 						<p:tree id="docTree" 
 							dynamic="true"
-							selection="#{analyzeBacking.fileTree.selectedNodes}"
-							selectionMode="multiple"
+							selection="#{analyzeBacking.fileTree.selectedNode}"
+							selectionMode="single"
 							value="#{analyzeBacking.fileTree.treeRoot}" 
 							var="node"
 							style="width:100%">
-							
-							<p:ajax event="select" listener="#{analyzeBacking.folderSelect}" update="docTree"/>
-							<p:ajax event="unselect" listener="#{analyzeBacking.folderUnSelect}" update="docTree"/>
 							
 							<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
 								<h:outputText value="#{node}" />
@@ -54,22 +51,22 @@
 						var="studyHolder"
 						styleClass="analyzeDataTable"
 						sortMode="multiple"
-						rowKey="#{studyHolder.subjectID}"
+						rowKey="#{studyHolder.subjectId}"
 						value="#{analyzeBacking.tableList}"
 						resizableColumns="true"
 						paginatorPosition="top"
 						style="width:100%">
 	
-						<p:column headerText="Subject ID" width="278">
-							<h:outputText value="#{studyHolder.title}" />
+						<p:column headerText="Subject ID" >
+							<h:outputText value="#{studyHolder.content.title}" />
 						</p:column>
 	
-						<p:column headerText="File Format" width="279">
-							<h:outputText value="#{studyHolder.extension}" />
+						<p:column headerText="File Format">
+							<h:outputText value="#{studyHolder.content.extension}" />
 						</p:column>
 	
-						<p:column headerText="File Date" width="279">
-							<h:outputText value="#{studyHolder.createDate}" />
+						<p:column headerText="File Date" >
+							<h:outputText value="#{studyHolder.content.createDate}" />
 						</p:column>
 	
 						<f:facet name="footer">

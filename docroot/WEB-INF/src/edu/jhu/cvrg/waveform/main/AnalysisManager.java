@@ -20,6 +20,7 @@ limitations under the License.
 */
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -36,10 +37,12 @@ import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 
+import edu.jhu.cvrg.dbapi.factory.Connection;
+import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 import edu.jhu.cvrg.waveform.model.Algorithm;
+import edu.jhu.cvrg.waveform.model.FileTreeNode;
 import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
 import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
-import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
@@ -50,12 +53,8 @@ public class AnalysisManager implements Serializable{
 
 	private boolean verbose = false;
 	private AnalysisInProgress aIP;
-	private AnalysisUtility anUtil;
 	private String MISSING_VALUE = "0";
 
-	//TODO [VILARDO] remove this after de persistence layer
-	Integer jobCounter = 0;
-	
 	public AnalysisManager(boolean verbose){	
 		
 		String dbUser = ResourceUtility.getDbUser();
@@ -74,39 +73,39 @@ public class AnalysisManager implements Serializable{
 			return;	
 		}
 		
-		anUtil = new AnalysisUtility(dbUser, dbPassword, dbUri, dbDriver, dbMainDatabase);
-		
 		this.verbose = verbose;
 		aIP = new AnalysisInProgress();
 	}
 
-	public boolean performAnalysis(List<FileEntry> selectedFiles, String userId, Algorithm[] selectedAlgorithms ){
+	public boolean performAnalysis(List<FileTreeNode> selectedNodes, long userId, Algorithm[] selectedAlgorithms ){
 		
 		try {
 			
-			Set<Map<String, String>> maps = new HashSet<Map<String, String>>();
+			Connection dbUtility = ConnectionFactory.createConnection();
+			
+			Set<AnalysisThread> threadMap = new HashSet<AnalysisThread>();
 			
 			Map<String, Object> jobs = new HashMap<String, Object>();
 			Map<String, FileEntry> filesMap = new HashMap<String, FileEntry>();
 			
-			for (FileEntry headerFile : selectedFiles) {
+			for (FileTreeNode node : selectedNodes) {
+				
+				FileEntry headerFile = (FileEntry) node.getContent();
 				
 				for (Algorithm algorithm : selectedAlgorithms) {
 					
 					Map<String, String> parameterMap = new HashMap<String, String>();
 					
-					parameterMap.put("userID", userId);
+					parameterMap.put("userID",  String.valueOf(userId));
 					parameterMap.put("groupID", String.valueOf(ResourceUtility.getCurrentGroupId()));
 					parameterMap.put("folderID", String.valueOf(headerFile.getFolderId()));
 					parameterMap.put("subjectID", headerFile.getFolder().getName());
 					
-					String jobID = this.getJobId();
 					
-					parameterMap.put("jobID", jobID);
 					
 					String fileNameString="";//filename.dat^filename.hea^";
 					List<FileEntry> subFiles = DLAppLocalServiceUtil.getFileEntries(ResourceUtility.getCurrentGroupId(), headerFile.getFolderId());
-					ArrayList<FileEntry> fileList = getFileList(headerFile, algorithm, subFiles);
+					ArrayList<FileEntry> fileList = getFileList(algorithm, subFiles);
 					for (FileEntry fileEntry : fileList) {
 						fileNameString += fileEntry.getTitle() + "^";
 						filesMap.put(fileEntry.getTitle(), fileEntry);
@@ -127,7 +126,14 @@ public class AnalysisManager implements Serializable{
 					parameterMap.put("serviceName", algorithm.getsServiceName());
 					parameterMap.put("URL", algorithm.getsAnalysisServiceURL());
 					
-					maps.add(parameterMap);
+					String jobID = "job_" + dbUtility.storeAnalysisJob(node.getDocumentRecordId(), fileList.size(), 0, algorithm.getsAnalysisServiceURL(), algorithm.getsServiceName(), algorithm.getsServiceMethod(), new Date(), ResourceUtility.getCurrentUserId());
+					
+					parameterMap.put("jobID", jobID);
+					
+					AnalysisThread t = new AnalysisThread(parameterMap, node.getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility);
+					
+					threadMap.add(t);
+					
 					jobs.put(jobID, fileNameString);
 				}
 			}
@@ -141,9 +147,8 @@ public class AnalysisManager implements Serializable{
 			OMElement status  = (OMElement)fileRet.getChildren().next();
 			
 			if(status != null  && Boolean.valueOf(status.getText())){
-				for (Map<String, String> map : maps) {
-					AnalysisThread t = new AnalysisThread(map);
-					t.start();
+				for (AnalysisThread thread : threadMap) {
+					thread.start();	
 				}
 			}
 			
@@ -157,10 +162,6 @@ public class AnalysisManager implements Serializable{
 		return false;
 	}
 	
-	private String getJobId() {
-		return "job_"+ ++jobCounter;
-	}
-
 	/** Step 0
 	 * The initialization of an analysis Job. Creates an entry in the Jobs-in-Flight database, 
 	 * then calls step 1A, to transfer the data files.
@@ -181,7 +182,7 @@ public class AnalysisManager implements Serializable{
 		try {
 			List<FileEntry> subFiles = DLAppLocalServiceUtil.getFileEntries(ResourceUtility.getCurrentGroupId(), fileEntry.getFolderId());
 		
-			ArrayList<FileEntry> fileList = getFileList(fileEntry, alDetails, subFiles);
+			ArrayList<FileEntry> fileList = getFileList(alDetails, subFiles);
 			
 			String[] dataFileList = new String[fileList.size()];
 			String fileNameString="";//filename.dat^filename.hea^";
@@ -239,7 +240,7 @@ public class AnalysisManager implements Serializable{
 		return false;	
 	}
 
-	private ArrayList<FileEntry> getFileList(FileEntry fileEntry, Algorithm algorithm, List<FileEntry> subFiles) {
+	private ArrayList<FileEntry> getFileList(Algorithm algorithm, List<FileEntry> subFiles) {
 		ArrayList<FileEntry> retFiles = new ArrayList<FileEntry>();
 		String needExtentions = "";
 		
