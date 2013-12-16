@@ -19,6 +19,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
+
 import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.model.PhysionetMethods;
 import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
@@ -80,8 +82,10 @@ public class AlgorithmList implements Serializable{
 			
 			for(int i = 0; i < algorithmNodes.getLength(); i++){
 				Algorithm algorithm = new Algorithm();
-				
+				boolean noShow = false;
 				Node node = algorithmNodes.item(i);
+				
+				boolean hasWFDBAnnotationOutput = false;
 				
 				for(int s = 0; s < node.getChildNodes().getLength(); s++){
 					Node childNode = node.getChildNodes().item(s);
@@ -89,6 +93,21 @@ public class AlgorithmList implements Serializable{
 					if(childNode.getNodeName().equals("sDisplayShortName")){
 						algorithm.setsDisplayShortName(getNodeValue(childNode, "sDisplayShortName").trim());
 						algorithm.setType(PhysionetMethods.getMethodByName(algorithm.getsDisplayShortName()));
+						
+						switch (algorithm.getType()) {
+							case ANN2RR:
+							case NGUESS:
+							case PNNLIST:
+							case TACH:
+							case WRSAMP:
+								noShow = true;
+								break;
+							default: break;
+						}
+						
+						if(noShow){
+							break;
+						}
 					}
 					if(childNode.getNodeName().equals("sServiceMethod"))
 						algorithm.setsServiceMethod(getNodeValue(childNode, "sServiceMethod").trim());
@@ -116,6 +135,36 @@ public class AlgorithmList implements Serializable{
 						}
 						algorithm.setaParameters(additionalParametersList);
 					}
+					
+					if (childNode.getNodeName().equals("afOutFileTypes")) {
+						NodeList fileTypeNodes = childNode.getChildNodes();
+						
+						for (int f = 0; f < fileTypeNodes.getLength(); f++) {
+							Node fileTypeNode = fileTypeNodes.item(f);
+							if(fileTypeNode instanceof DeferredElementImpl){
+								
+								for (int g = 0; g < fileTypeNode.getChildNodes().getLength(); g++) {
+									Node n = fileTypeNode.getChildNodes().item(g);
+									if(n instanceof DeferredElementImpl){
+										if("sName".equals(n.getNodeName())){
+											String nameValue = this.getNodeValue(n, "sName");
+											hasWFDBAnnotationOutput = "WFDBqrsAnnotation".equals(nameValue);
+											break;	
+										}
+									}
+								}
+								if(hasWFDBAnnotationOutput){
+									break;
+								}
+							}
+						}
+					}
+					
+					algorithm.setWfdbAnnotationOutput(hasWFDBAnnotationOutput);
+				}
+				
+				if(noShow){
+					continue;
 				}
 				availableAlgorithms.add(algorithm);
 			}
