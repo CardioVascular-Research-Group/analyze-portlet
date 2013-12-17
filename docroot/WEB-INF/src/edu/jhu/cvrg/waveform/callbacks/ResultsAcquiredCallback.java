@@ -47,10 +47,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import edu.jhu.cvrg.waveform.model.AnnotationData;
+import edu.jhu.cvrg.dbapi.factory.exists.AnnotationUtility;
+import edu.jhu.cvrg.dbapi.factory.exists.model.AnnotationData;
 import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
 import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
-import edu.jhu.cvrg.waveform.utility.AnnotationUtility;
 import edu.jhu.cvrg.waveform.utility.FTPUtility;
 import edu.jhu.cvrg.waveform.utility.ProgressNotification;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
