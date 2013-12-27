@@ -71,8 +71,6 @@ public class AnalysisThread extends Thread{
 	@Override
 	public void run() {
 		
-		
-		//TODO [VILARDO] ADD THE RESULTS ACQUIRED CALLBACK HERE
 		OMElement jobResult = WebServiceUtility.callWebService(map,map.get("method"),map.get("serviceName"), map.get("URL"), null, null);
 		
 		Map<String, OMElement> params = WebServiceUtility.extractParams(jobResult);
