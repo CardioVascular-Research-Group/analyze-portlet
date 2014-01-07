@@ -121,7 +121,7 @@ public class AnalysisThread extends Thread{
 				this.createTempFiles(jobId, originFiles, filesId);
 				List<String[]> result = execute_rdann(headerFileName, annotation);
 				result = this.changePhysioBankToOntology(result);
-				this.storeAnnotationList(result, documentRecordId);
+				this.storeAnnotationList(result, documentRecordId, jobId);
 				
 			} catch (PortalException e) {
 				e.printStackTrace();
@@ -227,6 +227,7 @@ public class AnalysisThread extends Thread{
 			if(AnalysisThread.isAnotationFile(file.getTitle())){
 				wfdbFiles.add(file);
 				annotation = file.getExtension();
+				
 				break;
 			}
 		}
@@ -235,7 +236,16 @@ public class AnalysisThread extends Thread{
 			
 			File targetDirectory = new File(tempPath);
 			
-			File targetFile = new File(tempPath + liferayFile.getTitle());
+			String targetFileName = tempPath + liferayFile.getTitle();
+			if(liferayFile.getExtension().equals(annotation)){
+				String replacement = '.'+liferayFile.getExtension();
+				String target = ("_"+jobId+replacement);
+						
+				targetFileName = targetFileName.replace(target, replacement);
+			}
+			
+			
+			File targetFile = new File(targetFileName);
 			
 			try {
 				targetDirectory.mkdirs();
@@ -292,9 +302,10 @@ public class AnalysisThread extends Thread{
 	 * Data are stored in database using Connection.storeLeadAnnotationNode().
 	 * 
 	 * @param alistAnnotation - output of execute_rdann() or changePhysioBankToOntology()
+	 * @param jobId 
 	 * @return true if all stored successfully
 	 */	 
-	private void storeAnnotationList(List<String[]> alistAnnotation, long recordId){
+	private void storeAnnotationList(List<String[]> alistAnnotation, long recordId, Long jobId){
 		//	 * Required values that need to be filled in are:
 		//	 * 
 		//	 * created by (x) - the source of this annotation (whether it came from an algorithm or was entered manually)
@@ -327,6 +338,8 @@ public class AnalysisThread extends Thread{
 																		 null/*bioportalRef*/, iLeadIndex, null/*unitMeasurement*/, null/*description*/,sFullAnnotation, Calendar.getInstance(), dMilliSec, dMicroVolt,
 																		 0.0, 0.0, null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
 	
+					annotationToInsert.setAnalysisJobId(jobId);
+					
 					// Inserting save to XML database
 					toPersist.add(annotationToInsert);
 					
