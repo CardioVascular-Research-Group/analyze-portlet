@@ -10,15 +10,15 @@
 	<h:head />
 	<h:body>
 
-	<f:event type="preRenderView" listener="#{analyzeBacking.init}" />
-
 	<h:panelGroup id="mainGroup" layout="block" styleClass="backgroundofContent">
 		<h:form id="formAnalyze">
+			<p:messages id="messages_prime" showSummary="true" showDetail="true" autoUpdate="true" closable="true" escape="false" />
+		
 			<p:layout id="layoutAnalyze" style="width:100%;height:600px" >
 		
-				<p:layoutUnit position="west" header="Click folders or files to be Analyzed (Ctrl + Click to un-select)" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
-					<h:panelGroup layout="block" id="analyzeTreeHolder"	>
-	
+				<p:layoutUnit styleClass="westpanel" position="west" header="Click folders or files to be Analyzed (Ctrl + Click to un-select)" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
+
+					<h:panelGroup layout="block" id="analyzeTreeHolder"	style="height:100%;overflow:auto">
 						<p:tree id="docTree" 
 							dynamic="true"
 							selection="#{analyzeBacking.fileTree.selectedNode}"
@@ -35,15 +35,16 @@
 								<h:outputText value="#{node}"/>
 							</p:treeNode>
 						</p:tree>
-		
+					</h:panelGroup>
+					<div class="nav">
 						<p:commandButton id="btnDisplay"
 							value="Click to Move Files To Analysis"
 							styleClass="displayButton"
 							update="availableStudy"
 							actionListener="#{analyzeBacking.displaySelectedMultiple}"
 							icon="ui-icon-disk"/>
-		
-					</h:panelGroup>
+					</div>
+					
 				</p:layoutUnit>
 			
 				<p:layoutUnit position="center" header="Files to be Analyzed" >		
@@ -68,44 +69,26 @@
 						<p:column headerText="File Date" >
 							<h:outputText value="#{studyHolder.content.createDate}" />
 						</p:column>
-	
-						<f:facet name="footer">
-							<p:commandButton value="Start Analysis" 
-								update="displayStart"
-								icon="ui-icon-play"
-								action="#{analyzeBacking.startAnalysis}"/>
-	
-							<p:dialog widgetVar="dlg" onclose="pbAjax.cancel()">
-								<h:outputText value="Analysis Complete." />
-								<f:verbatim><br /></f:verbatim>
-								<p:dataList id="displayStart"
-									value="#{analyzeBacking.selectedAlgorithms}" 
-									var="study"
-									rows="4">
-								</p:dataList>
-	
-								<p:dataList id="displayMultiStart"
-									value="#{analyzeBacking.selectedStudyEntries}"
-									var="studyHolder" 
-									rows="4">
-								</p:dataList>
-	
-								<h:outputText value="The files are available in Download Files." />
-							</p:dialog>
-						</f:facet>
 					</p:dataTable>
+					<div style="text-align: center;" class="ui-widget-header ui-corner-all">
+						<p:commandButton value="Start Analysis" 
+							icon="ui-icon-play"
+							update="availableStudy, availableAlgorithmTable"
+							action="#{analyzeBacking.startAnalysis}"/>
+					</div>
+					
 						
 				</p:layoutUnit>
 				
 				<p:layoutUnit position="south" size="300" header="Available Algorithms" resizable="true" collapsible="true">
 					<p:dataTable id="availableAlgorithmTable"
 						var="algorithm"
-						value="#{algorithmList.availableAlgorithms}"
+						value="#{analyzeBacking.algorithmList.availableAlgorithms}"
 						rowKey="#{algorithm.shortName}"
 						selection="#{analyzeBacking.selectedAlgorithms}">
 						
-						<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update=":formAnalyze"/>  
-		      				<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update=":formAnalyze"/>  
+						<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update="availableAlgorithmTable"/>  
+		      			<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update="availableAlgorithmTable"/>  
 								
 						<p:column selectionMode="multiple" style="width:2%"/>
 						

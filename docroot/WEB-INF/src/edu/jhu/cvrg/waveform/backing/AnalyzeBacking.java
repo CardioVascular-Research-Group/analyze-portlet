@@ -20,9 +20,11 @@ package edu.jhu.cvrg.waveform.backing;
  */
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
+import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.ViewScoped;
 import javax.faces.event.ActionEvent;
 
@@ -33,10 +35,8 @@ import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
 import org.primefaces.model.TreeNode;
 
-import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.model.User;
 
-import edu.jhu.cvrg.dbapi.factory.exists.model.StudyEntry;
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.model.FileTreeNode;
@@ -49,18 +49,18 @@ public class AnalyzeBacking implements Serializable {
 
 	private static final long serialVersionUID = -4006126553152259063L;
 
-	private StudyEntry[] selectedStudyEntries;
 	private Algorithm[] selectedAlgorithms;
 	private ArrayList<FileTreeNode> tableList;
 
-	private AnalysisManager analysisManager = new AnalysisManager(true);
 	private LocalFileTree fileTree;
 	private User userModel;
-	protected static org.apache.log4j.Logger logger = Logger.getLogger(AnalyzeBacking.class);
+	protected static Logger logger = Logger.getLogger(AnalyzeBacking.class);
 	
-	@ManagedProperty("#{algorithmList}")
 	private AlgorithmList algorithmList;
+	
+	private List<FacesMessage> messages;
 
+	@PostConstruct
 	public void init() {
 		userModel = ResourceUtility.getCurrentUser();
 		if(fileTree == null){
@@ -69,22 +69,32 @@ public class AnalyzeBacking implements Serializable {
 		if(algorithmList == null){
 			algorithmList = new AlgorithmList();
 		}
+		messages = new ArrayList<FacesMessage>();
 	}
 
 	public void startAnalysis() {
+		messages.clear();
 
-		if(tableList.isEmpty()){
+		if(tableList == null || tableList.isEmpty()){
 			logger.info("No files selected.  List is empty.");
-			return;
+			messages.add(new FacesMessage(FacesMessage.SEVERITY_WARN, "Analysis Error" , "No file selected."));
 		}
 		
-		if(selectedAlgorithms == null){
+		if(selectedAlgorithms == null || selectedAlgorithms.length == 0){
 			logger.info("Algorithms selected is null.");
-			return;
+			messages.add(new FacesMessage(FacesMessage.SEVERITY_WARN, "Analysis Error" , "No algorithm(s) selected."));
 		}
 		
-		
-		analysisManager.performAnalysis(tableList,  userModel.getUserId(), selectedAlgorithms);
+		if(messages == null || messages.size() == 0){
+			AnalysisManager analysisManager = new AnalysisManager();
+			analysisManager.performAnalysis(tableList,  userModel.getUserId(), selectedAlgorithms);
+			
+			tableList.clear();
+			selectedAlgorithms = null;
+			ResourceUtility.showMessages("Analysis Completed", messages);
+		}else{
+			ResourceUtility.showMessages("WARNING", messages);
+		}
 		
 	}
 
@@ -143,14 +153,6 @@ public class AnalyzeBacking implements Serializable {
 
 	public void setSelectedAlgorithms(Algorithm[] selectedAlgorithms) {
 		this.selectedAlgorithms = selectedAlgorithms;
-	}
-
-	public StudyEntry[] getSelectedStudyEntries() {
-		return selectedStudyEntries;
-	}
-
-	public void setSelectedStudyEntries(StudyEntry[] selectedStudyEntries) {
-		this.selectedStudyEntries = selectedStudyEntries;
 	}
 
 	public AlgorithmList getAlgorithmList() {

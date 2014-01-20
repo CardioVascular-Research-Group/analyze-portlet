@@ -75,7 +75,7 @@ public class AnalysisThread extends Thread{
 		
 		Map<String, OMElement> params = WebServiceUtility.extractParams(jobResult);
 		
-		if(params != null){
+		if(params != null && params.size() > 0){
 			int fileCount = Integer.valueOf(params.get("filecount").getText());
 			OMElement fileList = params.get("fileList");
 			

@@ -52,3 +52,17 @@ font-weight:800;
 font-color:#000000!important;
 
 }
+
+
+div.westpanel div.ui-widget-content{
+	overflow: hidden!important;	
+}
+
+div.westpanel div.ui-widget-content .nav{
+  	margin-right: 18px;
+    position: relative;
+    right: -143px;
+    text-align: right;
+    top: -30px;
+    width: 218px;
+}

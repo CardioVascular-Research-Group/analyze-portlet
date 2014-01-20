@@ -34,15 +34,12 @@ import org.apache.log4j.Logger;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 
 import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.model.FileTreeNode;
-import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
-import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
@@ -50,33 +47,7 @@ public class AnalysisManager implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	static org.apache.log4j.Logger logger = Logger.getLogger(AnalysisManager.class);
-
-	private boolean verbose = false;
-	private AnalysisInProgress aIP;
-	private String MISSING_VALUE = "0";
-
-	public AnalysisManager(boolean verbose){	
-		
-		String dbUser = ResourceUtility.getDbUser();
-		String dbPassword = ResourceUtility.getDbPassword();
-		String dbUri = ResourceUtility.getDbURI();
-		String dbDriver = ResourceUtility.getDbDriver();
-		String dbMainDatabase = ResourceUtility.getDbMainDatabase();
-		
-		if(dbUser.equals(MISSING_VALUE) || 
-				dbPassword.equals(MISSING_VALUE) || 
-				dbUri.equals(MISSING_VALUE) || 
-				dbDriver.equals(MISSING_VALUE) ||
-				dbMainDatabase.equals(MISSING_VALUE)){
-			
-			logger.error("Missing one or more configuration values for the database.");
-			return;	
-		}
-		
-		this.verbose = verbose;
-		aIP = new AnalysisInProgress();
-	}
-
+	
 	public boolean performAnalysis(List<FileTreeNode> selectedNodes, long userId, Algorithm[] selectedAlgorithms ){
 		
 		try {
@@ -162,84 +133,6 @@ public class AnalysisManager implements Serializable{
 		return false;
 	}
 	
-	/** Step 0
-	 * The initialization of an analysis Job. Creates an entry in the Jobs-in-Flight database, 
-	 * then calls step 1A, to transfer the data files.
-	 * 
-	 */
-	public boolean performAnalysis(FileEntry fileEntry, String userId, Algorithm alDetails ){
-
-		Folder folder = fileEntry.getFolder();
-		
-		
-		this.aIP.setUserId(userId);
-		this.aIP.setSubjectId(folder.getName());
-		this.aIP.setServiceName( alDetails.getsServiceName());
-		this.aIP.setWebServiceMethod(alDetails.getsServiceMethod());
-		this.aIP.setDatasetName(folder.getName());
-		this.aIP.setAnalysisServiceURL(ResourceUtility.getAnalysisServiceURL());		
-		
-		try {
-			List<FileEntry> subFiles = DLAppLocalServiceUtil.getFileEntries(ResourceUtility.getCurrentGroupId(), fileEntry.getFolderId());
-		
-			ArrayList<FileEntry> fileList = getFileList(alDetails, subFiles);
-			
-			String[] dataFileList = new String[fileList.size()];
-			String fileNameString="";//filename.dat^filename.hea^";
-			LinkedHashMap<String, FileEntry> filesMap = new LinkedHashMap<String, FileEntry>();
-			for (int i = 0; i < fileList.size(); i++) {
-				FileEntry f = fileList.get(i);
-				dataFileList[i] = f.getTitle();
-				fileNameString += f.getTitle() + "^";
-				filesMap.put(f.getTitle(), f);
-			}
-			
-			this.aIP.setDataFileList(dataFileList);
-			
-			//String sJobID = anUtil.createAnalysisJob(aIP, alDetails);
-			//this.aIP.setJobID(sJobID);
-			this.aIP.setJobID("TEST");
-			
-			LinkedHashMap<String, Object> parameterMap = new LinkedHashMap<String, Object>();
-			
-			LinkedHashMap<String, String> parameterlistMap = new LinkedHashMap<String, String>();
-			
-			AdditionalParameters[] commandParameters =  aIP.getaParameterList();
-			int commandParametersCount = 0;
-			if(commandParameters != null){
-				for(AdditionalParameters parameter : commandParameters){
-					parameterlistMap.put(parameter.getsParameterFlag(), parameter.getsParameterUserSpecifiedValue());
-				}
-				commandParametersCount = commandParameters.length;
-			}
-			
-			
-			parameterMap.put("jobID", aIP.getJobID());
-			parameterMap.put("userID", aIP.getUserId());
-			parameterMap.put("folderID", fileEntry.getFolderId());
-			parameterMap.put("groupID", fileEntry.getGroupId());
-			
-			parameterMap.put("parameterCount", String.valueOf(commandParametersCount));
-			parameterMap.put("parameterlist", parameterlistMap);
-			
-			parameterMap.put("fileCount", Integer.toString(fileList.size()));
-			parameterMap.put("fileNames", fileNameString); // caret delimited list for backwards compatibility to type1 web services.
-			
-			WebServiceUtility.callWebServiceComplexParam(parameterMap,aIP.getWebServiceMethod(),aIP.getServiceName(),aIP.getAnalysisServiceURL(),null, filesMap);
-		
-			return true;
-			
-		} catch (PortalException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SystemException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		return false;	
-	}
-
 	private ArrayList<FileEntry> getFileList(Algorithm algorithm, List<FileEntry> subFiles) {
 		ArrayList<FileEntry> retFiles = new ArrayList<FileEntry>();
 		String needExtentions = "";
@@ -282,8 +175,7 @@ public class AnalysisManager implements Serializable{
 		parameterMap.put("publicprivatefolder", String.valueOf(isPublic));
 		parameterMap.put("service", ResourceUtility.getDataTransferClass());
 		parameterMap.put("logindatetime", new Long(System.currentTimeMillis()).toString());
-		parameterMap.put("verbose", String.valueOf(verbose));
-
+		
 		omeResult = WebServiceUtility.callWebService(parameterMap, isPublic, ResourceUtility.getConsolidatePrimaryAndDerivedDataMethod(), ResourceUtility.getNodeDataServiceName(), null);
 		return omeResult.getText();
 	}	
