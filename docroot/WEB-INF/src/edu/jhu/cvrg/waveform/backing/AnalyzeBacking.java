@@ -26,6 +26,7 @@ import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.apache.log4j.Logger;
@@ -63,13 +64,15 @@ public class AnalyzeBacking implements Serializable {
 	@PostConstruct
 	public void init() {
 		userModel = ResourceUtility.getCurrentUser();
-		if(fileTree == null){
-			fileTree = new LocalFileTree(userModel.getUserId(), "hea");
+		if(userModel != null){
+			if(fileTree == null){
+				fileTree = new LocalFileTree(userModel.getUserId(), "hea");
+			}
+			if(algorithmList == null){
+				algorithmList = new AlgorithmList();
+			}
+			messages = new ArrayList<FacesMessage>();
 		}
-		if(algorithmList == null){
-			algorithmList = new AlgorithmList();
-		}
-		messages = new ArrayList<FacesMessage>();
 	}
 
 	public void startAnalysis() {
@@ -93,13 +96,17 @@ public class AnalyzeBacking implements Serializable {
 			selectedAlgorithms = null;
 			ResourceUtility.showMessages("Analysis Completed", messages);
 		}else{
-			ResourceUtility.showMessages("WARNING", messages);
+			ResourceUtility.showMessages("Warning", messages);
 		}
 		
 	}
 
 	public void displaySelectedMultiple(ActionEvent event) {
-		this.setTableList(fileTree.getSelectedFileNodes());
+		if(fileTree.getSelectedFileNodes() != null){
+			this.setTableList(fileTree.getSelectedFileNodes());	
+		}else{
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning", "<br />Please select a file."));
+		}
 	}
 
 	public void folderSelect(NodeSelectEvent event){
@@ -161,5 +168,9 @@ public class AnalyzeBacking implements Serializable {
 
 	public void setAlgorithmList(AlgorithmList algorithmList) {
 		this.algorithmList = algorithmList;
+	}
+	
+	public User getUser(){
+		return userModel;
 	}
 }

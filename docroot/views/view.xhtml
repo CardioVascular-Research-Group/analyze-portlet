@@ -12,96 +12,107 @@
 
 	<h:panelGroup id="mainGroup" layout="block" styleClass="backgroundofContent">
 		<h:form id="formAnalyze">
-			<p:messages id="messages_prime" showSummary="true" showDetail="true" autoUpdate="true" closable="true" escape="false" />
 		
-			<p:layout id="layoutAnalyze" style="width:100%;height:600px" >
-		
-				<p:layoutUnit styleClass="westpanel" position="west" header="Click folders or files to be Analyzed (Ctrl + Click to un-select)" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
-
-					<h:panelGroup layout="block" id="analyzeTreeHolder"	style="height:100%;overflow:auto">
-						<p:tree id="docTree" 
-							dynamic="true"
-							selection="#{analyzeBacking.fileTree.selectedNode}"
-							selectionMode="single"
-							value="#{analyzeBacking.fileTree.treeRoot}" 
-							var="node"
-							style="width:100%">
-							
-							<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
-								<h:outputText value="#{node}" />
-							</p:treeNode>
-							
-							<p:treeNode type="document" icon="ui-icon ui-icon-document">
-								<h:outputText value="#{node}"/>
-							</p:treeNode>
-						</p:tree>
-					</h:panelGroup>
-					<div class="nav">
-						<p:commandButton id="btnDisplay"
-							value="Click to Move Files To Analysis"
-							styleClass="displayButton"
-							update="availableStudy"
-							actionListener="#{analyzeBacking.displaySelectedMultiple}"
-							icon="ui-icon-disk"/>
-					</div>
-					
-				</p:layoutUnit>
+			<h:panelGroup rendered="#{analyzeBacking.user != null}">
 			
-				<p:layoutUnit position="center" header="Files to be Analyzed" >		
-					<p:dataTable id="availableStudy"
-						var="studyHolder"
-						styleClass="analyzeDataTable"
-						sortMode="multiple"
-						rowKey="#{studyHolder.subjectId}"
-						value="#{analyzeBacking.tableList}"
-						resizableColumns="true"
-						paginatorPosition="top"
-						style="width:100%">
+				<p:messages id="messages_prime" showSummary="true" showDetail="true" autoUpdate="true" closable="true" escape="false" />
+			
+				<p:layout id="layoutAnalyze" style="width:100%;height:600px" >
+			
+					<p:layoutUnit styleClass="westpanel" position="west" header="Click folders or files to be Analyzed (Ctrl + Click to un-select)" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
 	
-						<p:column headerText="Subject ID" >
-							<h:outputText value="#{studyHolder.content.title}" />
-						</p:column>
-	
-						<p:column headerText="File Format">
-							<h:outputText value="#{studyHolder.content.extension}" />
-						</p:column>
-	
-						<p:column headerText="File Date" >
-							<h:outputText value="#{studyHolder.content.createDate}" />
-						</p:column>
-					</p:dataTable>
-					<div style="text-align: center;" class="ui-widget-header ui-corner-all">
-						<p:commandButton value="Start Analysis" 
-							icon="ui-icon-play"
-							update="availableStudy, availableAlgorithmTable"
-							action="#{analyzeBacking.startAnalysis}"/>
-					</div>
-					
-						
-				</p:layoutUnit>
-				
-				<p:layoutUnit position="south" size="300" header="Available Algorithms" resizable="true" collapsible="true">
-					<p:dataTable id="availableAlgorithmTable"
-						var="algorithm"
-						value="#{analyzeBacking.algorithmList.availableAlgorithms}"
-						rowKey="#{algorithm.shortName}"
-						selection="#{analyzeBacking.selectedAlgorithms}">
-						
-						<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update="availableAlgorithmTable"/>  
-		      			<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update="availableAlgorithmTable"/>  
+						<h:panelGroup layout="block" id="analyzeTreeHolder"	style="height:100%;overflow:auto">
+							<p:tree id="docTree" 
+								dynamic="true"
+								selection="#{analyzeBacking.fileTree.selectedNode}"
+								selectionMode="single"
+								value="#{analyzeBacking.fileTree.treeRoot}" 
+								var="node"
+								style="width:100%">
 								
-						<p:column selectionMode="multiple" style="width:2%"/>
+								<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
+									<h:outputText value="#{node}" />
+								</p:treeNode>
+								
+								<p:treeNode type="document" icon="ui-icon ui-icon-document">
+									<h:outputText value="#{node}"/>
+								</p:treeNode>
+							</p:tree>
+						</h:panelGroup>
+						<div class="nav">
+							<p:commandButton id="btnDisplay"
+								value="Click to Move Files To Analysis"
+								styleClass="displayButton"
+								update="availableStudy"
+								actionListener="#{analyzeBacking.displaySelectedMultiple}"
+								icon="ui-icon-disk"/>
+						</div>
 						
-						<p:column headerText="Name" style="width:25%">  
-		          				<h:outputLabel value="#{algorithm.shortName}"/> 
-		      				</p:column> 
+					</p:layoutUnit>
+				
+					<p:layoutUnit position="center" header="Files to be Analyzed" >		
+						<p:dataTable id="availableStudy"
+							var="studyHolder"
+							styleClass="analyzeDataTable"
+							sortMode="multiple"
+							rowKey="#{studyHolder.subjectId}"
+							value="#{analyzeBacking.tableList}"
+							resizableColumns="true"
+							paginatorPosition="top"
+							style="width:100%">
+		
+							<p:column headerText="Subject ID" >
+								<h:outputText value="#{studyHolder.content.title}" />
+							</p:column>
+		
+							<p:column headerText="File Format">
+								<h:outputText value="#{studyHolder.content.extension}" />
+							</p:column>
+		
+							<p:column headerText="File Date" >
+								<h:outputText value="#{studyHolder.content.createDate}" />
+							</p:column>
+						</p:dataTable>
+						<div style="text-align: center;" class="ui-widget-header ui-corner-all">
+							<p:commandButton value="Start Analysis" 
+								icon="ui-icon-play"
+								update="availableStudy, availableAlgorithmTable"
+								action="#{analyzeBacking.startAnalysis}"/>
+						</div>
+						
 							
-						<p:column headerText="Description" style="width:73%">  
-		          				<h:outputLabel value="#{algorithm.longDescription}"/>  
-		      				</p:column> 	
-					</p:dataTable>
-				</p:layoutUnit>
-			</p:layout>
+					</p:layoutUnit>
+					
+					<p:layoutUnit position="south" size="300" header="Available Algorithms" resizable="true" collapsible="true">
+						<p:dataTable id="availableAlgorithmTable"
+							var="algorithm"
+							value="#{analyzeBacking.algorithmList.availableAlgorithms}"
+							rowKey="#{algorithm.shortName}"
+							selection="#{analyzeBacking.selectedAlgorithms}">
+							
+							<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update="availableAlgorithmTable"/>  
+			      			<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update="availableAlgorithmTable"/>  
+									
+							<p:column selectionMode="multiple" style="width:2%"/>
+							
+							<p:column headerText="Name" style="width:25%">  
+			          				<h:outputLabel value="#{algorithm.shortName}"/> 
+			      				</p:column> 
+								
+							<p:column headerText="Description" style="width:73%">  
+			          				<h:outputLabel value="#{algorithm.longDescription}"/>  
+			      				</p:column> 	
+						</p:dataTable>
+					</p:layoutUnit>
+				</p:layout>
+			</h:panelGroup>
+			
+			<h:panelGroup rendered="#{analyzeBacking.user == null}">
+				<div class="signin">
+					Please <a href="/c/portal/login" rel="nofollow">Sign In</a>
+				</div>
+			</h:panelGroup>
+			
 		</h:form>
 	</h:panelGroup>
 

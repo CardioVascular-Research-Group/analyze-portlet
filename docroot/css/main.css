@@ -66,3 +66,7 @@ div.westpanel div.ui-widget-content .nav{
     top: -30px;
     width: 218px;
 }
+
+div.signin{
+	text-align: center;
+}
