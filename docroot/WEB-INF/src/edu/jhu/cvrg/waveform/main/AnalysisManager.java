@@ -46,18 +46,24 @@ import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 public class AnalysisManager implements Serializable{
 
 	private static final long serialVersionUID = 1L;
-	static org.apache.log4j.Logger logger = Logger.getLogger(AnalysisManager.class);
+	static Logger logger = Logger.getLogger(AnalysisManager.class);
+	
+	private Set<AnalysisThread> threadSet;
+	private int total;
 	
 	public boolean performAnalysis(List<FileTreeNode> selectedNodes, long userId, Algorithm[] selectedAlgorithms ){
 		
 		try {
+			this.total = 0;
 			
 			Connection dbUtility = ConnectionFactory.createConnection();
 			
-			Set<AnalysisThread> threadMap = new HashSet<AnalysisThread>();
+			threadSet = new HashSet<AnalysisThread>();
 			
 			Map<String, Object> jobs = new HashMap<String, Object>();
 			Map<String, FileEntry> filesMap = new HashMap<String, FileEntry>();
+			
+			this.total = (selectedNodes.size()*selectedAlgorithms.length);
 			
 			for (FileTreeNode node : selectedNodes) {
 				
@@ -103,7 +109,7 @@ public class AnalysisManager implements Serializable{
 					
 					AnalysisThread t = new AnalysisThread(parameterMap, node.getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility);
 					
-					threadMap.add(t);
+					threadSet.add(t);
 					
 					jobs.put(jobID, fileNameString);
 				}
@@ -118,7 +124,7 @@ public class AnalysisManager implements Serializable{
 			OMElement status  = (OMElement)fileRet.getChildren().next();
 			
 			if(status != null  && Boolean.valueOf(status.getText())){
-				for (AnalysisThread thread : threadMap) {
+				for (AnalysisThread thread : threadSet) {
 					thread.start();	
 				}
 			}
@@ -180,4 +186,38 @@ public class AnalysisManager implements Serializable{
 		return omeResult.getText();
 	}	
 
+	public int getTotal() {
+		return total;
+	}
+
+	public int getDone() {
+		int done = 0;
+		if(threadSet != null){
+			for (AnalysisThread t : threadSet) {
+				if(!t.isAlive()){
+					done++;
+				}
+			}
+		}
+		return done;
+	}
+	
+	public List<String> getMessages() {
+		List<String> messages = null;
+		if(threadSet != null){
+			for (AnalysisThread t : threadSet) {
+				if(!t.isAlive()){
+					if(t.hasError()){
+						if(messages == null){
+							messages = new ArrayList<String>();
+						}
+						
+						messages.add(t.getErrorMessage());
+					}
+				}
+			}
+		}
+		return messages;
+	}
+	
 }

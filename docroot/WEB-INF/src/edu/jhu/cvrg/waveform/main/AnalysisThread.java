@@ -18,8 +18,6 @@ import javax.xml.namespace.QName;
 import org.apache.axiom.om.OMElement;
 import org.apache.log4j.Logger;
 
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.model.User;
 import com.liferay.portal.security.auth.PrincipalThreadLocal;
@@ -31,6 +29,7 @@ import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 
 import edu.jhu.cvrg.dbapi.dto.AnnotationDTO;
 import edu.jhu.cvrg.dbapi.factory.Connection;
+import edu.jhu.cvrg.waveform.exception.AnalyzeFailureException;
 import edu.jhu.cvrg.waveform.utility.ServerUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
@@ -45,8 +44,9 @@ public class AnalysisThread extends Thread{
 	
 	private String headerFileName;
 	private String annotation;
-	private ServerUtility util = new ServerUtility(false);
+	private ServerUtility util = null;
 	private Logger log = Logger.getLogger(AnalysisThread.class);
+	private String errorMessage;
 	
 	public AnalysisThread(Map<String, String> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility) {
 		super(params.get("jobID"));
@@ -56,6 +56,7 @@ public class AnalysisThread extends Thread{
 		this.hasWfdbAnnotationOutput = hasWfdbAnnotationOutput;
 		this.originFiles = originFiles;
 		this.userId = userId;
+		this.util = new ServerUtility(false);
 	}
 	
 	public AnalysisThread(Map<String, String> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility, ThreadGroup threadGroup) {
@@ -66,38 +67,47 @@ public class AnalysisThread extends Thread{
 		this.hasWfdbAnnotationOutput = hasWfdbAnnotationOutput;
 		this.originFiles = originFiles;
 		this.userId = userId;
+		this.util = new ServerUtility(false);
 	}
 	
 	@Override
 	public void run() {
 		
-		OMElement jobResult = WebServiceUtility.callWebService(map,map.get("method"),map.get("serviceName"), map.get("URL"), null, null);
-		
-		Map<String, OMElement> params = WebServiceUtility.extractParams(jobResult);
-		
-		if(params != null && params.size() > 0){
-			int fileCount = Integer.valueOf(params.get("filecount").getText());
-			OMElement fileList = params.get("fileList");
+		try{
+			OMElement jobResult = WebServiceUtility.callWebService(map,map.get("method"),map.get("serviceName"), map.get("URL"), null, null);
 			
-			long[] filesId = new long[fileCount];
+			Map<String, OMElement> params = WebServiceUtility.extractParams(jobResult);
 			
-			int i = 0;
-			for (Iterator<OMElement> iterator = fileList.getChildElements(); iterator.hasNext();) {
-				OMElement file = iterator.next();
+			if(params != null && params.size() > 0){
+				int fileCount = Integer.valueOf(params.get("filecount").getText());
+				OMElement fileList = params.get("fileList");
 				
-				String fileIdStr = AnalysisThread.getElementByName(file, "FileId").getText();
+				long[] filesId = new long[fileCount];
 				
-				Long fileId = null; 
-				if(fileIdStr != null && fileIdStr.length() > 0){
-					fileId = Long.valueOf(fileIdStr);
-					filesId[i] = fileId;
-					i++;
+				int i = 0;
+				for (Iterator<OMElement> iterator = fileList.getChildElements(); iterator.hasNext();) {
+					OMElement file = iterator.next();
+					
+					String fileIdStr = AnalysisThread.getElementByName(file, "FileId").getText();
+					
+					Long fileId = null; 
+					if(fileIdStr != null && fileIdStr.length() > 0){
+						fileId = Long.valueOf(fileIdStr);
+						filesId[i] = fileId;
+						i++;
+					}
 				}
+				
+				Long jobId = Long.valueOf(map.get("jobID").replaceAll("\\D", ""));
+				
+				recordAnalysisResults(documentRecordId, jobId, filesId);
 			}
-			
-			Long jobId = Long.valueOf(map.get("jobID").replaceAll("\\D", ""));
-			
-			recordAnalysisResults(documentRecordId, jobId, filesId);
+		}catch (AnalyzeFailureException e){
+			errorMessage = e.getMessage();
+			ServerUtility.logStackTrace(e, log);
+		}catch (Exception e){
+			errorMessage = "Fatal error. " + e.getMessage();
+			ServerUtility.logStackTrace(e, log);
 		}
 	
 	}
@@ -106,10 +116,14 @@ public class AnalysisThread extends Thread{
 		return parent.getFirstChildWithName(new QName(parent.getNamespace().getNamespaceURI(), tagName, parent.getNamespace().getPrefix()));
 	}
 	
-	private void recordAnalysisResults(Long documentRecordId, Long jobId, long[] filesId) {
+	private void recordAnalysisResults(Long documentRecordId, Long jobId, long[] filesId) throws AnalyzeFailureException {
 		
 		if(filesId != null){
-			dbUtility.storeFilesInfo(documentRecordId, filesId, jobId);
+			boolean status = dbUtility.storeFilesInfo(documentRecordId, filesId, jobId);
+			
+			if(!status){
+				throw new AnalyzeFailureException("Failed on FileInfo database persistence");
+			}
 		}
 		
 		if(hasWfdbAnnotationOutput){
@@ -123,10 +137,6 @@ public class AnalysisThread extends Thread{
 				result = this.changePhysioBankToOntology(result);
 				this.storeAnnotationList(result, documentRecordId, jobId);
 				
-			} catch (PortalException e) {
-				e.printStackTrace();
-			} catch (SystemException e) {
-				e.printStackTrace();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -134,14 +144,15 @@ public class AnalysisThread extends Thread{
 	}
 
 	
-	private void initializeLiferayPermissionChecker(long userId) throws Exception {
-		PrincipalThreadLocal.setName(userId);
-		
-        User user = UserLocalServiceUtil.getUserById(userId);
-
-        PermissionChecker permissionChecker = PermissionCheckerFactoryUtil.create(user);
-
-        PermissionThreadLocal.setPermissionChecker(permissionChecker);
+	private void initializeLiferayPermissionChecker(long userId) throws AnalyzeFailureException {
+		try{
+			PrincipalThreadLocal.setName(userId);
+			User user = UserLocalServiceUtil.getUserById(userId);
+	        PermissionChecker permissionChecker = PermissionCheckerFactoryUtil.create(user);
+	        PermissionThreadLocal.setPermissionChecker(permissionChecker);
+		}catch (Exception e){
+			throw new AnalyzeFailureException("Fail on premission checker initialization. [userId="+userId+"]", e);
+		}
 		
 	}
 
@@ -175,8 +186,8 @@ public class AnalysisThread extends Thread{
 	 * [6] - Num, context-dependent attribute (see the documentation for each Physionet database for details), it's always been zero on our sample data.<BR>
 	 * [7] - Aux, a free text string, it's always been blank on our sample data.<BR>
 	**/
-	private List<String[]> execute_rdann(String headerFileName, String annotation){
-		log.info("execute_rdann(), only works on Linux with the WFBD library installed.");
+	private List<String[]> execute_rdann(String headerFileName, String annotation) throws AnalyzeFailureException{
+		
 		List<String[]> alistAnnotation = new ArrayList<String[]>();
 		
 		String[] asEnvVar = new String[0];   
@@ -202,7 +213,7 @@ public class AnalysisThread extends Thread{
 			}
 			log.debug("--- execute_rdann() found " + lineNum + " annotations");
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new AnalyzeFailureException("Fail on RDANN execution. [recordname="+sRecord+"]", e);
 		}finally{
 			File jobFolder = new File(headerFileName).getParentFile();
 			File[] files = jobFolder.listFiles();
@@ -216,20 +227,23 @@ public class AnalysisThread extends Thread{
 		return alistAnnotation;
 	}
 	
-	private void createTempFiles(long jobId, List<FileEntry> wfdbFiles, long[] filesId ) throws PortalException, SystemException {
+	private void createTempFiles(long jobId, List<FileEntry> wfdbFiles, long[] filesId ) throws AnalyzeFailureException {
 		
 		String tempPath = System.getProperty("java.io.tmpdir") + File.separator + "waveform/a" + File.separator + jobId + File.separator;
 		
-		
-		for (long fileId : filesId) {
-			FileEntry file = DLAppLocalServiceUtil.getFileEntry(fileId);
-			
-			if(AnalysisThread.isAnotationFile(file.getTitle())){
-				wfdbFiles.add(file);
-				annotation = file.getExtension();
+		try{
+			for (long fileId : filesId) {
+				FileEntry file = DLAppLocalServiceUtil.getFileEntry(fileId);
 				
-				break;
+				if(AnalysisThread.isAnotationFile(file.getTitle())){
+					wfdbFiles.add(file);
+					annotation = file.getExtension();
+					
+					break;
+				}
 			}
+		}catch (Exception e){
+			throw new AnalyzeFailureException("Fail on analysis result file read.", e);
 		}
 		
 		for (FileEntry liferayFile : wfdbFiles) {
@@ -265,8 +279,8 @@ public class AnalysisThread extends Thread{
 				fOutStream.flush();
 				fOutStream.close();
 				
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				throw new AnalyzeFailureException("Fail on temporary file creation.", e);
 			}finally{
 				log.info("File created? " + targetFile.exists());
 			}
@@ -285,7 +299,7 @@ public class AnalysisThread extends Thread{
 	 */
 	private List<String[]> changePhysioBankToOntology(List<String[]>  alistAnnotation){
 		// TODO STUB METHOD-Needs to be fully implemented.
-		System.out.println("- changePhysioBankToOntology() alistAnnotation.size():" + alistAnnotation.size());
+		log.info("- changePhysioBankToOntology() alistAnnotation.size():" + alistAnnotation.size());
 		String sPhysioBankCode="";
 		for(String[] saAnnot : alistAnnotation){
 			sPhysioBankCode = saAnnot[4];
@@ -305,7 +319,7 @@ public class AnalysisThread extends Thread{
 	 * @param jobId 
 	 * @return true if all stored successfully
 	 */	 
-	private void storeAnnotationList(List<String[]> alistAnnotation, long recordId, Long jobId){
+	private void storeAnnotationList(List<String[]> alistAnnotation, long recordId, Long jobId) throws AnalyzeFailureException{
 		//	 * Required values that need to be filled in are:
 		//	 * 
 		//	 * created by (x) - the source of this annotation (whether it came from an algorithm or was entered manually)
@@ -344,12 +358,12 @@ public class AnalysisThread extends Thread{
 					toPersist.add(annotationToInsert);
 					
 				} catch (NumberFormatException e) {
-					e.printStackTrace();
+					throw new AnalyzeFailureException("Error on annotation data read.[dMilliSec="+saAnnot[1]+" | iLeadIndex="+saAnnot[6]+"]", e); 
 				} catch (Exception e){
-					e.printStackTrace();
+					throw new AnalyzeFailureException("Fail on annotation data extraction.", e);
 				}
 			}else{
-				System.out.println("-- ERROR bad annotatation");
+				log.error("-- ERROR bad annotatation");
 			}
 		}
 		
@@ -381,4 +395,13 @@ public class AnalysisThread extends Thread{
 		String tmp = fileName.replaceAll("\\.hea$", "");
 		return !tmp.equals(fileName);
 	}
+	
+	public boolean hasError(){
+		return errorMessage != null;
+	}
+	
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
 }

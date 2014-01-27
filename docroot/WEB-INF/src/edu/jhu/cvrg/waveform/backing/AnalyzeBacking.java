@@ -30,6 +30,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.apache.log4j.Logger;
+import org.primefaces.context.RequestContext;
 import org.primefaces.event.NodeSelectEvent;
 import org.primefaces.event.NodeUnselectEvent;
 import org.primefaces.event.SelectEvent;
@@ -58,7 +59,7 @@ public class AnalyzeBacking implements Serializable {
 	protected static Logger logger = Logger.getLogger(AnalyzeBacking.class);
 	
 	private AlgorithmList algorithmList;
-	
+	private AnalysisManager analysisManager;	
 	private List<FacesMessage> messages;
 
 	@PostConstruct
@@ -89,12 +90,10 @@ public class AnalyzeBacking implements Serializable {
 		}
 		
 		if(messages == null || messages.size() == 0){
-			AnalysisManager analysisManager = new AnalysisManager();
+			analysisManager = new AnalysisManager();
+			
 			analysisManager.performAnalysis(tableList,  userModel.getUserId(), selectedAlgorithms);
 			
-			tableList.clear();
-			selectedAlgorithms = null;
-			ResourceUtility.showMessages("Analysis Completed", messages);
 		}else{
 			ResourceUtility.showMessages("Warning", messages);
 		}
@@ -173,4 +172,35 @@ public class AnalyzeBacking implements Serializable {
 	public User getUser(){
 		return userModel;
 	}
+	
+	
+	public void updateProgressBar() {  
+    	int progress = 0;
+        if(analysisManager.getTotal() > 0){
+        	progress = (100 * analysisManager.getDone())/analysisManager.getTotal();
+        }  
+        
+        if(progress > 100){
+        	progress = 100;
+        }
+        RequestContext context = RequestContext.getCurrentInstance();  
+        context.execute("PF(\'pbClient\').setValue("+progress+");");
+    }  
+  
+    public void onComplete() {
+    	
+    	int failed = 0;
+    	List<String> messages = analysisManager.getMessages();
+    	if(messages != null){
+    		for (String m : messages) {
+				this.messages.add(new FacesMessage(FacesMessage.SEVERITY_ERROR, "Analysis Error", m));
+			}
+    		failed = messages.size();
+    	}
+    	
+    	ResourceUtility.showMessages("Analysis Completed ["+analysisManager.getTotal()+" File(s) - "+failed+" fail(s)]", this.messages);
+		tableList.clear();
+		selectedAlgorithms = null;
+    	this.messages.clear();
+    }
 }

@@ -15,8 +15,6 @@
 		
 			<h:panelGroup rendered="#{analyzeBacking.user != null}">
 			
-				<p:messages id="messages_prime" showSummary="true" showDetail="true" autoUpdate="true" closable="true" escape="false" />
-			
 				<p:layout id="layoutAnalyze" style="width:100%;height:600px" >
 			
 					<p:layoutUnit styleClass="westpanel" position="west" header="Click folders or files to be Analyzed (Ctrl + Click to un-select)" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
@@ -50,7 +48,16 @@
 						
 					</p:layoutUnit>
 				
-					<p:layoutUnit position="center" header="Files to be Analyzed" >		
+					<p:layoutUnit position="center" header="Files to be Analyzed" >
+						
+						<p:progressBar id="progressBarClient" widgetVar="pbClient" style="width:99%" styleClass="animated" labelTemplate="{value}%"/>
+						
+						<p:messages id="messages_prime" showSummary="true" showDetail="true" autoUpdate="true" closable="true" escape="false" />
+						
+						<p:remoteCommand name="updateProgressBar" action="#{analyzeBacking.updateProgressBar}" />
+			    		<p:remoteCommand name="onComplete" action="#{analyzeBacking.onComplete}" update="availableStudy, availableAlgorithmTable"/>
+			    	
+							
 						<p:dataTable id="availableStudy"
 							var="studyHolder"
 							styleClass="analyzeDataTable"
@@ -73,11 +80,12 @@
 								<h:outputText value="#{studyHolder.content.createDate}" />
 							</p:column>
 						</p:dataTable>
+						
 						<div style="text-align: center;" class="ui-widget-header ui-corner-all">
 							<p:commandButton value="Start Analysis" 
 								icon="ui-icon-play"
-								update="availableStudy, availableAlgorithmTable"
-								action="#{analyzeBacking.startAnalysis}"/>
+								action="#{analyzeBacking.startAnalysis}"
+								onclick="cancel();start()"/>
 						</div>
 						
 							
