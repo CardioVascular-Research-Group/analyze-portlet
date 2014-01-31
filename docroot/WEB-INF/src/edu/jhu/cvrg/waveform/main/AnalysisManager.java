@@ -154,6 +154,8 @@ public class AnalysisManager implements Serializable{
 			case RDSAMP:
 			case SIGAAMP:
 			case CHESNOKOV:
+			case SQRS2CSV:
+			case WQRS2CSV:
 				needExtentions = ".hea.dat"; break;
 			case WRSAMP:
 				needExtentions = ".txt"; break;
