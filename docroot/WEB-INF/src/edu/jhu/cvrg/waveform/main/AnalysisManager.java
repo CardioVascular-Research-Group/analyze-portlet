@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.axiom.om.OMElement;
-import org.apache.log4j.Logger;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
@@ -45,8 +44,7 @@ import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
 public class AnalysisManager implements Serializable{
 
-	private static final long serialVersionUID = 1L;
-	static Logger logger = Logger.getLogger(AnalysisManager.class);
+	private static final long serialVersionUID = -6155747608247379918L;
 	
 	private Set<AnalysisThread> threadSet;
 	private int total;

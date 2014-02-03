@@ -28,6 +28,7 @@ import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 public class AlgorithmList implements Serializable{
 	
 	private static final long serialVersionUID = -4006126323152259063L;
+	
 	private List<Algorithm> availableAlgorithms = new ArrayList<Algorithm>();
 
 	public AlgorithmList() {

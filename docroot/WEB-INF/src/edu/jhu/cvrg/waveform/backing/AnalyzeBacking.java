@@ -29,7 +29,6 @@ import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.apache.log4j.Logger;
 import org.primefaces.context.RequestContext;
 import org.primefaces.event.NodeSelectEvent;
 import org.primefaces.event.NodeUnselectEvent;
@@ -47,7 +46,7 @@ import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 
 @ManagedBean(name = "analyzeBacking")
 @ViewScoped
-public class AnalyzeBacking implements Serializable {
+public class AnalyzeBacking extends BackingBean implements Serializable {
 
 	private static final long serialVersionUID = -4006126553152259063L;
 
@@ -56,7 +55,6 @@ public class AnalyzeBacking implements Serializable {
 
 	private LocalFileTree fileTree;
 	private User userModel;
-	protected static Logger logger = Logger.getLogger(AnalyzeBacking.class);
 	
 	private AlgorithmList algorithmList;
 	private AnalysisManager analysisManager;	
@@ -80,12 +78,12 @@ public class AnalyzeBacking implements Serializable {
 		messages.clear();
 
 		if(tableList == null || tableList.isEmpty()){
-			logger.info("No files selected.  List is empty.");
+			this.getLog().info("No files selected.  List is empty.");
 			messages.add(new FacesMessage(FacesMessage.SEVERITY_WARN, "Analysis Error" , "No file selected."));
 		}
 		
 		if(selectedAlgorithms == null || selectedAlgorithms.length == 0){
-			logger.info("Algorithms selected is null.");
+			this.getLog().info("Algorithms selected is null.");
 			messages.add(new FacesMessage(FacesMessage.SEVERITY_WARN, "Analysis Error" , "No algorithm(s) selected."));
 		}
 		
