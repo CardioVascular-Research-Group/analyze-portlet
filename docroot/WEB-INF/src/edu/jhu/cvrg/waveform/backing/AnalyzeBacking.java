@@ -196,7 +196,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
     		failed = messages.size();
     	}
     	
-    	ResourceUtility.showMessages("Analysis Completed ["+analysisManager.getTotal()+" File(s) - "+failed+" fail(s)]", this.messages);
+    	ResourceUtility.showMessages("Analysis Completed ["+analysisManager.getTotal()+" Analysis - "+failed+" fail(s)]", this.messages);
 		tableList.clear();
 		selectedAlgorithms = null;
     	this.messages.clear();
