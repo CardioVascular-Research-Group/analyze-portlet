@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -47,6 +48,8 @@ public class AnalysisThread extends Thread{
 	private ServerUtility util = null;
 	private Logger log = Logger.getLogger(AnalysisThread.class);
 	private String errorMessage;
+	
+	private Map<String, String[]> ontologyCache;
 	
 	public AnalysisThread(Map<String, String> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility) {
 		super(params.get("jobID"));
@@ -127,6 +130,7 @@ public class AnalysisThread extends Thread{
 		}
 		
 		if(hasWfdbAnnotationOutput){
+			ontologyCache = new HashMap<String, String[]>();
 			
 			try {
 				
@@ -136,9 +140,11 @@ public class AnalysisThread extends Thread{
 				List<String[]> result = execute_rdann(headerFileName, annotation);
 				result = this.changePhysioBankToOntology(result);
 				this.storeAnnotationList(result, documentRecordId, jobId);
-				
+			
+			} catch (AnalyzeFailureException e){
+				throw e;
 			} catch (Exception e) {
-				e.printStackTrace();
+				throw new AnalyzeFailureException("Fail on annotation data extraction. [ERROR = "+e.getMessage()+" ]", e);
 			}
 		}
 	}
@@ -344,7 +350,12 @@ public class AnalysisThread extends Thread{
 					int iLeadIndex = Integer.parseInt(saAnnot[6]);
 					double dMicroVolt = lookupVoltage(dMilliSec,iLeadIndex);
 					
-					String[] saOntDetails = WebServiceUtility.lookupOntologyDefinition(sOntologyID); // ECGTermsv1:ECG_000000103
+					String[] saOntDetails = ontologyCache.get(sOntologyID);
+					if(saOntDetails == null){
+						saOntDetails = WebServiceUtility.lookupOntologyDefinition(sOntologyID); // ECGTermsv1:ECG_000000103
+						ontologyCache.put(sOntologyID, saOntDetails);
+					}
+					 
 					String sTermName = saOntDetails[0];
 					String sFullAnnotation=saOntDetails[1];
 
@@ -360,7 +371,7 @@ public class AnalysisThread extends Thread{
 				} catch (NumberFormatException e) {
 					throw new AnalyzeFailureException("Error on annotation data read.[dMilliSec="+saAnnot[1]+" | iLeadIndex="+saAnnot[6]+"]", e); 
 				} catch (Exception e){
-					throw new AnalyzeFailureException("Fail on annotation data extraction.", e);
+					throw new AnalyzeFailureException("Fail on annotation data extraction. [ERROR = "+e.getMessage()+" ]", e);
 				}
 			}else{
 				log.error("-- ERROR bad annotatation");
