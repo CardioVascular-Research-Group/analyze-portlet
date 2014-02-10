@@ -154,6 +154,10 @@ public class AnalysisManager implements Serializable{
 			case CHESNOKOV:
 			case SQRS2CSV:
 			case WQRS2CSV:
+			case SQRS4IHR:
+			case WQRS4IHR:
+			case SQRS4PNNLIST:
+			case WQRS4PNNLIST:
 				needExtentions = ".hea.dat"; break;
 			case WRSAMP:
 				needExtentions = ".txt"; break;
