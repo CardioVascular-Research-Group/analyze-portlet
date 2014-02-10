@@ -104,7 +104,6 @@ public class AnalysisThread extends Thread{
 				
 				recordAnalysisResults(documentRecordId, jobId, filesId);
 			}
-			done = true;
 		}catch (AnalyzeFailureException e){
 			errorMessage = e.getMessage();
 			ServerUtility.logStackTrace(e, log);
@@ -113,6 +112,7 @@ public class AnalysisThread extends Thread{
 			ServerUtility.logStackTrace(e, log);
 		}
 	
+		done = true;
 	}
 	
 	public static OMElement getElementByName(OMElement parent, String tagName){
