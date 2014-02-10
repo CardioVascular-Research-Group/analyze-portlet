@@ -45,11 +45,12 @@ public class AnalysisThread extends Thread{
 	
 	private String headerFileName;
 	private String annotation;
-	private ServerUtility util = null;
 	private Logger log = Logger.getLogger(AnalysisThread.class);
-	private String errorMessage;
 	
 	private Map<String, String[]> ontologyCache;
+	private boolean done = false;
+	private String errorMessage;
+	
 	
 	public AnalysisThread(Map<String, String> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility) {
 		super(params.get("jobID"));
@@ -59,7 +60,6 @@ public class AnalysisThread extends Thread{
 		this.hasWfdbAnnotationOutput = hasWfdbAnnotationOutput;
 		this.originFiles = originFiles;
 		this.userId = userId;
-		this.util = new ServerUtility(false);
 	}
 	
 	public AnalysisThread(Map<String, String> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility, ThreadGroup threadGroup) {
@@ -70,7 +70,6 @@ public class AnalysisThread extends Thread{
 		this.hasWfdbAnnotationOutput = hasWfdbAnnotationOutput;
 		this.originFiles = originFiles;
 		this.userId = userId;
-		this.util = new ServerUtility(false);
 	}
 	
 	@Override
@@ -105,6 +104,7 @@ public class AnalysisThread extends Thread{
 				
 				recordAnalysisResults(documentRecordId, jobId, filesId);
 			}
+			done = true;
 		}catch (AnalyzeFailureException e){
 			errorMessage = e.getMessage();
 			ServerUtility.logStackTrace(e, log);
@@ -130,7 +130,9 @@ public class AnalysisThread extends Thread{
 		}
 		
 		if(hasWfdbAnnotationOutput){
-			ontologyCache = new HashMap<String, String[]>();
+			if(ontologyCache == null){
+				ontologyCache = new HashMap<String, String[]>();
+			}
 			
 			try {
 				
@@ -201,7 +203,7 @@ public class AnalysisThread extends Thread{
 		String sRecord = headerFileName.substring(0, iIndexPeriod);
 		 
 		try { 
-			
+			ServerUtility util = new ServerUtility(false);
 			// rdann -v -x -r twa01 -a wqrs
 			String sCommand = "rdann -x -r " + sRecord + " -a " + annotation;
 			util.executeCommand(sCommand, asEnvVar, "/");
@@ -413,6 +415,10 @@ public class AnalysisThread extends Thread{
 	
 	public String getErrorMessage() {
 		return errorMessage;
+	}
+
+	public boolean isDone() {
+		return done;
 	}
 
 }

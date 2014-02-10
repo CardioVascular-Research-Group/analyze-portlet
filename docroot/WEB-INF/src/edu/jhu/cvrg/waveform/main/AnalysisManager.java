@@ -20,6 +20,7 @@ limitations under the License.
 */
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,28 +41,25 @@ import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.model.FileTreeNode;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
+import edu.jhu.cvrg.waveform.utility.ThreadController;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
 public class AnalysisManager implements Serializable{
 
 	private static final long serialVersionUID = -6155747608247379918L;
 	
-	private Set<AnalysisThread> threadSet;
-	private int total;
+	private ThreadController tController;
 	
 	public boolean performAnalysis(List<FileTreeNode> selectedNodes, long userId, Algorithm[] selectedAlgorithms ){
 		
 		try {
-			this.total = 0;
-			
 			Connection dbUtility = ConnectionFactory.createConnection();
 			
-			threadSet = new HashSet<AnalysisThread>();
+			Set<AnalysisThread> threadSet = new HashSet<AnalysisThread>();
 			
 			Map<String, Object> jobs = new HashMap<String, Object>();
 			Map<String, FileEntry> filesMap = new HashMap<String, FileEntry>();
-			
-			this.total = (selectedNodes.size()*selectedAlgorithms.length);
+			ThreadGroup analysisGroup = new ThreadGroup("AnalysisGroup");
 			
 			for (FileTreeNode node : selectedNodes) {
 				
@@ -105,7 +103,7 @@ public class AnalysisManager implements Serializable{
 					
 					parameterMap.put("jobID", jobID);
 					
-					AnalysisThread t = new AnalysisThread(parameterMap, node.getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility);
+					AnalysisThread t = new AnalysisThread(parameterMap, node.getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility, analysisGroup);
 					
 					threadSet.add(t);
 					
@@ -122,9 +120,8 @@ public class AnalysisManager implements Serializable{
 			OMElement status  = (OMElement)fileRet.getChildren().next();
 			
 			if(status != null  && Boolean.valueOf(status.getText())){
-				for (AnalysisThread thread : threadSet) {
-					thread.start();	
-				}
+				tController = new ThreadController(analysisGroup, threadSet);
+				tController.start();
 			}
 			
 			return true;
@@ -191,14 +188,16 @@ public class AnalysisManager implements Serializable{
 	}	
 
 	public int getTotal() {
-		return total;
+		return tController.getThreadCount();
 	}
 
+	
 	public int getDone() {
 		int done = 0;
-		if(threadSet != null){
-			for (AnalysisThread t : threadSet) {
-				if(!t.isAlive()){
+		if(tController != null){
+			Collection<AnalysisThread> tCollection = (Collection<AnalysisThread>) tController.getThreads();
+			for (AnalysisThread aThread : tCollection) {
+				if(aThread.isDone()){
 					done++;
 				}
 			}
@@ -208,8 +207,9 @@ public class AnalysisManager implements Serializable{
 	
 	public List<String> getMessages() {
 		List<String> messages = null;
-		if(threadSet != null){
-			for (AnalysisThread t : threadSet) {
+		if(tController != null){
+			Collection<AnalysisThread> tCollection = (Collection<AnalysisThread>) tController.getThreads();
+			for (AnalysisThread t : tCollection) {
 				if(!t.isAlive()){
 					if(t.hasError()){
 						if(messages == null){
@@ -223,5 +223,5 @@ public class AnalysisManager implements Serializable{
 		}
 		return messages;
 	}
-	
+
 }
