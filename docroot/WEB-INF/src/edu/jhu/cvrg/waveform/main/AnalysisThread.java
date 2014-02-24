@@ -361,7 +361,8 @@ public class AnalysisThread extends Thread{
 					String sTermName = saOntDetails[0];
 					String sFullAnnotation=saOntDetails[1];
 
-					AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, null/*createdBy*/, "ANNOTATION", sTermName, sOntologyID,
+					AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, null/*createdBy*/, "ANNOTATION", sTermName, 
+																		 sOntologyID != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY_ID : null , sOntologyID,
 																		 null/*bioportalRef*/, iLeadIndex, null/*unitMeasurement*/, null/*description*/,sFullAnnotation, Calendar.getInstance(), dMilliSec, dMicroVolt,
 																		 0.0, 0.0, null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
 	
