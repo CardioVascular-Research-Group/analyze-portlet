@@ -347,24 +347,25 @@ public class AnalysisThread extends Thread{
 
 			if( (saAnnot != null) & (saAnnot.length>=6)){
 				try {
-					double dMilliSec = Double.parseDouble(saAnnot[1]);
-					String sOntologyID = saAnnot[4];
+					double dMilliSec = Double.parseDouble(saAnnot[1])*1000;
+					String conceptId = saAnnot[4];
 					int iLeadIndex = Integer.parseInt(saAnnot[6]);
 					double dMicroVolt = lookupVoltage(dMilliSec,iLeadIndex);
 					
-					String[] saOntDetails = ontologyCache.get(sOntologyID);
+					String[] saOntDetails = ontologyCache.get(conceptId);
 					if(saOntDetails == null){
-						saOntDetails = WebServiceUtility.lookupOntologyDefinition(sOntologyID); // ECGTermsv1:ECG_000000103
-						ontologyCache.put(sOntologyID, saOntDetails);
+						saOntDetails = WebServiceUtility.lookupOntologyDefinition(conceptId); // ECGTermsv1:ECG_000000103
+						ontologyCache.put(conceptId, saOntDetails);
 					}
 					 
 					String sTermName = saOntDetails[0];
 					String sFullAnnotation=saOntDetails[1];
 
 					AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, null/*createdBy*/, "ANNOTATION", sTermName, 
-																		 sOntologyID != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY_ID : null , sOntologyID,
-																		 null/*bioportalRef*/, iLeadIndex, null/*unitMeasurement*/, null/*description*/,sFullAnnotation, Calendar.getInstance(), dMilliSec, dMicroVolt,
-																		 0.0, 0.0, null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
+																		 conceptId != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY_ID : null , conceptId,
+																		 null/*bioportalRef*/, iLeadIndex, null/*unitMeasurement*/, null/*description*/,sFullAnnotation, Calendar.getInstance(), 
+																		 dMilliSec, dMicroVolt, dMilliSec, dMicroVolt, //start and end are the same than this is a single point annotation 
+																		 null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
 	
 					annotationToInsert.setAnalysisJobId(jobId);
 					
