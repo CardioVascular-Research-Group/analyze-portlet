@@ -143,7 +143,7 @@ public class AnalysisManager implements Serializable{
 			case NGUESS:
 			case PNNLIST:
 			case TACH:
-				needExtentions = ".atr.qrs.hea.dat"; break;
+				needExtentions = ".atr.qrs.wqrs.hea.dat"; break;
 			case SQRS:
 			case WQRS:
 			case RDSAMP:
