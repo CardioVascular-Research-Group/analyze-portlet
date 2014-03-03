@@ -47,7 +47,7 @@ public class AnalysisThread extends Thread{
 	private String annotation;
 	private Logger log = Logger.getLogger(AnalysisThread.class);
 	
-	private Map<String, String[]> ontologyCache;
+	private Map<String, Map<String, String>> ontologyCache;
 	private boolean done = false;
 	private String errorMessage;
 	
@@ -131,7 +131,7 @@ public class AnalysisThread extends Thread{
 		
 		if(hasWfdbAnnotationOutput){
 			if(ontologyCache == null){
-				ontologyCache = new HashMap<String, String[]>();
+				ontologyCache = new HashMap<String, Map<String, String>>();
 			}
 			
 			try {
@@ -312,9 +312,9 @@ public class AnalysisThread extends Thread{
 		for(String[] saAnnot : alistAnnotation){
 			sPhysioBankCode = saAnnot[4];
 			if(sPhysioBankCode.equals("N")){
-				saAnnot[4] = "ECGTermsv1:ECG_000000023";
+				saAnnot[4] = "http://www.cvrgrid.org/files/ECGTermsv1.owl#ECG_000000023"; 
 			}else if(sPhysioBankCode.equals(")")){
-				saAnnot[4] = "ECGTermsv1:ECG_000000236";
+				saAnnot[4] = "http://www.cvrgrid.org/files/ECGTermsv1.owl#ECG_000000236"; 
 			}							
 		}
 		return alistAnnotation;
@@ -352,18 +352,23 @@ public class AnalysisThread extends Thread{
 					int iLeadIndex = Integer.parseInt(saAnnot[6]);
 					double dMicroVolt = lookupVoltage(dMilliSec,iLeadIndex);
 					
-					String[] saOntDetails = ontologyCache.get(conceptId);
+					Map<String, String> saOntDetails = ontologyCache.get(conceptId);
 					if(saOntDetails == null){
-						saOntDetails = WebServiceUtility.lookupOntologyDefinition(conceptId); // ECGTermsv1:ECG_000000103
+						saOntDetails = WebServiceUtility.lookupOntology(AnnotationDTO.ECG_TERMS_ONTOLOGY, conceptId, "definition", "prefLabel");
 						ontologyCache.put(conceptId, saOntDetails);
 					}
 					 
-					String sTermName = saOntDetails[0];
-					String sFullAnnotation=saOntDetails[1];
+					String termName = "Not found";
+					String fullAnnotation = "Not found";
+					
+					if(saOntDetails != null){
+						termName = saOntDetails.get("prefLabel");
+						fullAnnotation = saOntDetails.get("definition");
+					}
 
-					AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, null/*createdBy*/, "ANNOTATION", sTermName, 
-																		 conceptId != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY_ID : null , conceptId,
-																		 null/*bioportalRef*/, iLeadIndex, null/*unitMeasurement*/, null/*description*/,sFullAnnotation, Calendar.getInstance(), 
+					AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, null/*createdBy*/, "ANNOTATION", termName, 
+																		 conceptId != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY : null , conceptId,
+																		 null/*bioportalRef*/, iLeadIndex, null/*unitMeasurement*/, null/*description*/,fullAnnotation, Calendar.getInstance(), 
 																		 dMilliSec, dMicroVolt, dMilliSec, dMicroVolt, //start and end are the same than this is a single point annotation 
 																		 null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
 	
