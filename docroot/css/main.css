@@ -9,11 +9,6 @@
 	top:4px;"
 }
 
-.analyzeDataTable {
-	width:900px;
-	float:right;
-}
-
 ul#css3menu1 li.topmenuAnalyses > a, ul#css3menu1 li.topmenuAnalyses
 {
 border-top-width: 2px;
@@ -68,5 +63,54 @@ div.westpanel div.ui-widget-content .nav{
 }
 
 div.signin{
+	text-align: center;
+}
+
+
+
+span.wfdragitem{
+	background-attachment: scroll;
+	background-color: transparent;
+	background-image: none;
+	background-position: 0 0;
+	background-repeat: repeat-y;
+	list-style: none outside none;
+	margin: 0;
+	padding: 1px 0 0;
+	
+	white-space: nowrap;
+	
+	font-size: 1em;
+	color: #4F4F4F;
+	
+	font-family: Arial,sans-serif;
+	text-align: left;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+span.wfdragitem span.wfdragicon{
+	display: inline-block;
+	height: 16px;
+	width: 16px;
+}
+
+span.wfdragitem span.wfdraglabel{
+	display: inline-block;
+	margin: 2px 0 0;
+	padding: 0 3px;
+	vertical-align: top;
+}
+
+div.wfdrop-active{
+	border: 2px solid #7096AB!important;
+}
+
+div.wfdrop-highlight{
+	border: 2px solid #C9EEFC!important;
+}
+
+a.dataTableCentered{
+	margin: 0 auto;
 	text-align: center;
 }
