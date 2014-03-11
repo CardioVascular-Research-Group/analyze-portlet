@@ -21,6 +21,7 @@ package edu.jhu.cvrg.waveform.backing;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
@@ -59,7 +60,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 	private AlgorithmList algorithmList;
 	private AnalysisManager analysisManager;	
 	private List<FacesMessage> messages;
-
+	
 	@PostConstruct
 	public void init() {
 		userModel = ResourceUtility.getCurrentUser();
@@ -201,4 +202,49 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 		selectedAlgorithms = null;
     	this.messages.clear();
     }
+    
+    public void treeToTable() {
+        Map<String,String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        String property = params.get("property");
+        String type = params.get("type");
+        
+        if(property!=null && !property.isEmpty()){
+        	
+        	if(tableList == null){
+        		tableList = new ArrayList<FileTreeNode>();
+        	}
+        	
+        	if("leaf".equals(type)){
+        		FileTreeNode node = fileTree.getNodeByReference(property);
+            	if(node != null && !tableList.contains(node)){
+            		tableList.add(node);	
+            	}	
+        	}else if("parent".equals(type)){
+        		List<FileTreeNode> nodes = fileTree.getNodesByReference(property);
+            	if(nodes!=null){
+            		for (FileTreeNode node : nodes) {
+            			if(!tableList.contains(node)){
+                    		tableList.add(node);	
+                    	}			
+					}
+            	}
+            }
+        }else{
+        	System.err.println("DRAGDROP = ERROR");
+        }
+    }
+    
+    public void removeTableItem(){
+    	Map<String,String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        String index = params.get("index");
+        
+    	if(index != null ){
+    		int indexTableToRemove = Integer.parseInt(index);
+    		
+    		if(indexTableToRemove >= 0 && (tableList != null && tableList.size() > indexTableToRemove)){
+    			tableList.remove(indexTableToRemove);
+    		}
+    	}
+    }
+    
 }
