@@ -204,7 +204,6 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
         String type = params.get("type");
         
         if(property!=null && !property.isEmpty()){
-        	
         	Connection con = ConnectionFactory.createConnection();
         	
         	if(tableList == null){
