@@ -39,8 +39,11 @@ import org.primefaces.model.TreeNode;
 
 import com.liferay.portal.model.User;
 
+import edu.jhu.cvrg.dbapi.factory.Connection;
+import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.Algorithm;
+import edu.jhu.cvrg.waveform.model.AnalysisObjectVO;
 import edu.jhu.cvrg.waveform.model.FileTreeNode;
 import edu.jhu.cvrg.waveform.model.LocalFileTree;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
@@ -52,7 +55,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 	private static final long serialVersionUID = -4006126553152259063L;
 
 	private Algorithm[] selectedAlgorithms;
-	private ArrayList<FileTreeNode> tableList;
+	private ArrayList<AnalysisObjectVO> tableList;
 
 	private LocalFileTree fileTree;
 	private User userModel;
@@ -99,14 +102,6 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 		
 	}
 
-	public void displaySelectedMultiple(ActionEvent event) {
-		if(fileTree.getSelectedFileNodes() != null){
-			this.setTableList(fileTree.getSelectedFileNodes());	
-		}else{
-			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning", "<br />Please select a file."));
-		}
-	}
-
 	public void folderSelect(NodeSelectEvent event){
 		TreeNode node = event.getTreeNode();
 		if(!node.getType().equals("document")){
@@ -132,7 +127,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
     	return;
     }  
 
-	public ArrayList<FileTreeNode> getTableList() {
+	public ArrayList<AnalysisObjectVO> getTableList() {
 		return tableList;
 	}
 
@@ -148,7 +143,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 		this.fileTree = fileTree;
 	}
 
-	public void setTableList(ArrayList<FileTreeNode> tableList) {
+	public void setTableList(ArrayList<AnalysisObjectVO> tableList) {
 		this.tableList = tableList;
 	}
 
@@ -210,21 +205,30 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
         
         if(property!=null && !property.isEmpty()){
         	
+        	Connection con = ConnectionFactory.createConnection();
+        	
         	if(tableList == null){
-        		tableList = new ArrayList<FileTreeNode>();
+        		tableList = new ArrayList<AnalysisObjectVO>();
         	}
+        	
+        	AnalysisObjectVO vo = null;
         	
         	if("leaf".equals(type)){
         		FileTreeNode node = fileTree.getNodeByReference(property);
-            	if(node != null && !tableList.contains(node)){
-            		tableList.add(node);	
+            	if(node != null){
+            		vo = new AnalysisObjectVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
+            		if(!tableList.contains(vo)){
+            			tableList.add(vo);	
+            		}
             	}	
         	}else if("parent".equals(type)){
         		List<FileTreeNode> nodes = fileTree.getNodesByReference(property);
             	if(nodes!=null){
             		for (FileTreeNode node : nodes) {
-            			if(!tableList.contains(node)){
-                    		tableList.add(node);	
+            			
+            			vo = new AnalysisObjectVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
+            			if(!tableList.contains(vo)){
+                    		tableList.add(vo);	
                     	}			
 					}
             	}

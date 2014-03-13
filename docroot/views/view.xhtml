@@ -68,7 +68,6 @@
 							rowIndexVar="index"
 							styleClass="analyzeDataTable"
 							sortMode="multiple"
-							rowKey="#{studyHolder.subjectId}"
 							value="#{analyzeBacking.tableList}"
 							resizableColumns="true"
 							paginatorPosition="top"
@@ -76,15 +75,15 @@
 							emptyMessage="No records. Drop yours files here!">
 		
 							<p:column headerText="Subject ID" width="40%">
-								<h:outputText value="#{studyHolder.content.title}" />
+								<h:outputText value="#{studyHolder.fileNode.data}" />
 							</p:column>
 		
 							<p:column headerText="File Format" width="15%">
-								<h:outputText value="#{studyHolder.content.extension}" />
+								<h:outputText value="#{studyHolder.documentRecord.originalFormat.label}" />
 							</p:column>
 		
 							<p:column headerText="File Date" width="35%">
-								<h:outputText value="#{studyHolder.content.createDate}" />
+								<h:outputText value="#{studyHolder.fileNode.content.createDate}" />
 							</p:column>
 							<p:column headerText="Remove" width="10%">
 								<p:commandLink styleClass="ui-icon ui-icon-close dataTableCentered" update="availableStudy" actionListener="#{analyzeBacking.removeTableItem}" oncomplete="initDragDrop()">

@@ -39,7 +39,7 @@ import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.model.FileTreeNode;
+import edu.jhu.cvrg.waveform.model.AnalysisObjectVO;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ThreadController;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
@@ -50,7 +50,7 @@ public class AnalysisManager implements Serializable{
 	
 	private ThreadController tController;
 	
-	public boolean performAnalysis(List<FileTreeNode> selectedNodes, long userId, Algorithm[] selectedAlgorithms ){
+	public boolean performAnalysis(List<AnalysisObjectVO> selectedNodes, long userId, Algorithm[] selectedAlgorithms ){
 		
 		try {
 			Connection dbUtility = ConnectionFactory.createConnection();
@@ -61,9 +61,9 @@ public class AnalysisManager implements Serializable{
 			Map<String, FileEntry> filesMap = new HashMap<String, FileEntry>();
 			ThreadGroup analysisGroup = new ThreadGroup("AnalysisGroup");
 			
-			for (FileTreeNode node : selectedNodes) {
+			for (AnalysisObjectVO node : selectedNodes) {
 				
-				FileEntry headerFile = (FileEntry) node.getContent();
+				FileEntry headerFile = (FileEntry) node.getFileNode().getContent();
 				
 				for (Algorithm algorithm : selectedAlgorithms) {
 					
@@ -99,11 +99,11 @@ public class AnalysisManager implements Serializable{
 					parameterMap.put("serviceName", algorithm.getsServiceName());
 					parameterMap.put("URL", algorithm.getsAnalysisServiceURL());
 					
-					String jobID = "job_" + dbUtility.storeAnalysisJob(node.getDocumentRecordId(), fileList.size(), 0, algorithm.getsAnalysisServiceURL(), algorithm.getsServiceName(), algorithm.getsServiceMethod(), new Date(), ResourceUtility.getCurrentUserId());
+					String jobID = "job_" + dbUtility.storeAnalysisJob(node.getFileNode().getDocumentRecordId(), fileList.size(), 0, algorithm.getsAnalysisServiceURL(), algorithm.getsServiceName(), algorithm.getsServiceMethod(), new Date(), ResourceUtility.getCurrentUserId());
 					
 					parameterMap.put("jobID", jobID);
 					
-					AnalysisThread t = new AnalysisThread(parameterMap, node.getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility, analysisGroup);
+					AnalysisThread t = new AnalysisThread(parameterMap, node.getFileNode().getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility, analysisGroup);
 					
 					threadSet.add(t);
 					
