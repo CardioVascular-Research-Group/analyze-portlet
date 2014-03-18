@@ -39,7 +39,7 @@ import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.model.AnalysisObjectVO;
+import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ThreadController;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
@@ -50,7 +50,7 @@ public class AnalysisManager implements Serializable{
 	
 	private ThreadController tController;
 	
-	public boolean performAnalysis(List<AnalysisObjectVO> selectedNodes, long userId, Algorithm[] selectedAlgorithms ){
+	public boolean performAnalysis(List<DocumentDragVO> selectedNodes, long userId, Algorithm[] selectedAlgorithms ){
 		
 		try {
 			Connection dbUtility = ConnectionFactory.createConnection();
@@ -61,7 +61,7 @@ public class AnalysisManager implements Serializable{
 			Map<String, FileEntry> filesMap = new HashMap<String, FileEntry>();
 			ThreadGroup analysisGroup = new ThreadGroup("AnalysisGroup");
 			
-			for (AnalysisObjectVO node : selectedNodes) {
+			for (DocumentDragVO node : selectedNodes) {
 				
 				FileEntry headerFile = (FileEntry) node.getFileNode().getContent();
 				

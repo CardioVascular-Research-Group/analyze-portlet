@@ -43,7 +43,7 @@ import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.model.AnalysisObjectVO;
+import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.model.FileTreeNode;
 import edu.jhu.cvrg.waveform.model.LocalFileTree;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
@@ -55,7 +55,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 	private static final long serialVersionUID = -4006126553152259063L;
 
 	private Algorithm[] selectedAlgorithms;
-	private ArrayList<AnalysisObjectVO> tableList;
+	private ArrayList<DocumentDragVO> tableList;
 
 	private LocalFileTree fileTree;
 	private User userModel;
@@ -127,7 +127,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
     	return;
     }  
 
-	public ArrayList<AnalysisObjectVO> getTableList() {
+	public ArrayList<DocumentDragVO> getTableList() {
 		return tableList;
 	}
 
@@ -143,7 +143,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 		this.fileTree = fileTree;
 	}
 
-	public void setTableList(ArrayList<AnalysisObjectVO> tableList) {
+	public void setTableList(ArrayList<DocumentDragVO> tableList) {
 		this.tableList = tableList;
 	}
 
@@ -207,15 +207,15 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
         	Connection con = ConnectionFactory.createConnection();
         	
         	if(tableList == null){
-        		tableList = new ArrayList<AnalysisObjectVO>();
+        		tableList = new ArrayList<DocumentDragVO>();
         	}
         	
-        	AnalysisObjectVO vo = null;
+        	DocumentDragVO vo = null;
         	
         	if("leaf".equals(type)){
         		FileTreeNode node = fileTree.getNodeByReference(property);
             	if(node != null){
-            		vo = new AnalysisObjectVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
+            		vo = new DocumentDragVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
             		if(!tableList.contains(vo)){
             			tableList.add(vo);	
             		}
@@ -225,7 +225,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
             	if(nodes!=null){
             		for (FileTreeNode node : nodes) {
             			
-            			vo = new AnalysisObjectVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
+            			vo = new DocumentDragVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
             			if(!tableList.contains(vo)){
                     		tableList.add(vo);	
                     	}			
