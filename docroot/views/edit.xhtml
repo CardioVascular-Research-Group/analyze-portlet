@@ -10,28 +10,23 @@
 	<h:head />
 	<h:body>
 
-	<h:panelGroup id="mainGroup" layout="block" styleClass="backgroundofContent">
+	<h:panelGroup id="mainGroupEdit" layout="block" styleClass="backgroundofContent">
 		<h:form id="formAnalyze">
 		
 			<h:panelGroup rendered="#{analyzeBacking.user != null}">
-				
-				<p:remoteCommand name="treeToTable" actionListener="#{analyzeBacking.treeToTable}" update="availableStudy" oncomplete="initDragDrop()"/>
-				
-				<p:layout id="layoutAnalyze" style="width:100%;height:600px" >
 			
-					<p:layoutUnit styleClass="westpanel" position="west" header="Drag and drop folders or files to be Analyzed" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
+				<p:layout id="layoutAnalyzeEdit" style="width:100%;height:600px" >
+			
+					<p:layoutUnit styleClass="westpanel" position="west" header="Click folders or files to be Analyzed (Ctrl + Click to un-select)" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
 	
-						<h:panelGroup layout="block" id="analyzeTreeHolder"	style="height:100%;overflow:auto">
+						<h:panelGroup layout="block" id="analyzeTreeHolderEdit"	style="height:100%;overflow:auto">
 							<p:tree id="docTree" 
 								dynamic="true"
 								selection="#{analyzeBacking.fileTree.selectedNode}"
 								selectionMode="single"
 								value="#{analyzeBacking.fileTree.treeRoot}" 
 								var="node"
-								animate="true"
 								style="width:100%">
-								
-								<p:ajax event="expand" oncomplete="initDragDrop()" />  
 								
 								<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
 									<h:outputText value="#{node}" />
@@ -50,18 +45,16 @@
 								</p:treeNode>
 								
 							</p:tree>
-							
-							<h:panelGroup layout="block">
-								<h:panelGroup styleClass="ui-layout-unit-header ui-widget-header ui-corner-all">Analyze Instructions</h:panelGroup>
-								<OL>
-									<LI>Terse instruction text goes here.</LI>
-									<LI>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. </LI>
-									<LI>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</LI>
-									<LI>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</LI>
-								</OL>
-							</h:panelGroup>
-							
 						</h:panelGroup>
+						<div class="nav">
+							<p:commandButton id="btnDisplay"
+								value="Click to Move Files To Analysis"
+								styleClass="displayButton"
+								update="availableStudy"
+								actionListener="#{analyzeBacking.displaySelectedMultiple}"
+								icon="ui-icon-disk"/>
+						</div>
+						
 					</p:layoutUnit>
 				
 					<p:layoutUnit position="center" header="Files to be Analyzed" >
@@ -74,32 +67,26 @@
 			    		<p:remoteCommand name="onComplete" action="#{analyzeBacking.onComplete}" update="availableStudy, availableAlgorithmTable"/>
 			    	
 							
-						<p:dataTable id="availableStudy"
+						<p:dataTable id="availableStudyEdit"
 							var="studyHolder"
-							rowIndexVar="index"
 							styleClass="analyzeDataTable"
 							sortMode="multiple"
+							rowKey="#{studyHolder.subjectId}"
 							value="#{analyzeBacking.tableList}"
 							resizableColumns="true"
 							paginatorPosition="top"
-							style="width:100%"
-							emptyMessage="No records. Drop yours files here!">
+							style="width:100%">
 		
-							<p:column headerText="Subject ID" width="40%">
-								<h:outputText value="#{studyHolder.fileNode.data}" />
+							<p:column headerText="Subject ID" >
+								<h:outputText value="#{studyHolder.content.title}" />
 							</p:column>
 		
-							<p:column headerText="File Format" width="15%">
-								<h:outputText value="#{studyHolder.documentRecord.originalFormat.label}" />
+							<p:column headerText="File Format">
+								<h:outputText value="#{studyHolder.content.extension}" />
 							</p:column>
 		
-							<p:column headerText="File Date" width="35%">
-								<h:outputText value="#{studyHolder.fileNode.content.createDate}" />
-							</p:column>
-							<p:column headerText="Remove" width="10%">
-								<p:commandLink styleClass="ui-icon ui-icon-close dataTableCentered" update="availableStudy" actionListener="#{analyzeBacking.removeTableItem}" oncomplete="initDragDrop()">
-									<f:param name="index" value="#{index}"/>
-								</p:commandLink>
+							<p:column headerText="File Date" >
+								<h:outputText value="#{studyHolder.content.createDate}" />
 							</p:column>
 						</p:dataTable>
 						
@@ -114,7 +101,7 @@
 					</p:layoutUnit>
 					
 					<p:layoutUnit position="south" size="300" header="Available Algorithms" resizable="true" collapsible="true">
-						<p:dataTable id="availableAlgorithmTable"
+						<p:dataTable id="availableAlgorithmTableEdit"
 							var="algorithm"
 							value="#{analyzeBacking.algorithmList.availableAlgorithms}"
 							rowKey="#{algorithm.shortName}"
@@ -135,9 +122,6 @@
 						</p:dataTable>
 					</p:layoutUnit>
 				</p:layout>
-				<script type="text/javascript">
-					initDragDrop();
-				</script>
 			</h:panelGroup>
 			
 			<h:panelGroup rendered="#{analyzeBacking.user == null}">

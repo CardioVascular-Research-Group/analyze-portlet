@@ -1,12 +1,12 @@
 .ui-tree{
-	border:0!important;	
+	border:0;	
 }
 
 
 .displayButton {
 	position: relative; 
 	left:2px;
-	top:4px;"
+	top:4px;
 }
 
 ul#css3menu1 li.topmenuAnalyses > a, ul#css3menu1 li.topmenuAnalyses
@@ -50,7 +50,7 @@ font-color:#000000!important;
 
 
 div.westpanel div.ui-widget-content{
-	overflow: hidden!important;	
+	overflow: auto;	
 }
 
 div.westpanel div.ui-widget-content .nav{
