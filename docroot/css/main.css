@@ -38,9 +38,12 @@ background-color: #3DB6E3;
 .ui-state-highlight {
 border: 1px solid #c9eefc!important;
 background: #AAA;
+
 background: #c9eefc  linear-gradient(top, rgba(0, 0, 0, 0.25), transparent)!important;
 background: #c9eefc -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.25)), to(transparent))!important;
 background: #c9eefc -moz-linear-gradient(top, rgba(0, 0, 0, 0.25), transparent)!important;
+
+
 color: black!important;
 text-shadow: 1px 1px 1px #FFF!important;
 font-weight:800;
@@ -50,7 +53,7 @@ font-color:#000000!important;
 
 
 div.westpanel div.ui-widget-content{
-	overflow: auto;	
+/*	overflow: auto;	*/
 }
 
 div.westpanel div.ui-widget-content .nav{
@@ -117,4 +120,10 @@ div.wfdrop-highlight{
 a.dataTableCentered{
 	margin: 0 auto;
 	text-align: center;
+}
+
+div.westpanel div.ui-widget-content .waveformTree{
+	width: 100%;
+	height: 140px;
+	overflow: auto;
 }

@@ -23,13 +23,13 @@
 	
 						<h:panelGroup layout="block" id="analyzeTreeHolder"	style="height:100%;overflow:auto">
 							<p:tree id="docTree" 
+								styleClass="waveformTree"							
 								dynamic="true"
 								selection="#{analyzeBacking.fileTree.selectedNode}"
 								selectionMode="single"
 								value="#{analyzeBacking.fileTree.treeRoot}" 
 								var="node"
-								animate="true"
-								style="width:100%">
+								animate="true">
 								
 								<p:ajax event="expand" oncomplete="initDragDrop()" />  
 								
