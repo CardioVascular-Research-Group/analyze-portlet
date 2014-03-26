@@ -21,46 +21,44 @@
 			
 					<p:layoutUnit styleClass="westpanel" position="west" header="Drag and drop folders or files to be Analyzed" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
 	
-						<h:panelGroup layout="block" id="analyzeTreeHolder"	style="height:100%;overflow:auto">
-							<p:tree id="docTree" 
-								styleClass="waveformTree"							
-								dynamic="true"
-								selection="#{analyzeBacking.fileTree.selectedNode}"
-								selectionMode="single"
-								value="#{analyzeBacking.fileTree.treeRoot}" 
-								var="node"
-								animate="true">
-								
-								<p:ajax event="expand" oncomplete="initDragDrop()" />  
-								
-								<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
-									<h:outputText value="#{node}" />
-								</p:treeNode>
-								
-								<p:treeNode type="document" icon="ui-icon ui-icon-note">
-									<h:outputText value="#{node}"/>
-								</p:treeNode>
-								
-								<p:treeNode type="analysis" icon="ui-icon ui-icon-document">
-									<h:outputText value="#{node}"/>
-								</p:treeNode>
-								
-								<p:treeNode type="document_error" icon="ui-icon ui-icon-alert">
-									<h:outputText value="#{node}"/>
-								</p:treeNode>
-								
-							</p:tree>
+						<p:tree id="docTree" 
+							styleClass="waveformTree"							
+							dynamic="true"
+							selection="#{analyzeBacking.fileTree.selectedNode}"
+							selectionMode="single"
+							value="#{analyzeBacking.fileTree.treeRoot}" 
+							var="node"
+							animate="true">
 							
-							<h:panelGroup layout="block">
-								<h:panelGroup styleClass="ui-layout-unit-header ui-widget-header ui-corner-all">Analyze Instructions</h:panelGroup>
-								<OL>
-									<LI>Drag files or folders to the right.</LI>
-									<LI>Select algorithms from the list below</LI>
-									<LI>Click the "Start Analysis" button under the list on top right.</LI>
-								</OL>
-							</h:panelGroup>
+							<p:ajax event="expand" oncomplete="initDragDrop()" />  
 							
-						</h:panelGroup>
+							<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
+								<h:outputText value="#{node}" />
+							</p:treeNode>
+							
+							<p:treeNode type="document" icon="ui-icon ui-icon-note">
+								<h:outputText value="#{node}"/>
+							</p:treeNode>
+							
+							<p:treeNode type="analysis" icon="ui-icon ui-icon-document">
+								<h:outputText value="#{node}"/>
+							</p:treeNode>
+							
+							<p:treeNode type="document_error" icon="ui-icon ui-icon-alert">
+								<h:outputText value="#{node}"/>
+							</p:treeNode>
+							
+						</p:tree>
+
+						<h:panelGroup layout="block">
+							<h3 class="ui-widget ui-widget-header ui-corner-all submenu-title">Analyze Instructions</h3>
+							<ol>
+								<li>Drag files or folders to the right.</li>
+								<li>Select algorithms from the list below</li>
+								<li>Click the "Start Analysis" button under the list on top right.</li>
+							</ol>
+						</h:panelGroup>	
+								
 					</p:layoutUnit>
 				
 					<p:layoutUnit position="center" header="Files to be Analyzed" >
@@ -82,7 +80,7 @@
 							resizableColumns="true"
 							paginatorPosition="top"
 							style="width:100%"
-							emptyMessage="No records. Drop yours files here!">
+							emptyMessage="No records. Drop your files here!">
 		
 							<p:column headerText="Subject ID" width="40%">
 								<h:outputText value="#{studyHolder.fileNode.data}" />

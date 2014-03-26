@@ -2,7 +2,6 @@
 	border:0;	
 }
 
-
 .displayButton {
 	position: relative; 
 	left:2px;
@@ -34,7 +33,6 @@ background-color: #3DB6E3;
 
 /* dark blue 3DB6E3 blue 3CB6E2 light blue 89f5ff gray 333 */
 
-
 .ui-state-highlight {
 border: 1px solid #c9eefc!important;
 background: #AAA;
@@ -43,14 +41,11 @@ background: #c9eefc  linear-gradient(top, rgba(0, 0, 0, 0.25), transparent)!impo
 background: #c9eefc -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.25)), to(transparent))!important;
 background: #c9eefc -moz-linear-gradient(top, rgba(0, 0, 0, 0.25), transparent)!important;
 
-
 color: black!important;
 text-shadow: 1px 1px 1px #FFF!important;
 font-weight:800;
 font-color:#000000!important;
-
 }
-
 
 div.westpanel div.ui-widget-content{
 /*	overflow: auto;	*/
@@ -69,8 +64,6 @@ div.signin{
 	text-align: center;
 }
 
-
-
 span.wfdragitem{
 	background-attachment: scroll;
 	background-color: transparent;
@@ -80,9 +73,7 @@ span.wfdragitem{
 	list-style: none outside none;
 	margin: 0;
 	padding: 1px 0 0;
-	
 	white-space: nowrap;
-	
 	font-size: 1em;
 	color: #4F4F4F;
 	cursor: pointer;
@@ -121,9 +112,14 @@ a.dataTableCentered{
 	margin: 0 auto;
 	text-align: center;
 }
-
+.ui-widget.ui-widget-header.ui-corner-all.submenu-title{
+	padding:5px 6px;
+	margin-top:10px;
+}
 div.westpanel div.ui-widget-content .waveformTree{
 	width: 100%;
-	height: 140px;
-	overflow: auto;
+	/*height: 140px;*/
+	overflow:auto;
+	margin-bottom:5px;
+	border:none;
 }
