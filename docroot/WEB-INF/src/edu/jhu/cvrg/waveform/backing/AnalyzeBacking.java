@@ -170,9 +170,10 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 	
 	public void updateProgressBar() {  
     	int progress = 0;
-        if(analysisManager.getTotal() > 0){
+    	
+        if(analysisManager != null && analysisManager.getTotal() > 0){
         	progress = (100 * analysisManager.getDone())/analysisManager.getTotal();
-        }  
+        }
         
         if(progress > 100){
         	progress = 100;

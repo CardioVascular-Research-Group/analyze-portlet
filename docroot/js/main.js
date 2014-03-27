@@ -2,7 +2,11 @@
         
         window['progress'] = setInterval(function() {  
             var pbClient = PF('pbClient');  
-              
+            
+            if($('#wfmessages') != null){
+            	cancel();
+            }
+            
             updateProgressBar();  
   
             if(pbClient.getValue() === 100) {  
