@@ -3,7 +3,7 @@
         window['progress'] = setInterval(function() {  
             var pbClient = PF('pbClient');  
             
-            if($('#wfmessages') != null){
+            if($('#wfmessages') > 0 ){
             	cancel();
             }
             
