@@ -12,9 +12,6 @@
 
 	<h:panelGroup id="mainGroup" layout="block" styleClass="backgroundofContent">
 		<h:form id="formAnalyze">
-		
-			<h:panelGroup rendered="#{analyzeBacking.user != null}">
-				
 				<p:remoteCommand name="treeToTable" actionListener="#{analyzeBacking.treeToTable}" update="availableStudy" oncomplete="initDragDrop()"/>
 				
 				<p:layout id="layoutAnalyze" style="width:100%;height:600px" >
@@ -108,15 +105,14 @@
 								action="#{analyzeBacking.startAnalysis}"
 								onclick="cancel();start()"/>
 						</div>
-						
-							
+													
 					</p:layoutUnit>
 					
 					<p:layoutUnit position="south" size="300" header="Available Algorithms" resizable="true" collapsible="true">
 						<p:dataTable id="availableAlgorithmTable"
 							var="algorithm"
 							value="#{analyzeBacking.algorithmList.availableAlgorithms}"
-							rowKey="#{algorithm.shortName}"
+							rowKey="#{algorithm.displayShortName}"
 							selection="#{analyzeBacking.selectedAlgorithms}">
 							
 							<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update="availableAlgorithmTable"/>  
@@ -125,26 +121,18 @@
 							<p:column selectionMode="multiple" style="width:2%"/>
 							
 							<p:column headerText="Name" style="width:25%">  
-			          				<h:outputLabel value="#{algorithm.shortName}"/> 
-			      				</p:column> 
+			          			<h:outputLabel value="#{algorithm.displayShortName}"/> 
+			      			</p:column> 
 								
-							<p:column headerText="Description" style="width:73%">  
-			          				<h:outputLabel value="#{algorithm.longDescription}"/>  
-			      				</p:column> 	
+							<p:column headerText="Description" style="width:73%" >  
+			          			<h:outputLabel value="#{algorithm.displayLongDescription}"/>  
+			      			</p:column> 	
 						</p:dataTable>
 					</p:layoutUnit>
 				</p:layout>
 				<script type="text/javascript">
 					initDragDrop();
 				</script>
-			</h:panelGroup>
-			
-			<h:panelGroup rendered="#{analyzeBacking.user == null}">
-				<div class="signin">
-					Please <a href="/c/portal/login" rel="nofollow">Sign In</a>
-				</div>
-			</h:panelGroup>
-			
 		</h:form>
 	</h:panelGroup>
 

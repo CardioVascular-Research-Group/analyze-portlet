@@ -36,9 +36,10 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 
+import edu.jhu.cvrg.dbapi.dto.Algorithm;
 import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
-import edu.jhu.cvrg.waveform.model.Algorithm;
+//import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ThreadController;
@@ -95,11 +96,11 @@ public class AnalysisManager implements Serializable{
 	//				}
 	//				algMap.put("parameterList", parameterlistMap);
 					
-					parameterMap.put("method", algorithm.getsServiceMethod());
-					parameterMap.put("serviceName", algorithm.getsServiceName());
-					parameterMap.put("URL", algorithm.getsAnalysisServiceURL());
+					parameterMap.put("method", algorithm.getServiceMethod());
+					parameterMap.put("serviceName", algorithm.getServiceName());
+					parameterMap.put("URL", algorithm.getAnalysisServiceURL());
 					
-					String jobID = "job_" + dbUtility.storeAnalysisJob(node.getFileNode().getDocumentRecordId(), fileList.size(), 0, algorithm.getsAnalysisServiceURL(), algorithm.getsServiceName(), algorithm.getsServiceMethod(), new Date(), ResourceUtility.getCurrentUserId());
+					String jobID = "job_" + dbUtility.storeAnalysisJob(node.getFileNode().getDocumentRecordId(), fileList.size(), 0, algorithm.getAnalysisServiceURL(), algorithm.getServiceName(), algorithm.getServiceMethod(), new Date(), ResourceUtility.getCurrentUserId());
 					
 					parameterMap.put("jobID", jobID);
 					

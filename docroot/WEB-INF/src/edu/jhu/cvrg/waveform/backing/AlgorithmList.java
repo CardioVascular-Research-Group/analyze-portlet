@@ -13,15 +13,25 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLOutputFactory;
 
 import org.apache.axiom.om.OMElement;
+import org.hsqldb.error.Error;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 
-import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.model.PhysionetMethods;
-import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
+import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
+import edu.jhu.cvrg.dbapi.dto.Algorithm;
+import edu.jhu.cvrg.dbapi.dto.PhysionetMethods;
+import edu.jhu.cvrg.dbapi.factory.hibernate.AWS_Algorithm;
+import edu.jhu.cvrg.dbapi.factory.Connection;
+import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
+import edu.jhu.cvrg.dbapi.factory.HibernateConnection;
+
+//import edu.jhu.cvrg.waveform.model.Algorithm;
+//import edu.jhu.cvrg.waveform.model.PhysionetMethods;
+//import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
+
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
@@ -34,7 +44,10 @@ public class AlgorithmList implements Serializable{
 	public AlgorithmList() {
 
 		try {
-			populateAlgorithms();
+//			populateAlgorithms();
+			populateAlgorithmsFromDB();
+//			persistAlgorithmsToDB();
+//			persistAlgorithmParametersToDB();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -42,13 +55,31 @@ public class AlgorithmList implements Serializable{
 	
 	public Algorithm getAlgorithmByName(String name){
 		for(Algorithm algorithm : availableAlgorithms){
-			if(algorithm.getsDisplayShortName().equals(name)){
+			if(algorithm.getDisplayShortName().equals(name)){
 				return algorithm;
 			}
 		}
 		return null;
 	}
 	
+	/** Returns a single algorithm based on it's Primary Key.
+	 * 
+	 * @param id - the primary key, as found in the algorithm database table.
+	 * @return - the selected algorithm.
+	 */
+	public Algorithm getAlgorithmByID(int id){
+		for(Algorithm algorithm : availableAlgorithms){
+			if(algorithm.getId()==id){
+				return algorithm;
+			}
+		}
+		return null;
+	}
+	
+	/** Old method for populating algorithm list.<BR>
+	 * Partially uses the getAlgorithmDetails method, and partly uses hard coded values.
+	 * Is replaced by populateAlgorithmsFromDB() which uses the postgres database instead.
+	 */
 	private void populateAlgorithms(){
 
 		String xml="";
@@ -88,8 +119,8 @@ public class AlgorithmList implements Serializable{
 					Node childNode = node.getChildNodes().item(s);
 
 					if(childNode.getNodeName().equals("sDisplayShortName")){
-						algorithm.setsDisplayShortName(getNodeValue(childNode, "sDisplayShortName").trim());
-						algorithm.setType(PhysionetMethods.getMethodByName(algorithm.getsDisplayShortName()));
+						algorithm.setDisplayShortName(getNodeValue(childNode, "sDisplayShortName").trim());
+						algorithm.setType(PhysionetMethods.getMethodByName(algorithm.getDisplayShortName()));
 						
 						switch (algorithm.getType()) {
 							case ANN2RR:
@@ -107,30 +138,37 @@ public class AlgorithmList implements Serializable{
 						}
 					}
 					if(childNode.getNodeName().equals("sServiceMethod"))
-						algorithm.setsServiceMethod(getNodeValue(childNode, "sServiceMethod").trim());
+						algorithm.setServiceMethod(getNodeValue(childNode, "sServiceMethod").trim());
 					if(childNode.getNodeName().equals("sServiceName"))
-						algorithm.setsServiceName(getNodeValue(childNode, "sServiceName").trim());
+						algorithm.setServiceName(getNodeValue(childNode, "sServiceName").trim());
 					if(childNode.getNodeName().equals("sAnalysisServiceURL"))
-						algorithm.setsAnalysisServiceURL(getNodeValue(childNode, "sAnalysisServiceURL").trim());
+						algorithm.setAnalysisServiceURL(getNodeValue(childNode, "sAnalysisServiceURL").trim());
+					if(childNode.getNodeName().equals("sToolTipDescription"))
+						algorithm.setToolTipDescription(getNodeValue(childNode, "sToolTipDescription").trim());
 					if(childNode.getNodeName().equals("sLongDescription"))
-						algorithm.setsDisplayLongDescription(getNodeValue(childNode, "sLongDescription").trim());
+						algorithm.setDisplayLongDescription(getNodeValue(childNode, "sLongDescription").trim());
 
 					if(childNode.getNodeName().equals("aParameters")){
 						ArrayList<AdditionalParameters> additionalParametersList = new ArrayList<AdditionalParameters>();
 						for(int a = 0; a < childNode.getChildNodes().getLength(); a++){
 							Node pNode = childNode.getChildNodes().item(a);
-							if(pNode.getNodeName().equals("serviceDescriptionData.AdditionalParameters")){
+							if(pNode.getNodeName().endsWith("serviceDescriptionData.AdditionalParameters")){
 								AdditionalParameters additionalParameters = new AdditionalParameters();
 								for(int j = 0; j < pNode.getChildNodes().getLength(); j++){
 									Node iNode = pNode.getChildNodes().item(j);
-									additionalParameters.setsParameterFlag(getNodeValue(iNode, "sParameterFlag"));
-									additionalParameters.setsParameterDefaultValue(getNodeValue(iNode, "sParameterDefaultValue"));
-									additionalParameters.setsToolTipDescription(getNodeValue(iNode, "sToolTipDescription"));
+									String nName = iNode.getNodeName();
+									if(nName.equals("sParameterFlag")) { additionalParameters.setParameterFlag(getNodeValue(iNode, "sParameterFlag")); }
+									if(nName.equals("sParameterDefaultValue")) { additionalParameters.setParameterDefaultValue(getNodeValue(iNode, "sParameterDefaultValue")); }
+									if(nName.equals("sDisplayShortName")) { additionalParameters.setDisplayShortName(getNodeValue(iNode, "sDisplayShortName")); }
+									if(nName.equals("sToolTipDescription")) { additionalParameters.setToolTipDescription(getNodeValue(iNode, "sToolTipDescription")); }
+									if(nName.equals("sLongDescription")) { additionalParameters.setLongDescription(getNodeValue(iNode, "sLongDescription")); }
+									if(nName.equals("sType")) { additionalParameters.setType(getNodeValue(iNode, "sType")); }
+									if(nName.equals("bOptional")) { additionalParameters.setOptional(Boolean.parseBoolean(getNodeValue(iNode, "bOptional")) ); }
 								}
 								additionalParametersList.add(additionalParameters);
 							}
 						}
-						algorithm.setaParameters(additionalParametersList);
+						algorithm.setParameters(additionalParametersList);
 					}
 					
 					if (childNode.getNodeName().equals("afOutFileTypes")) {
@@ -171,6 +209,81 @@ public class AlgorithmList implements Serializable{
 		}	
 	}
 	
+	/** Copies the current algorithm List to the database.
+	 * Used once for initializing the database only, should not be run in normal situations.
+	 */
+	private void persistAlgorithmsToDB(){
+		Connection dbUtility = ConnectionFactory.createConnection();
+		
+		for(Algorithm a : availableAlgorithms){
+			int algorithmID = dbUtility.storeAlgorithm(a.getDisplayShortName(), 1, a.getServiceMethod(),
+					a.getToolTipDescription(), a.getDisplayLongDescription());
+			persistAlgorithmParametersToDB(a, algorithmID);
+		}
+	}
+	
+	/** Copies the current algorithm List to the database.
+	 * Used once for initializing the database only, should not be run in normal situations.
+	 */
+	public void updateAlgorithmToDB(Algorithm alg){
+		
+		System.out.println("Updating algorithm ID:" + alg.getId());
+		System.out.println("Display Name:" + alg.getDisplayShortName());
+		System.out.println("Service Name:" + alg.getServiceName());
+		System.out.println("Method:" + alg.getServiceMethod());
+
+//		Connection dbUtility = ConnectionFactory.createConnection();
+
+		
+//			int algorithmID = dbUtility.storeAlgorithm(a.getDisplayShortName(), 1, a.getServiceMethod(),
+//					a.getToolTipDescription(), a.getDisplayLongDescription());
+//			persistAlgorithmParametersToDB(a, algorithmID);
+	}
+	
+	/** Copies the current algorithm List to the database.
+	 * Used once for initializing the database only, should not be run in normal situations.
+	 */
+	private void persistAllAlgorithmParametersToDB(){
+		Connection dbUtility = ConnectionFactory.createConnection();
+		
+		int algID = 1;
+
+		for(Algorithm a : availableAlgorithms){
+			persistAlgorithmParametersToDB(a, algID);
+			algID++;
+		}
+	}
+	
+	/** Copies a single algorithm to the database.
+	 * Used once for initializing the database only, should not be run in normal situations.
+	 */
+	private void persistAlgorithmParametersToDB(Algorithm a, int algID){
+		Connection dbUtility = ConnectionFactory.createConnection();
+		
+		if (a.getParameters() !=null){
+			if (a.getParameters().size() != 0){
+				for(AdditionalParameters param: a.getParameters()){
+					int parameterID = dbUtility.storeAlgorithmParameter(param, algID);
+				}
+			}
+		}
+	}
+	
+
+	/** populates the availableAlgorithm List from the waveform3 database.
+	 * Instead of from the web service's AlgorithmDetails method.
+	 */
+	public void populateAlgorithmsFromDB(){
+		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
+			List<Algorithm> algList = dbUtility.getAvailableAlgorithmList(-1);
+			availableAlgorithms = algList;
+
+		} catch(Exception ex) {
+			ex.printStackTrace();
+		}	
+	}
+
 	private String getNodeValue(Node node, String name){
 		if(node.getNodeName().equals(name)){
 			if(node.getFirstChild() != null){

@@ -39,10 +39,11 @@ import org.primefaces.model.TreeNode;
 
 import com.liferay.portal.model.User;
 
+import edu.jhu.cvrg.dbapi.dto.Algorithm;
 import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
-import edu.jhu.cvrg.waveform.model.Algorithm;
+//import edu.jhu.cvrg.waveform.model.Algorithm;
 import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.model.FileTreeNode;
 import edu.jhu.cvrg.waveform.model.LocalFileTree;

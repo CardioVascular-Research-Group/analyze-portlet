@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 
-<f:view contentType="text/html"
-	xmlns="http://www.w3.org/1999/xhtml"
+<f:view contentType="text/html" xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:c="http://java.sun.com/jsp/jstl/core"
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
@@ -10,128 +9,210 @@
 	<h:head />
 	<h:body>
 
-	<h:panelGroup id="mainGroupEdit" layout="block" styleClass="backgroundofContent">
-		<h:form id="formAnalyze">
-		
-			<h:panelGroup rendered="#{analyzeBacking.user != null}">
-			
-				<p:layout id="layoutAnalyzeEdit" style="width:100%;height:600px" >
-			
-					<p:layoutUnit styleClass="westpanel" position="west" header="Click folders or files to be Analyzed (Ctrl + Click to un-select)" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
-	
-						<h:panelGroup layout="block" id="analyzeTreeHolderEdit"	style="height:100%;overflow:auto">
-							<p:tree id="docTree" 
-								dynamic="true"
-								selection="#{analyzeBacking.fileTree.selectedNode}"
-								selectionMode="single"
-								value="#{analyzeBacking.fileTree.treeRoot}" 
-								var="node"
-								style="width:100%">
-								
-								<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
-									<h:outputText value="#{node}" />
-								</p:treeNode>
-								
-								<p:treeNode type="document" icon="ui-icon ui-icon-note">
-									<h:outputText value="#{node}"/>
-								</p:treeNode>
-								
-								<p:treeNode type="analysis" icon="ui-icon ui-icon-document">
-									<h:outputText value="#{node}"/>
-								</p:treeNode>
-								
-								<p:treeNode type="document_error" icon="ui-icon ui-icon-alert">
-									<h:outputText value="#{node}"/>
-								</p:treeNode>
-								
-							</p:tree>
-						</h:panelGroup>
-						<div class="nav">
-							<p:commandButton id="btnDisplay"
-								value="Click to Move Files To Analysis"
-								styleClass="displayButton"
-								update="availableStudy"
-								actionListener="#{analyzeBacking.displaySelectedMultiple}"
-								icon="ui-icon-disk"/>
-						</div>
-						
-					</p:layoutUnit>
-				
-					<p:layoutUnit position="center" header="Files to be Analyzed" >
-						
-						<p:progressBar id="progressBarClient" widgetVar="pbClient" style="width:99%" styleClass="animated" labelTemplate="{value}%"/>
-						
-						<p:messages id="messages_prime" showSummary="true" showDetail="true" autoUpdate="true" closable="true" escape="false" />
-						
-						<p:remoteCommand name="updateProgressBar" action="#{analyzeBacking.updateProgressBar}" />
-			    		<p:remoteCommand name="onComplete" action="#{analyzeBacking.onComplete}" update="availableStudy, availableAlgorithmTable"/>
-			    	
-							
-						<p:dataTable id="availableStudyEdit"
-							var="studyHolder"
-							styleClass="analyzeDataTable"
-							sortMode="multiple"
-							rowKey="#{studyHolder.subjectId}"
-							value="#{analyzeBacking.tableList}"
-							resizableColumns="true"
+		<h:panelGroup id="mainGroupEdit" layout="block" styleClass="backgroundofContent">
+			<h:form id="formAlgorithmEdit">
+			<!-- ***************************************************** -->
+				<p:layout id="layoutAlgorithmEdit"  style="width:100%;height:1400px" >										
+
+					<p:layoutUnit position="north" header="Select an algorithm to edit" collapsible="true">
+						north List of Algorithms
+						<p:dataTable id="availableAlgorithmTable"
+							var="algorithm"
+							value="#{algorithmEditBacking.algorithmList.availableAlgorithms}"
+							rowKey="#{algorithm.displayShortName}"
+							selection="#{algorithmEditBacking.selectedAlgorithm}" 
+							selectionMode="single" 
+							paginator="true" 
+							rows="10"
+							rowIndexVar="index"
+							resizableColumns="true" 
+							resizable="true"
+							collapsible="true" 
+							paginatorAlwaysVisible="false"
 							paginatorPosition="top"
-							style="width:100%">
-		
-							<p:column headerText="Subject ID" >
-								<h:outputText value="#{studyHolder.content.title}" />
+							paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+							rowsPerPageTemplate="5,10,15,20" 
+							emptyMessage="No algorithms found in database.">
+							
+							<!-- How this update works is explained at http://stackoverflow.com/questions/13499642/primefaces-cannot-find-component-with-identifier-outside-the-datatable  -->
+ 							<p:ajax event="rowSelect" listener="#{algorithmEditBacking.onRowSelect}" update="@([id$=requiredAttributesGrid]), @([id$=serviceSelect]))" />   <!--  update=":#{p:component('requiredAttributesGrid')}" -->
+			      			<p:ajax event="rowUnselect" listener="#{algorithmEditBacking.onRowUnselect}" />   <!--  update="availableAlgorithmTable" -->
+								
+ 							<p:column headerText="Service" width="15%">
+								<h:outputLabel 
+									value="#{algorithm.displayServiceName}"  
+									title="#{algorithm.url}/#{algorithm.serviceName}/#{algorithm.serviceMethod}" />
 							</p:column>
 		
-							<p:column headerText="File Format">
-								<h:outputText value="#{studyHolder.content.extension}" />
+ 							<p:column headerText="ID" width="5%">
+								<h:outputLabel 
+									value="#{algorithm.id}"  
+									title="Algorithm's ID in the database (Primary Key)" />
+							</p:column>
+
+							<p:column headerText="Name" width="15%">
+								<h:outputLabel 
+									value="#{algorithm.displayShortName}"  
+									title="#{algorithm.url}/#{algorithm.serviceName}/#{algorithm.serviceMethod}"/>
 							</p:column>
 		
-							<p:column headerText="File Date" >
-								<h:outputText value="#{studyHolder.content.createDate}" />
+							<p:column headerText="Description" swidth="60%">
+								<h:outputLabel 
+									value="#{algorithm.toolTipDescription}" 
+									title="#{algorithm.displayLongDescription}"/>								
 							</p:column>
 						</p:dataTable>
+					</p:layoutUnit>	
+					
+					<p:layoutUnit id="louRequired" position="west" header="Required Attributes" 
+						collapsible="true" collapsed="#{algorithmEditBacking.selectedAlgorithmID == -1}"
+						resizable="true" minWidth="100" minHeight="30" style="height:200px" >					
 						
-						<div style="text-align: center;" class="ui-widget-header ui-corner-all">
-							<p:commandButton value="Start Analysis" 
-								icon="ui-icon-play"
-								action="#{analyzeBacking.startAnalysis}"
-								onclick="cancel();start()"/>
+						<div align="center" class="ui-widget-header ui-corner-all">
+							<p:commandButton id="btnAddAlgorithm" value="Add New"
+									action="#{algorithmEditBacking.onRowSelect}"
+									title="Create a new algorithm specification in the editor below." />
+							<p:commandButton id="btnSaveAlgorithm" 
+									value="Save"
+									ajax="false"
+									action="#{algorithmEditBacking.saveAlgorithm}"
+									title="Saves the edited/new algorithm specification in the editor below to the database." />
 						</div>
+
+						<H1>west</H1> algorithm table contents here (info required to run WS)<BR/>
 						
-							
+						<p:panelGrid id="requiredAttributesGrid" >
+							<p:row>
+								<p:column style="font-weight: bold;" >optional parameters count</p:column>
+								<p:column><h:outputText value="#{algorithmEditBacking.parameterCount}" /></p:column>
+							</p:row> 
+							<p:row>
+								<p:column style="font-weight: bold;" >Service ID</p:column>
+								<p:column><h:outputText value="#{algorithmEditBacking.selectedAlgorithm.serviceID}" /></p:column>
+							</p:row> 
+							<p:row>
+								<p:column style="font-weight: bold;" >Service Name</p:column>
+								<p:column>									
+									<p:selectOneMenu id="serviceSelect" value="#{algorithmEditBacking.selectedService}" effect="fade" 
+					 					required="true" requiredMessage="Server must be selected." maxlength="75"> 
+										<f:selectItem itemLabel="Select One" itemValue="" />  
+										<f:selectItems value="#{algorithmEditBacking.serviceList.availableServiceList}" var="service" itemLabel="#{service.displayServiceName}" itemValue="#{service}"/>  
+									</p:selectOneMenu>
+								</p:column>
+							</p:row> 
+							<p:row>
+								<p:column style="font-weight: bold;" >Algorithm ID</p:column>
+								<p:column><h:outputText size="75" value="#{algorithmEditBacking.selectedAlgorithm.id}" /></p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Service Method</p:column>
+								<p:column><h:inputText size="75" value="#{algorithmEditBacking.selectedAlgorithm.serviceMethod}" /></p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Display Name</p:column>
+								<p:column><h:inputText size="75" value="#{algorithmEditBacking.selectedAlgorithm.displayShortName}" /></p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Short Description</p:column>
+								<p:column><h:inputTextarea rows="3" cols="75" value="#{algorithmEditBacking.selectedAlgorithm.toolTipDescription}" /></p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Full Description</p:column>
+								<p:column><h:inputTextarea rows="8"  cols="75" value="#{algorithmEditBacking.selectedAlgorithm.displayLongDescription}"/></p:column>
+							</p:row>
+							<!-- ************************ Optional parameters  ***************************** -->
+							<p:row>
+								<p:column style="font-weight: bold;" >Algorithm Version</p:column>
+								<p:column><h:inputText size="75" value="#{algorithmEditBacking.selectedAlgorithm.versionIdAlgorithm}"/></p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Algorithm Date</p:column>
+								<p:column><h:inputText size="75" value="#{algorithmEditBacking.selectedAlgorithm.dateAlgorithm}"/></p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Webservice Version</p:column>
+								<p:column><h:inputText size="75" value="#{algorithmEditBacking.selectedAlgorithm.versionIdWebService}"/></p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Webservice Date</p:column>
+								<p:column><h:inputText size="75" value="#{algorithmEditBacking.selectedAlgorithm.dateWebService}"/></p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Documentation URL</p:column>
+								<p:column><h:inputText size="75" value="#{algorithmEditBacking.selectedAlgorithm.URLreference}"/></p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >License</p:column>
+								<p:column><h:inputText size="75" value="#{algorithmEditBacking.selectedAlgorithm.licence}"/></p:column>
+							</p:row>
+	
+						</p:panelGrid>	
 					</p:layoutUnit>
 					
-					<p:layoutUnit position="south" size="300" header="Available Algorithms" resizable="true" collapsible="true">
-						<p:dataTable id="availableAlgorithmTableEdit"
-							var="algorithm"
-							value="#{analyzeBacking.algorithmList.availableAlgorithms}"
-							rowKey="#{algorithm.shortName}"
-							selection="#{analyzeBacking.selectedAlgorithms}">
+
+					<p:layoutUnit  id="louParameters" position="center" header="Optional Parameters" size="100"  
+						collapsible="false" 
+						resizable="true" style="height:200px">
+						<H1>center</H1><BR/>
+						<p:commandButton id="btnShowParameters" value="Show Parameters"
+							update="@([id$= optionalParameterTable])"
+							title="Show the optional parameters in the table below." />
+						
+						
+						<p:dataTable id="optionalParameterTable"
+							var="param"
+							value="#{algorithmEditBacking.selectedAlgorithm.parameters}"
+							rowKey="#{param.displayShortName}"
+							selectionMode="single" 
+							paginator="true" 
+							rows="10"
+							rowIndexVar="index"
+							resizableColumns="true" 
+							resizable="true"
+							collapsible="true" 
+							paginatorAlwaysVisible="false"
+							paginatorPosition="top"
+							paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+							rowsPerPageTemplate="5,10,15,20" 
+							emptyMessage="No optional parameter found in database.">
 							
-							<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update="availableAlgorithmTable"/>  
-			      			<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update="availableAlgorithmTable"/>  
-									
-							<p:column selectionMode="multiple" style="width:2%"/>
-							
-							<p:column headerText="Name" style="width:25%">  
-			          				<h:outputLabel value="#{algorithm.shortName}"/> 
-			      				</p:column> 
-								
-							<p:column headerText="Description" style="width:73%">  
-			          				<h:outputLabel value="#{algorithm.longDescription}"/>  
-			      				</p:column> 	
-						</p:dataTable>
+ 							<p:column headerText="Name" width="15%">
+								<h:outputLabel 
+									value="#{param.displayShortName}"  
+									title="#{param.toolTipDescription}" />
+							</p:column>
+		
+							<p:column headerText="Type" width="15%">
+								<h:outputLabel 
+									value="#{param.type}"  
+									title="#{param.longDescription}"/>
+							</p:column>
+		
+							<p:column headerText="ValidatorType" swidth="60%">
+								<h:outputLabel 
+									value="#{param.validator.type}" 
+									title="#{param.validator.message}"/>								
+							</p:column>
+						</p:dataTable>						
 					</p:layoutUnit>
+
+					<p:layoutUnit  id="louPeople" position="east" header="Associated People" size="100" collapsible="true" resizable="true" 
+						style="height:200px">
+						<H1>east</H1><BR/>
+						list associated people here
+					</p:layoutUnit>
+
+					<p:layoutUnit  id="louOrganizations" position="south" header="Associated Organizations"  
+						size="100" collapsible="true" resizable="true" 
+						style="height:300px">
+						<H1>south</H1><BR/>
+						List associated organizations
+					</p:layoutUnit>
+
 				</p:layout>
-			</h:panelGroup>
-			
-			<h:panelGroup rendered="#{analyzeBacking.user == null}">
-				<div class="signin">
-					Please <a href="/c/portal/login" rel="nofollow">Sign In</a>
-				</div>
-			</h:panelGroup>
-			
-		</h:form>
-	</h:panelGroup>
+			<!-- ***************************************************** -->
+			</h:form>
+		</h:panelGroup>
 
 	</h:body>
 </f:view>
