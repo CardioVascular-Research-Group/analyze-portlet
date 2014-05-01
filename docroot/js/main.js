@@ -1,25 +1,25 @@
     function start() {  
         
-        window['progress'] = setInterval(function() {  
-            var pbClient = PF('pbClient');  
+//        window['progress'] = setInterval(function() {  
+//            var pbClient = PF('pbClient');  
             
-            if($('#wfmessages') > 0 ){
-            	cancel();
-            }
-            
-            updateProgressBar();  
-  
-            if(pbClient.getValue() === 100) {  
-                clearInterval(window['progress']);
-                onComplete();
-            }  
-  
-        }, 1000);  
+//            if($('#wfmessages') > 0 ){
+//            	cancel();
+//            }
+//            
+//            updateProgressBar();  
+//  
+//            if(pbClient.getValue() === 100) {  
+//                clearInterval(window['progress']);
+//                onComplete();
+//            }  
+//  
+//        }, 1000);  
     }  
   
     function cancel() {  
-        clearInterval(window['progress']);  
-        PF('pbClient').setValue(0);  
+//        clearInterval(window['progress']);  
+//        PF('pbClient').setValue(0);  
     }  
     
     
@@ -101,4 +101,17 @@
         });
 		
 	}
+    
+    // Opens the URL in a named popup window (800x600px) and forces it to be on top and visible.
+    function open_helpwindow(url)
+    {
+    	if(url == "URLreference not in database yet."){
+    		alert("Reference web page is not in database yet.");
+    	}else{
+		    helpwindow = window.open(url, "helpwindow", "width=800,height=600,scrollbars=yes", false);
+		    helpwindow.focus();
+    	}
+	    return false;
+    }
+
     

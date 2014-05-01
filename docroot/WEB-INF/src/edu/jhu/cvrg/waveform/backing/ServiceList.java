@@ -1,41 +1,12 @@
 package edu.jhu.cvrg.waveform.backing;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.stream.XMLOutputFactory;
-
-import org.apache.axiom.om.OMElement;
-import org.hsqldb.error.Error;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
-
-import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
-import edu.jhu.cvrg.dbapi.dto.Algorithm;
-import edu.jhu.cvrg.dbapi.dto.PhysionetMethods;
 import edu.jhu.cvrg.dbapi.dto.Service;
-import edu.jhu.cvrg.dbapi.factory.hibernate.AWS_Algorithm;
 import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
-import edu.jhu.cvrg.dbapi.factory.HibernateConnection;
-
-//import edu.jhu.cvrg.waveform.model.Algorithm;
-//import edu.jhu.cvrg.waveform.model.PhysionetMethods;
-//import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
-
-import edu.jhu.cvrg.waveform.utility.ResourceUtility;
-import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
 public class ServiceList implements Serializable{
 	

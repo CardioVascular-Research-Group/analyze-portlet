@@ -138,28 +138,36 @@ public class AnalysisManager implements Serializable{
 	private ArrayList<FileEntry> getFileList(Algorithm algorithm, List<FileEntry> subFiles) {
 		ArrayList<FileEntry> retFiles = new ArrayList<FileEntry>();
 		String needExtentions = "";
-		
-		switch (algorithm.getType()) {
-			case ANN2RR:
-			case NGUESS:
-			case PNNLIST:
-			case TACH:
-				needExtentions = ".atr.qrs.wqrs.hea.dat"; break;
-			case SQRS:
-			case WQRS:
-			case RDSAMP:
-			case SIGAAMP:
-			case CHESNOKOV:
-			case SQRS2CSV:
-			case WQRS2CSV:
-			case SQRS4IHR:
-			case WQRS4IHR:
-			case SQRS4PNNLIST:
-			case WQRS4PNNLIST:
-				needExtentions = ".hea.dat"; break;
-			case WRSAMP:
-				needExtentions = ".txt"; break;
-			default: break;
+		if(algorithm.getType()==null){
+			needExtentions = ".hea.dat";
+		}else{
+			switch (algorithm.getType()) {
+				case ANN2RR:
+				case NGUESS:
+				case PNNLIST:
+				case TACH:
+					needExtentions = ".atr.qrs.wqrs.hea.dat"; 
+					break;
+				case SQRS:
+				case WQRS:
+				case RDSAMP:
+				case SIGAAMP:
+				case CHESNOKOV:
+				case SQRS2CSV:
+				case WQRS2CSV:
+				case SQRS4IHR:
+				case WQRS4IHR:
+				case SQRS4PNNLIST:
+				case WQRS4PNNLIST:
+					needExtentions = ".hea.dat"; 
+					break;
+				case WRSAMP:
+					needExtentions = ".txt"; 
+					break;
+				default: 
+					needExtentions = ".hea.dat";
+					break;
+			}
 		}
 		
 		for (FileEntry file : subFiles) {

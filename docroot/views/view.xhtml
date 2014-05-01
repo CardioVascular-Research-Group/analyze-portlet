@@ -12,60 +12,60 @@
 
 	<h:panelGroup id="mainGroup" layout="block" styleClass="backgroundofContent">
 		<h:form id="formAnalyze">
+		
+			<h:panelGroup rendered="#{analyzeBacking.user != null}">
+				
 				<p:remoteCommand name="treeToTable" actionListener="#{analyzeBacking.treeToTable}" update="availableStudy" oncomplete="initDragDrop()"/>
 				
 				<p:layout id="layoutAnalyze" style="width:100%;height:600px" >
 			
 					<p:layoutUnit styleClass="westpanel" position="west" header="Drag and drop folders or files to be Analyzed" resizable="true" size="385" minSize="385" maxSize="600" collapsible="true" >
 	
-						<h:panelGroup layout="block" id="analyzeTreeHolder"	style="height:100%;overflow:auto">
-							<p:tree id="docTree" 
-								styleClass="waveformTree"							
-								dynamic="true"
-								selection="#{analyzeBacking.fileTree.selectedNode}"
-								selectionMode="single"
-								value="#{analyzeBacking.fileTree.treeRoot}" 
-								var="node"
-								animate="true">
-								
-								<p:ajax event="expand" oncomplete="initDragDrop()" />  
-								
-								<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
-									<h:outputText value="#{node}" />
-								</p:treeNode>
-								
-								<p:treeNode type="document" icon="ui-icon ui-icon-note">
-									<h:outputText value="#{node}"/>
-								</p:treeNode>
-								
-								<p:treeNode type="analysis" icon="ui-icon ui-icon-document">
-									<h:outputText value="#{node}"/>
-								</p:treeNode>
-								
-								<p:treeNode type="document_error" icon="ui-icon ui-icon-alert">
-									<h:outputText value="#{node}"/>
-								</p:treeNode>
-								
-							</p:tree>
+						<p:tree id="docTree" 
+							styleClass="waveformTree"							
+							dynamic="true"
+							selection="#{analyzeBacking.fileTree.selectedNode}"
+							selectionMode="single"
+							value="#{analyzeBacking.fileTree.treeRoot}" 
+							var="node"
+							animate="true">
 							
-							<h:panelGroup layout="block">
-								<h:panelGroup styleClass="ui-layout-unit-header ui-widget-header ui-corner-all">Analyze Instructions</h:panelGroup>
-								<OL>
-									<LI>Drag files or folders to the right.</LI>
-									<LI>Select algorithms from the list below</LI>
-									<LI>Click the "Start Analysis" button under the list on top right.</LI>
-								</OL>
-							</h:panelGroup>
+							<p:ajax event="expand" oncomplete="initDragDrop()" />  
 							
-						</h:panelGroup>
+							<p:treeNode expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
+								<h:outputText value="#{node}" />
+							</p:treeNode>
+							
+							<p:treeNode type="document" icon="ui-icon ui-icon-note">
+								<h:outputText value="#{node}"/>
+							</p:treeNode>
+							
+							<p:treeNode type="analysis" icon="ui-icon ui-icon-document">
+								<h:outputText value="#{node}"/>
+							</p:treeNode>
+							
+							<p:treeNode type="document_error" icon="ui-icon ui-icon-alert">
+								<h:outputText value="#{node}"/>
+							</p:treeNode>
+							
+						</p:tree>
+
+						<h:panelGroup layout="block">
+							<h3 class="ui-widget ui-widget-header ui-corner-all submenu-title">Analyze Instructions</h3>
+							<ol>
+								<li>Drag files or folders to the right.</li>
+								<li>Select algorithms from the list below</li>
+								<li>Click the "Start Analysis" button under the list on top right.</li>
+							</ol>
+						</h:panelGroup>	
+								
 					</p:layoutUnit>
 				
 					<p:layoutUnit position="center" header="Files to be Analyzed" >
-						
+						 
 						<p:progressBar id="progressBarClient" widgetVar="pbClient" style="width:99%" styleClass="animated" labelTemplate="{value}%"/>
-						
 						<p:messages id="messages_prime" showSummary="true" showDetail="true" autoUpdate="true" closable="true" escape="false" />
-						
+						 
 						<p:remoteCommand name="updateProgressBar" action="#{analyzeBacking.updateProgressBar}" />
 			    		<p:remoteCommand name="onComplete" action="#{analyzeBacking.onComplete}" update="availableStudy, availableAlgorithmTable"/>
 			    	
@@ -79,7 +79,7 @@
 							resizableColumns="true"
 							paginatorPosition="top"
 							style="width:100%"
-							emptyMessage="No records. Drop yours files here!">
+							emptyMessage="No records. Drop your files here!">
 		
 							<p:column headerText="Subject ID" width="40%">
 								<h:outputText value="#{studyHolder.fileNode.data}" />
@@ -103,9 +103,10 @@
 							<p:commandButton value="Start Analysis" 
 								icon="ui-icon-play"
 								action="#{analyzeBacking.startAnalysis}"
-								onclick="cancel();start()"/>
+							/> <!-- onclick="cancel();start()" -->
 						</div>
-													
+						
+							
 					</p:layoutUnit>
 					
 					<p:layoutUnit position="south" size="300" header="Available Algorithms" resizable="true" collapsible="true">
@@ -120,19 +121,33 @@
 									
 							<p:column selectionMode="multiple" style="width:2%"/>
 							
-							<p:column headerText="Name" style="width:25%">  
-			          			<h:outputLabel value="#{algorithm.displayShortName}"/> 
-			      			</p:column> 
+							<p:column headerText="Name" style="width:20%">  
+		          				<h:outputLabel value="#{algorithm.displayShortName}"/> 
+		      				</p:column> 
 								
-							<p:column headerText="Description" style="width:73%" >  
-			          			<h:outputLabel value="#{algorithm.displayLongDescription}"/>  
-			      			</p:column> 	
+							<p:column headerText="Help" style="width:5%">  
+		          				<h:commandLink id="documentationURL" onclick="open_helpwindow('#{algorithm.URLreference}'); return false;">
+								    <h:outputText value="Ref" />
+								</h:commandLink>
+		      				</p:column> 
+
+							<p:column headerText="Description" style="width:73%">  
+		          				<h:outputLabel value="#{algorithm.toolTipDescription}" title="#{algorithm.displayLongDescription}"/>  
+		      				</p:column> 	
 						</p:dataTable>
 					</p:layoutUnit>
 				</p:layout>
 				<script type="text/javascript">
 					initDragDrop();
 				</script>
+			</h:panelGroup>
+			
+			<h:panelGroup rendered="#{analyzeBacking.user == null}">
+				<div class="signin">
+					Please <a href="/c/portal/login" rel="nofollow">Sign In</a>
+				</div>
+			</h:panelGroup>
+			
 		</h:form>
 	</h:panelGroup>
 
