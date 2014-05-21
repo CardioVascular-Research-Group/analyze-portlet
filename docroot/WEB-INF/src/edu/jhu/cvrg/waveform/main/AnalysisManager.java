@@ -36,7 +36,11 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 
+import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
 import edu.jhu.cvrg.dbapi.dto.Algorithm;
+import edu.jhu.cvrg.dbapi.dto.AnnotationDTO;
+import edu.jhu.cvrg.dbapi.dto.FileTypes;
+import edu.jhu.cvrg.dbapi.enums.EnumFileType;
 import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 //import edu.jhu.cvrg.waveform.model.Algorithm;
@@ -65,18 +69,38 @@ public class AnalysisManager implements Serializable{
 			for (DocumentDragVO node : selectedNodes) {
 				
 				FileEntry headerFile = (FileEntry) node.getFileNode().getContent();
-				
+				EnumFileType originalFileType = node.getDocumentRecord().getOriginalFormat();
+				long docId = node.getDocumentRecord().getDocumentRecordId();
+				String name = node.getDocumentRecord().getRecordName();
+				String age = node.getDocumentRecord().getAge().toString();
+				String sex = node.getDocumentRecord().getGender();
+								
 				for (Algorithm algorithm : selectedAlgorithms) {
 					
-					Map<String, String> parameterMap = new HashMap<String, String>();
+//					Map<String, String> parameterMap = new HashMap<String, String>();
+					Map<String, Object> parameterMap = new HashMap<String, Object>();
 					
 					parameterMap.put("userID",  String.valueOf(userId));
 					parameterMap.put("groupID", String.valueOf(ResourceUtility.getCurrentGroupId()));
 					parameterMap.put("folderID", String.valueOf(headerFile.getFolderId()));
 					parameterMap.put("subjectID", headerFile.getFolder().getName());
 					
+//					for(FileTypes ft:algorithm.getAfInFileTypes()){
+//						if(ft.id==0){
+//							
+//						}
+//					}
+					ArrayList<AdditionalParameters> commandParameters = algorithm.getParameters();
+					if( (originalFileType.getLabel().equals("Schiller")) && (algorithm.getDisplayShortName().contentEquals("qrs-score")) ){
+						 List<AnnotationDTO> magellanAnnot = getMagellanLeadAnnotationList(userId, docId, "Schiller", "ECGT");
+						 List<AnnotationDTO> magellanRecAnnot = getMagellanRecordAnnotationList(userId, docId, "Schiller", "ECGT");
+						 String qrsd = magellanRecAnnot.get(0).getValue();
+						 String qrsax = magellanRecAnnot.get(1).getValue();
+						 
+						 String magellanText = buildMagellanText(docId, name, age, sex, qrsd, qrsax, magellanAnnot);
+					}
 					
-					
+					//TODO: [Mike] should create a separate filesMap for each analysis server.
 					String fileNameString="";//filename.dat^filename.hea^";
 					List<FileEntry> subFiles = DLAppLocalServiceUtil.getFileEntries(ResourceUtility.getCurrentGroupId(), headerFile.getFolderId());
 					ArrayList<FileEntry> fileList = getFileList(algorithm, subFiles);
@@ -86,15 +110,17 @@ public class AnalysisManager implements Serializable{
 					}
 					parameterMap.put("fileNames", fileNameString); // caret delimited list for backwards compatibility to type1 web services.
 					
-					//TODO [VILARDO] Not implemented yet
-	//				LinkedHashMap<String, String> parameterlistMap = new LinkedHashMap<String, String>();
-	//				AdditionalParameters[] commandParameters = null;
-	//				if(commandParameters != null){
-	//					for(AdditionalParameters parameter : commandParameters){
-	//						parameterlistMap.put(parameter.getsParameterFlag(), parameter.getsParameterUserSpecifiedValue());
-	//					}
-	//				}
-	//				algMap.put("parameterList", parameterlistMap);
+					LinkedHashMap<String, String> parameterlistMap = new LinkedHashMap<String, String>();					
+//					if(commandParameters != null){
+//						for(AdditionalParameters parameter : commandParameters){
+//							parameterlistMap.put(parameter.getParameterFlag(), parameter.getParameterUserSpecifiedValue());
+//						}
+//					}
+					parameterlistMap.put("testParam1", "1.0");
+					parameterlistMap.put("testParam2", "true");
+					parameterlistMap.put("testParam3", "foo");
+					parameterlistMap.put("testParam4", "bar");
+					parameterMap.put("parameterlist", parameterlistMap);
 					
 					parameterMap.put("method", algorithm.getServiceMethod());
 					parameterMap.put("serviceName", algorithm.getServiceName());
@@ -116,6 +142,7 @@ public class AnalysisManager implements Serializable{
 			
 			parameterMap.put("jobs", jobs);
 			
+			//TODO: AnalysisThread() should be given the AnalysisServiceURL from the algorithm description (database) not from the ResourceUtility properties in the waveform-utilities.jar
 			OMElement fileRet = WebServiceUtility.callWebServiceComplexParam(parameterMap, "receiveAnalysisTempFiles", ResourceUtility.getDataTransferServiceName(), ResourceUtility.getAnalysisServiceURL(), null, filesMap);
 			
 			OMElement status  = (OMElement)fileRet.getChildren().next();
@@ -233,4 +260,192 @@ public class AnalysisManager implements Serializable{
 		return messages;
 	}
 
+	/** Gets an ArrayList of annotations, on all the standard 12 leads for Q_Wave_Amplitude, Q_Wave_Duration, R_Wave_Amplitude, R_Wave_Duration, S_Wave_Amplitude;
+	 *  which are found in the Magellan text output file.
+	 * 
+	 * @param userId - Id of the user who owns this data.
+	 * @param docId - Document ID
+	 * @param createdBy - Either original file format identifier, algorithm identifier, or user ID in the case of manual annotations.
+	 * @param bioportalOntologyID - Identifier of the Ontology, e.g. "ECGT"
+	 **/
+	private List<AnnotationDTO> getMagellanLeadAnnotationList(long userId, long docId, String createdBy, String bioportalOntologyID){
+		List<AnnotationDTO> retList= new ArrayList<AnnotationDTO>();
+		
+		List <String> bioportalClassIdList = new ArrayList<String>();
+		bioportalClassIdList.add("ECGOntology:ECG_000000652"); // Q_Wave_Amplitude
+		bioportalClassIdList.add("ECGOntology:ECG_000000551"); // Q_Wave_Duration
+		bioportalClassIdList.add("ECGOntology:ECG_000000750"); // R_Wave_Amplitude
+		bioportalClassIdList.add("ECGOntology:ECG_000000597"); // R_Wave_Duration
+		bioportalClassIdList.add("ECGOntology:ECG_000000107"); // S_Wave_Amplitude
+//		bioportalClassIdList.add("ECGOntology:ECG_000000072"); // QRS_Wave_Duration
+		
+		List<AnnotationDTO> paramList_I = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 0, createdBy, bioportalOntologyID, bioportalClassIdList);
+		List<AnnotationDTO> paramList_II = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 1, createdBy, bioportalOntologyID, bioportalClassIdList);
+//		List<AnnotationDTO> paramList_III = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 2, createdBy, bioportalOntologyID, bioportalClassIdList);
+//		List<AnnotationDTO> paramList_aVR = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 3, createdBy, bioportalOntologyID, bioportalClassIdList);
+		List<AnnotationDTO> paramList_aVL = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 4, createdBy, bioportalOntologyID, bioportalClassIdList);
+		List<AnnotationDTO> paramList_aVF = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 5, createdBy, bioportalOntologyID, bioportalClassIdList);
+		List<AnnotationDTO> paramList_V1 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 6, createdBy, bioportalOntologyID, bioportalClassIdList);
+		List<AnnotationDTO> paramList_V2 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 7, createdBy, bioportalOntologyID, bioportalClassIdList);
+		List<AnnotationDTO> paramList_V3 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 8, createdBy, bioportalOntologyID, bioportalClassIdList);
+		List<AnnotationDTO> paramList_V4 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 9, createdBy, bioportalOntologyID, bioportalClassIdList);
+		List<AnnotationDTO> paramList_V5 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 10, createdBy, bioportalOntologyID, bioportalClassIdList);
+		List<AnnotationDTO> paramList_V6 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 11, createdBy, bioportalOntologyID, bioportalClassIdList);
+
+		int i=0;
+		retList.add(i++, paramList_I.get(0)); // qa_I
+		retList.add(i++, paramList_II.get(0)); // qa_II
+//		retList.add(2, paramList_III.get(0)); // qa_III
+//		retList.add(3, paramList_aVR.get(0)); // qa_aVR
+		retList.add(i++, paramList_aVL.get(0)); // qa_aVL
+		retList.add(i++, paramList_aVF.get(0)); // qa_aVF
+		retList.add(i++, paramList_V1.get(0)); // qa_V1
+		retList.add(i++, paramList_V2.get(0)); // qa_V2
+		retList.add(i++, paramList_V3.get(0)); // qa_V3
+		retList.add(i++, paramList_V4.get(0)); // qa_V4
+		retList.add(i++, paramList_V5.get(0)); // qa_V5
+		retList.add(i++, paramList_V6.get(0)); // qa_V6
+		//*********************************************
+		retList.add(i++, paramList_I.get(1)); // qd_I
+		retList.add(i++, paramList_II.get(1)); // qd_II
+//		retList.add(14, paramList_III.get(1)); // qd_III
+//		retList.add(15, paramList_aVR.get(1)); // qd_aVR
+		retList.add(i++, paramList_aVL.get(1)); // qd_aVL
+		retList.add(i++, paramList_aVF.get(1)); // qd_aVF
+		retList.add(i++, paramList_V1.get(1)); // qd_V1
+		retList.add(i++, paramList_V2.get(1)); // qd_V2
+		retList.add(i++, paramList_V3.get(1)); // qd_V3
+		retList.add(i++, paramList_V4.get(1)); // qd_V4
+		retList.add(i++, paramList_V5.get(1)); // qd_V5
+		retList.add(i++, paramList_V6.get(1)); // qd_V6
+		//*********************************************
+		retList.add(i++, paramList_I.get(2)); // ra_I
+		retList.add(i++, paramList_II.get(2)); // ra_II
+//		retList.add(26, paramList_III.get(2)); // ra_III
+//		retList.add(27, paramList_aVR.get(2)); // ra_aVR
+		retList.add(i++, paramList_aVL.get(2)); // ra_aVL
+		retList.add(i++, paramList_aVF.get(2)); // ra_aVF
+		retList.add(i++, paramList_V1.get(2)); // ra_V1
+		retList.add(i++, paramList_V2.get(2)); // ra_V2
+		retList.add(i++, paramList_V3.get(2)); // ra_V3
+		retList.add(i++, paramList_V4.get(2)); // ra_V4
+		retList.add(i++, paramList_V5.get(2)); // ra_V5
+		retList.add(i++, paramList_V6.get(2)); // ra_V6
+		//*********************************************
+//		retList.add(36, paramList_I.get(3)); // rd_I
+//		retList.add(37, paramList_II.get(3)); // rd_II
+//		retList.add(38, paramList_III.get(3)); // rd_III
+//		retList.add(39, paramList_aVR.get(3)); // rd_aVR
+//		retList.add(40, paramList_aVL.get(3)); // rd_aVL
+//		retList.add(41, paramList_aVF.get(3)); // rd_aVF
+		retList.add(i++, paramList_V1.get(3)); // rd_V1
+		retList.add(i++, paramList_V2.get(3)); // rd_V2
+		retList.add(i++, paramList_V3.get(3)); // rd_V3
+//		retList.add(45, paramList_V4.get(3)); // rd_V4
+//		retList.add(46, paramList_V5.get(3)); // rd_V5
+//		retList.add(47, paramList_V6.get(3)); // rd_V6
+		//*********************************************
+		retList.add(i++, paramList_I.get(4)); // sa_I
+		retList.add(i++, paramList_II.get(4)); // sa_II
+//		retList.add(50, paramList_III.get(4)); // sa_III
+//		retList.add(51, paramList_aVR.get(4)); // sa_aVR
+		retList.add(i++, paramList_aVL.get(4)); // sa_aVL
+		retList.add(i++, paramList_aVF.get(4)); // sa_aVF
+		retList.add(i++, paramList_V1.get(4)); // sa_V1
+		retList.add(i++, paramList_V2.get(4)); // sa_V2
+		retList.add(i++, paramList_V3.get(4)); // sa_V3
+		retList.add(i++, paramList_V4.get(4)); // sa_V4
+		retList.add(i++, paramList_V5.get(4)); // sa_V5
+		retList.add(i++, paramList_V6.get(4)); // sa_V6
+		//*********************************************
+
+		
+		return retList;
+	}
+	
+	/** Gets an ArrayList of annotations, on all the standard 12 leads for Q_Wave_Amplitude, Q_Wave_Duration, R_Wave_Amplitude, R_Wave_Duration, S_Wave_Amplitude;
+	 *  which are found in the Magellan text output file.
+	 * 
+	 * @param userId - Id of the user who owns this data.
+	 * @param docId - Document ID
+	 * @param createdBy - Either original file format identifier, algorithm identifier, or user ID in the case of manual annotations.
+	 * @param bioportalOntologyID - Identifier of the Ontology, e.g. "ECGT"
+	 **/
+	 private List<AnnotationDTO>  getMagellanRecordAnnotationList(long userId, long docId, String createdBy, String bioportalOntologyID){
+//			List<AnnotationDTO> retList= new ArrayList<AnnotationDTO>();
+			
+			List <String> bioportalClassIdList = new ArrayList<String>();
+			bioportalClassIdList.add("ECGOntology:ECG_000000072"); // QRS Duration
+			bioportalClassIdList.add("ECGOntology:ECG_000000838"); // QRS Axis
+			
+			List<AnnotationDTO> paramList_Rec = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, null, createdBy, bioportalOntologyID, bioportalClassIdList);
+
+//			retList.add(0, paramList_Rec.get(0)); // qa_I
+			//*********************************************
+			
+			return paramList_Rec;
+	 }
+	 
+	 
+	 private String buildMagellanText(long docId, String name, String age, String sex, String qrsd, String qrsax, List<AnnotationDTO> magellanLeadAnnotList){
+		 StringBuffer sb = new StringBuffer();
+		 sb.append("13\n"
+					+"\n"
+					+"Age\n" 
+					+"Sex \n"
+					+"vrate \n"
+					+"arate \n"
+					+"pr \n"
+					+"qrsd \n"
+					+"qt \n"
+					+"qtc \n"
+					+"pax \n"
+					+"qrsax \n"
+					+"tax \n"
+					+"pdur \n"
+					+"qrstangle\n" 
+					+"\n"
+					+"8 \n"
+					+"\n"
+					+"pa  0  0  0  0  0  1  1  0  0  0  0  0\n"  
+					+"qa  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+					+"qd  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+					+"ra  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+					+"rd  0  0  0  0  0  0  1  1  1  0  0  0  \n"
+					+"sa  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+					+"rpa  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+					+"spa  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+					+"\n"
+					+"\n"
+					+"2 \n"
+					+"\n"
+					+"No_scode\n"  
+					+"scode\n");
+		 sb.append(name + " "); // Name
+		 sb.append(docId + " "); // ID
+		 sb.append("05/14/2010_01:59  C:/FAKEdir/FAKE.ECG "); // Date/Time, FilePath
+		 sb.append(age + " ");// age
+		 sb.append(sex + " ");// sex
+		 sb.append("0 0 0 ");// vrate, arate, pr
+		 sb.append(qrsd + " ");// qrsd
+		 sb.append("0 0 0 "); // qt, qtc, pax
+		 sb.append(qrsax + " ");// qrsax
+		 sb.append("0 0 0 0 "); // tax, pdur, qrstangle, pa_aVF, pa_V1		 		 
+		 for (AnnotationDTO a:magellanLeadAnnotList){
+			 if(a ==null){
+				 sb.append("0 "); // Magellan used zeros to mark unknown or incalculable values.
+			 }else{
+				 sb.append(a.getValue() + " ");
+			 }
+		 }
+		 sb.append("0 0 0 0 0 "); // rpa_I, rpa_II, rpa_aVL, rpa_aVF	
+		 sb.append("0 0 0 0 0 0 "); // rpa_V1, rpa_V2, rpa_V3, rpa_V4, rpa_V5, rpa_V6	
+		 sb.append("0 0 0 0 0 "); // spa_I, spa_II, spa_aVL, spa_aVF	
+		 sb.append("0 0 0 0 0 0 "); // spa_V1, spa_V2, spa_V3, spa_V4, spa_V5, spa_V6	
+		 sb.append("0 "); // No_scode, scode
+
+		 sb.append("\n");
+		 
+		 return sb.toString();
+	 }
 }

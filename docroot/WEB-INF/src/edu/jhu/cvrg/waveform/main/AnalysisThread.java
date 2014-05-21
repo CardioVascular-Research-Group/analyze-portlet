@@ -36,7 +36,7 @@ import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
 public class AnalysisThread extends Thread{
 
-	private Map<String, String> map;
+	private Map<String, Object> map;
 	private Connection dbUtility;
 	private long documentRecordId;
 	private boolean hasWfdbAnnotationOutput;
@@ -52,8 +52,13 @@ public class AnalysisThread extends Thread{
 	private String errorMessage;
 	
 	
-	public AnalysisThread(Map<String, String> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility) {
-		super(params.get("jobID"));
+	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility) {
+		super((String)params.get("jobID"));
+		log.info("---  AnalysisThread constructor 1 info -------");
+		log.debug("--- AnalysisThread constructor 1 debug -------");
+		log.warn ("--- AnalysisThread constructor 1 warn -------");
+		log.error("--- AnalysisThread constructor 1 error -------");
+		log.fatal("--- AnalysisThread constructor 1 fatal -------");
 		this.dbUtility = dbUtility;
 		this.map = params;
 		this.documentRecordId = documentRecordId;
@@ -62,8 +67,13 @@ public class AnalysisThread extends Thread{
 		this.userId = userId;
 	}
 	
-	public AnalysisThread(Map<String, String> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility, ThreadGroup threadGroup) {
-		super(threadGroup, params.get("jobID"));
+	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility, ThreadGroup threadGroup) {
+		super(threadGroup, (String)params.get("jobID"));
+		log.info ("--- AnalysisThread constructor 2 info -------");
+		log.debug("--- AnalysisThread constructor 2 debug -------");
+		log.warn ("--- AnalysisThread constructor 2 warn -------");
+		log.error("--- AnalysisThread constructor 2 error -------");
+		log.fatal("--- AnalysisThread constructor 2 fatal -------");
 		this.dbUtility = dbUtility;
 		this.map = params;
 		this.documentRecordId = documentRecordId;
@@ -74,9 +84,16 @@ public class AnalysisThread extends Thread{
 	
 	@Override
 	public void run() {
-		
+//		log.debug("--- AnalysisThread.run() -------");
+		log.info("---  AnalysisThread.run() info -------");
+		log.debug("--- AnalysisThread.run() debug -------");
+		log.warn ("--- AnalysisThread.run() warn -------");
+		log.error("--- AnalysisThread.run() error -------");
+		log.fatal("--- AnalysisThread.run() fatal -------");
+
 		try{
-			OMElement jobResult = WebServiceUtility.callWebService(map,map.get("method"),map.get("serviceName"), map.get("URL"), null, null);
+//			OMElement jobResult = WebServiceUtility.callWebService(map,map.get("method"),map.get("serviceName"), map.get("URL"), null, null);
+			OMElement jobResult = WebServiceUtility.callWebServiceComplexParam(map,(String)map.get("method"),(String)map.get("serviceName"), (String)map.get("URL"), null, null);
 			
 			Map<String, OMElement> params = WebServiceUtility.extractParams(jobResult);
 			
@@ -100,7 +117,7 @@ public class AnalysisThread extends Thread{
 					}
 				}
 				
-				Long jobId = Long.valueOf(map.get("jobID").replaceAll("\\D", ""));
+				Long jobId = Long.valueOf(((String) map.get("jobID")).replaceAll("\\D", ""));
 				
 				recordAnalysisResults(documentRecordId, jobId, filesId);
 			}

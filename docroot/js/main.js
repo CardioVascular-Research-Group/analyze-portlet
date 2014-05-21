@@ -1,25 +1,25 @@
     function start() {  
         
-//        window['progress'] = setInterval(function() {  
-//            var pbClient = PF('pbClient');  
+        window['progress'] = setInterval(function() {  
+            var pbClient = PF('pbClient');  
             
-//            if($('#wfmessages') > 0 ){
-//            	cancel();
-//            }
-//            
-//            updateProgressBar();  
-//  
-//            if(pbClient.getValue() === 100) {  
-//                clearInterval(window['progress']);
-//                onComplete();
-//            }  
-//  
-//        }, 1000);  
+            if($('#wfmessages') > 0 ){
+            	cancel();
+            }
+            
+            updateProgressBar();  
+  
+            if(pbClient.getValue() === 100) {  
+                clearInterval(window['progress']);
+                onComplete();
+            }  
+  
+        }, 1000);  
     }  
   
     function cancel() {  
-//        clearInterval(window['progress']);  
-//        PF('pbClient').setValue(0);  
+        clearInterval(window['progress']);  
+        PF('pbClient').setValue(0);  
     }  
     
     
