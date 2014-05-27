@@ -54,11 +54,6 @@ public class AnalysisThread extends Thread{
 	
 	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility) {
 		super((String)params.get("jobID"));
-		log.info("---  AnalysisThread constructor 1 info -------");
-		log.debug("--- AnalysisThread constructor 1 debug -------");
-		log.warn ("--- AnalysisThread constructor 1 warn -------");
-		log.error("--- AnalysisThread constructor 1 error -------");
-		log.fatal("--- AnalysisThread constructor 1 fatal -------");
 		this.dbUtility = dbUtility;
 		this.map = params;
 		this.documentRecordId = documentRecordId;
@@ -69,11 +64,6 @@ public class AnalysisThread extends Thread{
 	
 	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility, ThreadGroup threadGroup) {
 		super(threadGroup, (String)params.get("jobID"));
-		log.info ("--- AnalysisThread constructor 2 info -------");
-		log.debug("--- AnalysisThread constructor 2 debug -------");
-		log.warn ("--- AnalysisThread constructor 2 warn -------");
-		log.error("--- AnalysisThread constructor 2 error -------");
-		log.fatal("--- AnalysisThread constructor 2 fatal -------");
 		this.dbUtility = dbUtility;
 		this.map = params;
 		this.documentRecordId = documentRecordId;
@@ -84,13 +74,6 @@ public class AnalysisThread extends Thread{
 	
 	@Override
 	public void run() {
-//		log.debug("--- AnalysisThread.run() -------");
-		log.info("---  AnalysisThread.run() info -------");
-		log.debug("--- AnalysisThread.run() debug -------");
-		log.warn ("--- AnalysisThread.run() warn -------");
-		log.error("--- AnalysisThread.run() error -------");
-		log.fatal("--- AnalysisThread.run() fatal -------");
-
 		try{
 //			OMElement jobResult = WebServiceUtility.callWebService(map,map.get("method"),map.get("serviceName"), map.get("URL"), null, null);
 			OMElement jobResult = WebServiceUtility.callWebServiceComplexParam(map,(String)map.get("method"),(String)map.get("serviceName"), (String)map.get("URL"), null, null);
@@ -161,8 +144,10 @@ public class AnalysisThread extends Thread{
 				this.storeAnnotationList(result, documentRecordId, jobId);
 			
 			} catch (AnalyzeFailureException e){
+				ServerUtility.logStackTrace(e, log);
 				throw e;
 			} catch (Exception e) {
+				ServerUtility.logStackTrace(e, log);
 				throw new AnalyzeFailureException("Fail on annotation data extraction. [ERROR = "+e.getMessage()+" ]", e);
 			}
 		}
@@ -176,6 +161,7 @@ public class AnalysisThread extends Thread{
 	        PermissionChecker permissionChecker = PermissionCheckerFactoryUtil.create(user);
 	        PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}catch (Exception e){
+			ServerUtility.logStackTrace(e, log);
 			throw new AnalyzeFailureException("Fail on premission checker initialization. [userId="+userId+"]", e);
 		}
 		
@@ -236,8 +222,9 @@ public class AnalysisThread extends Thread{
 				alistAnnotation.add(columns);
 				lineNum++;
 			}
-			log.debug("--- execute_rdann() found " + lineNum + " annotations");
+			log.info("--- execute_rdann() found " + lineNum + " annotations");
 		} catch (IOException e) {
+			ServerUtility.logStackTrace(e, log);
 			throw new AnalyzeFailureException("Fail on RDANN execution. [recordname="+sRecord+"]", e);
 		}finally{
 			File jobFolder = new File(headerFileName).getParentFile();
@@ -268,6 +255,7 @@ public class AnalysisThread extends Thread{
 				}
 			}
 		}catch (Exception e){
+			ServerUtility.logStackTrace(e, log);
 			throw new AnalyzeFailureException("Fail on analysis result file read.", e);
 		}
 		
@@ -305,6 +293,7 @@ public class AnalysisThread extends Thread{
 				fOutStream.close();
 				
 			} catch (Exception e) {
+				ServerUtility.logStackTrace(e, log);
 				throw new AnalyzeFailureException("Fail on temporary file creation.", e);
 			}finally{
 				log.info("File created? " + targetFile.exists());
@@ -395,8 +384,10 @@ public class AnalysisThread extends Thread{
 					toPersist.add(annotationToInsert);
 					
 				} catch (NumberFormatException e) {
+					ServerUtility.logStackTrace(e, log);
 					throw new AnalyzeFailureException("Error on annotation data read.[dMilliSec="+saAnnot[1]+" | iLeadIndex="+saAnnot[6]+"]", e); 
 				} catch (Exception e){
+					ServerUtility.logStackTrace(e, log);
 					throw new AnalyzeFailureException("Fail on annotation data extraction. [ERROR = "+e.getMessage()+" ]", e);
 				}
 			}else{
