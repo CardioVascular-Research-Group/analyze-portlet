@@ -171,15 +171,20 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 	public void updateProgressBar() {  
     	int progress = 0;
     	if(analysisManager != null){
-	        if(analysisManager != null && analysisManager.getTotal() > 0){
-	        	progress = (100 * analysisManager.getDone())/analysisManager.getTotal();
+	        if(analysisManager.getTotal() > 0){
+	        	int done = analysisManager.getDone();
+	        	if(done>0){
+	        		progress = (100 * done)/analysisManager.getTotal();
+	        	}
 	        }
 	        
 	        if(progress > 100){
 	        	progress = 100;
 	        }
-	        RequestContext context = RequestContext.getCurrentInstance();  
-	        context.execute("PF(\'pbClient\').setValue("+progress+");");
+	        if(progress>0){
+		        RequestContext context = RequestContext.getCurrentInstance();  
+		        context.execute("PF(\'pbClient\').setValue("+progress+");");
+	        }
     	}
     }  
   

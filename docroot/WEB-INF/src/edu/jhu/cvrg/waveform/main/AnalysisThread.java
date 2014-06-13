@@ -62,6 +62,16 @@ public class AnalysisThread extends Thread{
 		this.userId = userId;
 	}
 	
+	/** Same as the other constructor, plus it has a threadGroup parameter
+	 * 
+	 * @param params
+	 * @param documentRecordId
+	 * @param hasWfdbAnnotationOutput
+	 * @param originFiles
+	 * @param userId
+	 * @param dbUtility
+	 * @param threadGroup
+	 */
 	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility, ThreadGroup threadGroup) {
 		super(threadGroup, (String)params.get("jobID"));
 		this.dbUtility = dbUtility;
@@ -81,34 +91,54 @@ public class AnalysisThread extends Thread{
 			Map<String, OMElement> params = WebServiceUtility.extractParams(jobResult);
 			
 			if(params != null && params.size() > 0){
-				int fileCount = Integer.valueOf(params.get("filecount").getText());
-				OMElement fileList = params.get("fileList");
-				
-				long[] filesId = new long[fileCount];
-				
-				int i = 0;
-				for (Iterator<OMElement> iterator = fileList.getChildElements(); iterator.hasNext();) {
-					OMElement file = iterator.next();
-					
-					String fileIdStr = AnalysisThread.getElementByName(file, "FileId").getText();
-					
-					Long fileId = null; 
-					if(fileIdStr != null && fileIdStr.length() > 0){
-						fileId = Long.valueOf(fileIdStr);
-						filesId[i] = fileId;
-						i++;
-					}
-				}
-				
 				Long jobId = Long.valueOf(((String) map.get("jobID")).replaceAll("\\D", ""));
-				
-				recordAnalysisResults(documentRecordId, jobId, filesId);
+				if(params.get("error")!= null){
+					String errorMessage = (String) params.get("error").getText();
+					throw new AnalyzeFailureException(errorMessage);
+				}
+
+				int fileCount = 0;
+				if(params.get("filecount")!= null){
+					fileCount = Integer.valueOf(params.get("filecount").getText());
+	
+					OMElement fileList = null;
+					if(fileCount>0 && (params.get("fileList")!= null)) {
+						fileList = params.get("fileList");
+					
+						long[] filesId = new long[fileCount];
+						
+						int i = 0;
+						for (Iterator<OMElement> iterator = fileList.getChildElements(); iterator.hasNext();) {
+							OMElement file = iterator.next();
+							
+							String fileIdStr = AnalysisThread.getElementByName(file, "FileId").getText();
+							
+							Long fileId = null; 
+							if(fileIdStr != null && fileIdStr.length() > 0){
+								fileId = Long.valueOf(fileIdStr);
+								filesId[i] = fileId;
+								i++;
+							}
+						}
+						if(i==fileCount){
+							recordAnalysisResults(documentRecordId, jobId, filesId);
+						}else{
+							throw new AnalyzeFailureException("The number of result files received (" + i + ") did not match the number expected (" + fileCount + ") from web service (" + (String)map.get("method"));
+						}
+					}else{
+						throw new AnalyzeFailureException("The parameter \"fileList\" is missing from web service (" + (String)map.get("method") + " response. There should be " + fileCount + " file names.");
+					}
+				}else{
+					throw new AnalyzeFailureException("The parameter \"filecount\" is missing from web service (" + (String)map.get("method") + " response.");
+				}
 			}
 		}catch (AnalyzeFailureException e){
 			errorMessage = e.getMessage();
+			log.error(errorMessage);
 			ServerUtility.logStackTrace(e, log);
 		}catch (Exception e){
 			errorMessage = "Fatal error. " + e.getMessage();
+			log.fatal(errorMessage);
 			ServerUtility.logStackTrace(e, log);
 		}
 	

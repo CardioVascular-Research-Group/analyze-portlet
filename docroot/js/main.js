@@ -7,7 +7,7 @@
             	cancel();
             }
             
-            updateProgressBar();  
+//            updateProgressBar();  
   
             if(pbClient.getValue() === 100) {  
                 clearInterval(window['progress']);
