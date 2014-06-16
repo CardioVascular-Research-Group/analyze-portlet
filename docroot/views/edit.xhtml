@@ -41,7 +41,7 @@
  							<p:column headerText="Service" width="15%">
 								<h:outputLabel 
 									value="#{algorithm.displayServiceName}"  
-									title="#{algorithm.AnalysisServiceURL}/#{algorithm.serviceName}/#{algorithm.serviceMethod}" />
+									title="#{algorithm.analysisServiceURL}/#{algorithm.serviceName}/#{algorithm.serviceMethod}" />
 							</p:column>
 		
  							<p:column headerText="ID" width="5%">
@@ -53,7 +53,7 @@
 							<p:column headerText="Name" width="15%">
 								<h:outputLabel 
 									value="#{algorithm.displayShortName}"  
-									title="#{algorithm.AnalysisServiceURL}/#{algorithm.serviceName}/#{algorithm.serviceMethod}"/>
+									title="#{algorithm.analysisServiceURL}/#{algorithm.serviceName}/#{algorithm.serviceMethod}"/>
 							</p:column>
 		
 							<p:column headerText="Description" swidth="60%">
@@ -157,42 +157,7 @@
 							update="@([id$= optionalParameterTable])"
 							title="Show the optional parameters in the table below." />
 						
-						
-						<p:dataTable id="optionalParameterTable"
-							var="param"
-							value="#{algorithmEditBacking.selectedAlgorithm.parameters}"
-							rowKey="#{param.displayShortName}"
-							selectionMode="single" 
-							paginator="true" 
-							rows="10"
-							rowIndexVar="index"
-							resizableColumns="true" 
-							resizable="true"
-							collapsible="true" 
-							paginatorAlwaysVisible="false"
-							paginatorPosition="top"
-							paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-							rowsPerPageTemplate="5,10,15,20" 
-							emptyMessage="No optional parameter found in database.">
-							
- 							<p:column headerText="Name" width="15%">
-								<h:outputLabel 
-									value="#{param.displayShortName}"  
-									title="#{param.toolTipDescription}" />
-							</p:column>
-		
-							<p:column headerText="Type" width="15%">
-								<h:outputLabel 
-									value="#{param.type}"  
-									title="#{param.longDescription}"/>
-							</p:column>
-		
-							<p:column headerText="ValidatorType" swidth="60%">
-								<h:outputLabel 
-									value="#{param.validator.type}" 
-									title="#{param.validator.message}"/>								
-							</p:column>
-						</p:dataTable>						
+										
 					</p:layoutUnit>
 
 					<p:layoutUnit  id="louPeople" position="east" header="Associated People" size="100" collapsible="true" resizable="true" 
