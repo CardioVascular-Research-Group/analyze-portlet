@@ -74,6 +74,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 			if(algorithmList == null){
 				algorithmList = new AlgorithmList();
 			}
+			this.getLog().info("Number of algorithms in list:" + algorithmList.getAvailableAlgorithms().size());
 			messages = new ArrayList<FacesMessage>();
 		}
 	}

@@ -26,6 +26,8 @@ package edu.jhu.cvrg.waveform.backing;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.log4j.Logger;
 import org.w3c.dom.Node;
 import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
 import edu.jhu.cvrg.dbapi.dto.Algorithm;
@@ -35,6 +37,7 @@ import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
 public class AlgorithmList implements Serializable{
 	
 	private static final long serialVersionUID = -4006126323152259063L;
+	Logger log = Logger.getLogger(this.getClass());
 	
 	private List<Algorithm> availableAlgorithms = new ArrayList<Algorithm>();
 
@@ -144,10 +147,11 @@ public class AlgorithmList implements Serializable{
 	 */
 	public void populateAlgorithmsFromDB(){
 		try {
-			Connection dbUtility = ConnectionFactory.createConnection();
-			List<Algorithm> algList = dbUtility.getAvailableAlgorithmList(-1);
+			Connection dbUtilityConn = ConnectionFactory.createConnection();
+			log.info("Connnection to database:" + dbUtilityConn.getType().toString());
+			List<Algorithm> algList = dbUtilityConn.getAvailableAlgorithmList(-1);
 			availableAlgorithms = algList;
-
+			log.info("Number of algorithms in list:" + algList.size());
 		} catch(Exception ex) {
 			ex.printStackTrace();
 		}	
