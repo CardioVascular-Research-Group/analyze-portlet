@@ -24,7 +24,9 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
 
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.sql.Select;
@@ -38,7 +40,7 @@ import edu.jhu.cvrg.dbapi.dto.Service;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 
 @ManagedBean(name = "algorithmEditBacking")
-@ViewScoped
+@SessionScoped
 public class AlgorithmEditBacking extends BackingBean implements Serializable {
 	private static final long serialVersionUID = 1183266658930656309L;
 	
@@ -61,7 +63,8 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 				serviceList = new ServiceList();
 			}
 			if(algorithmList == null){
-				algorithmList = new AlgorithmList();
+				initAlgorithmList(-1); // always start with default
+//				algorithmList = new AlgorithmList();
 //				if(algorithmList.getAvailableAlgorithms().size()>1){
 //					setSelectedAlgorithm(algorithmList.getAvailableAlgorithms().get(1));
 //					selectedAlgorithmID = getSelectedAlgorithm().getId();
@@ -70,6 +73,19 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 			messages = new ArrayList<FacesMessage>();
 		}
 		
+	}
+	
+	private void initAlgorithmList(int selectedAlgID){
+		algorithmList = new AlgorithmList();
+		if(algorithmList.getAvailableAlgorithms().size()>1){
+			setSelectedAlgorithm(algorithmList.getAvailableAlgorithms().get(0)); // default to first in list
+			for(Algorithm a:algorithmList.getAvailableAlgorithms()){
+				if(a.getId() == selectedAlgID){
+					setSelectedAlgorithm(a);
+				}
+			}			
+			selectedAlgorithmID = getSelectedAlgorithm().getId();
+		}
 	}
 
     public void onComplete() {
@@ -95,25 +111,89 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
     	//Do not delete this method.  The listener is present to force a form submit on select.
     	// System.out.println("AlgorithmEditBacking.onRowSelect() algorithm:" + ((Algorithm) event.getObject()).getDisplayShortName());
 //    	setSelectedAlgorithm((Algorithm) event.getObject());
-
+    	this.getLog().info("selected:" + selectedAlgorithm.getDisplayShortName());
     	return;
     }  
   
     public void onRowUnselect(UnselectEvent event) {  
     	//Do not delete this method.  The listener is present to force a form submit on un-select.
+    	this.getLog().info("unselected:" + selectedAlgorithm.getDisplayShortName());
+
     	return;
     }  
+    /*
+    public void saveAlgorithm(SelectEvent event) {  
+    	this.getLog().info("+++ AlgorithmEditBacking.java, saveAlgorithm() +++ ");
+    	
+    	return;
+    }  */
+
     
-    public String saveAlgorithm(){
-    	if(selectedAlgorithmID>0){
+    /********************** Button Click handlers ************************/
+    // template for 
+    public void doAction() {
+    	this.getLog().info("Done");
+
+//        System.out.println("Done");
+    }
+    
+    /** Save the current algorithm edit and stays on current page.
+     * 
+     */
+    public void saveAlgorithm(){
+    	this.getLog().info(" saveAlgorithm()");
+    	if(selectedAlgorithmID>=0){
     		// edited existing algorithm
     		algorithmList.updateAlgorithmToDB(selectedAlgorithm);
     	}else{
     		// new algorithm
     	}
-    	return "success";
+    	initAlgorithmList(selectedAlgorithmID);
     }
     
+	/** Loads the main Algorithm listing view, the start of the edit mode, without saving.
+     * Handles onclick event for the button "btnEditMain". 
+     */
+    public String loadMainEdit(){
+		return "edit";
+    }
+    
+    
+    public String editRequiredElements(){
+    	this.getLog().info("+ nextView: editA_RequiredElements"); 
+    	return "editA_RequiredElements";
+    }
+
+	/** Loads the edit screen for the Long algorithm description.
+     * Handles onclick event for the button "btnEditLongDesc" in the edit.xhtml view.
+     */
+    public String editLongDesc(){
+    	String nextView= null;
+    	this.getLog().info("editLongDesc()");
+    	
+    	if(selectedAlgorithmID >= 0){
+    		this.getLog().info("+ selected algorithm:" + selectedAlgorithm.getDisplayShortName());
+	   		nextView = "editB_LongDescription";
+    	}else{
+    		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Error" , "<br />Please select an algorithm to edit."));	
+    	}
+    	
+    	this.getLog().info("+ nextView:" + nextView); 
+		return nextView;
+    }
+	
+    
+    public String editParameterList(){
+    	this.getLog().info("+ nextView: editC_ParameterList"); 
+    	return "editC_ParameterList";
+    }
+    
+    public String editServiceList(){
+    	this.getLog().info("+ nextView: editD_ServiceList"); 
+    	return "editD_ServiceList";
+    }
+    
+/******************** getters and setters **************************/    
 	public int getSelectedAlgorithmID() {
 		return selectedAlgorithmID;
 	}
@@ -143,7 +223,7 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 		return this.selectedAlgorithm.getParameters().size();
 	}
 	
-	public ArrayList<AdditionalParameters> getParameterList(){
+	public List<AdditionalParameters> getParameterList(){
 		return this.selectedAlgorithm.getParameters();
 	}
 

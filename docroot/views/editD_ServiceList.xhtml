@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+
+<f:view contentType="text/html" xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://java.sun.com/jsf/facelets">
+	<h:head />
+	<h:body>
+
+		<h:panelGroup id="mainGroupEdit" layout="block" styleClass="backgroundofContent">
+			<h:form id="formAlgorithmEditLongDesc">
+				
+						<p:panelGrid id="webServiceGrid" >
+							<p:row>
+								<p:column colspan="2">
+									<div align="center" class="ui-widget-header ui-corner-all">
+										<p:commandButton value="Save"
+			                					action="#{algorithmEditBacking.saveAlgorithm()}" />
+										<p:commandButton id="btnEditMain" value="Home"
+												action="#{algorithmEditBacking.loadMainEdit}"
+												title="Return to the main algorithm edit view." />
+									</div>
+								</p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Web Services</p:column>
+								<p:column style="font-weight: bold;" colspan="3">
+									<p:dataTable id="webServiceTable"
+										var="s"
+										value="#{algorithmEditBacking.serviceList.availableServiceList}"
+										rowKey="#{s.id}"
+										paginator="true" 
+										rows="20"
+										rowIndexVar="indexService"
+										resizableColumns="true" 
+										resizable="false"										
+										collapsible="false" 
+										paginatorAlwaysVisible="false"
+										paginatorPosition="top"
+										paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+										rowsPerPageTemplate="5,10,15,20" 
+										emptyMessage="No parameter options found for this algorithm">
+										
+			 							<p:column headerText="ID"  width="5%">
+											<h:outputLabel 
+												value="#{s.id}"  
+												title="Web Service's ID in the database (Primary Key)" />
+										</p:column>
+					 
+										<p:column headerText="Display Name" width="15%">
+											<h:outputLabel 
+												value="#{s.displayServiceName}" 
+												title="Human friendly name of the service to be used by the UI when listing services."/>
+										</p:column>
+					
+										<p:column headerText="Service's Name" width="15%">
+											<h:outputLabel 
+												value="#{s.serviceName}" 
+												title="The web service’s name to be used in the URL when calling the service.   e.g. 'physionetAnalysisService'"/>
+										</p:column>
+					
+										<p:column headerText="URL" width="25%">
+											<h:outputLabel 
+												value="#{s.url}"
+												title="URL of the web service."/>								
+										</p:column>
+
+									</p:dataTable>	
+								</p:column>															
+							</p:row>
+							
+						</p:panelGrid>	
+			</h:form>
+		</h:panelGroup>
+
+	</h:body>
+</f:view>

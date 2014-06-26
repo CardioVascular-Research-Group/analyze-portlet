@@ -99,17 +99,18 @@ public class AlgorithmList implements Serializable{
 	 */
 	public void updateAlgorithmToDB(Algorithm alg){
 		
-		System.out.println("Updating algorithm ID:" + alg.getId());
-		System.out.println("Display Name:" + alg.getDisplayShortName());
-		System.out.println("Service Name:" + alg.getServiceName());
-		System.out.println("Method:" + alg.getServiceMethod());
-
-//		Connection dbUtility = ConnectionFactory.createConnection();
+		log.info("updateAlgorithmToDB() algorithm ID:" + alg.getId());
+		log.info("updateAlgorithmToDB() Display Name:" + alg.getDisplayShortName());
+		log.info("updateAlgorithmToDB() Service Name:" + alg.getServiceName());
+		log.info("updateAlgorithmToDB() Method:" + alg.getServiceMethod());
+		log.info("updateAlgorithmToDB() URL Ref:" + alg.getURLreference());
+		
+		Connection dbUtility = ConnectionFactory.createConnection();
 
 		
-//			int algorithmID = dbUtility.storeAlgorithm(a.getDisplayShortName(), 1, a.getServiceMethod(),
-//					a.getToolTipDescription(), a.getDisplayLongDescription());
-//			persistAlgorithmParametersToDB(a, algorithmID);
+			int algorithmID = dbUtility.updateAlgorithm(alg.getId(), alg.getDisplayShortName(), alg.getServiceID(), 
+					alg.getServiceMethod(), alg.getToolTipDescription(), alg.getDisplayLongDescription());
+//			persistAlgorithmParametersToDB(alg, algorithmID);
 	}
 	
 	/** Copies the current algorithm List to the database.

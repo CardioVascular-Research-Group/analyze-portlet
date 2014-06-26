@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+
+<f:view contentType="text/html" xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://java.sun.com/jsf/facelets">
+	<h:head />
+	<h:body>
+
+		<h:panelGroup id="mainGroupEdit" layout="block" styleClass="backgroundofContent">
+			<h:form id="formAlgorithmEditLongDesc">
+				
+						<p:panelGrid id="requiredAttributesGrid" >
+							<p:row>
+								<p:column colspan="2">
+									<div align="center" class="ui-widget-header ui-corner-all">
+										<p:commandButton value="Save"
+			                					action="#{algorithmEditBacking.saveAlgorithm()}" />
+										<p:commandButton id="btnEditMain" value="Home"
+												action="#{algorithmEditBacking.loadMainEdit}"
+												title="Return to the main algorithm edit view." />
+									</div>
+								</p:column>
+							</p:row>
+							<p:row>
+								<p:column style="font-weight: bold;" >Optional Parameters</p:column>
+								<p:column style="font-weight: bold;" colspan="3">
+									<p:dataTable id="optionalParameterTable"
+										var="p"
+										value="#{algorithmEditBacking.parameterList}"
+										rowKey="#{p.displayShortName}"
+										paginator="true" 
+										rows="10"
+										rowIndexVar="indexParam"
+										resizableColumns="true" 
+										resizable="false"										
+										collapsible="false" 
+										paginatorAlwaysVisible="false"
+										paginatorPosition="top"
+										paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+										rowsPerPageTemplate="5,10,15,20" 
+										emptyMessage="No parameter options found for this algorithm">
+										
+			 							<p:column headerText="ID"  width="5%">
+											<h:outputLabel 
+												value="#{p.id}"  
+												title="Optional Parameter's ID in the database (Primary Key)" />
+										</p:column>
+					 
+										<p:column headerText="Name" width="15%">
+											<h:outputLabel 
+												value="#{p.displayShortName}" />
+										</p:column>
+					
+										<p:column headerText="Tooltip" width="25%">
+											<h:outputLabel 
+												value="#{p.toolTipDescription}"
+												title="#{p.longDescription}"/>								
+										</p:column>
+
+										<p:column headerText="Description">
+											<h:outputLabel 
+												value="#{p.longDescription}"
+												title="#{p.toolTipDescription}"/>								
+										</p:column>
+									</p:dataTable>	
+								</p:column>															
+							</p:row>
+							
+						</p:panelGrid>	
+			</h:form>
+		</h:panelGroup>
+
+	</h:body>
+</f:view>
