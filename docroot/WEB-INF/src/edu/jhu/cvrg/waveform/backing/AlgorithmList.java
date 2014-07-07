@@ -44,6 +44,7 @@ public class AlgorithmList implements Serializable{
 	public AlgorithmList() {
 
 		try {
+			availableAlgorithms.clear();
 			populateAlgorithmsFromDB();
 //			persistAlgorithmsToDB();
 //			persistAlgorithmParametersToDB();
@@ -94,6 +95,25 @@ public class AlgorithmList implements Serializable{
 		}
 	}
 	
+	
+	/** Adds a new algorithm entry to the database with blatantly unreal values, so that it can be edited by the user.
+	 * This is the first step of creating a new algorithm entry.
+	 * 
+	 * @param serviceID - the primary key of an existing service entry in this database.  Can be edited later.
+	 * @return - the primary key of the new algorithm entry.
+	 * @author Michael Shipway
+	 */
+	public int addNewAlgorithmToDB(int serviceID){
+		Connection dbUtility = ConnectionFactory.createConnection();
+		String displayShortName = "REPLACE";
+		String serviceMethod = "REPLACE";
+		String toolTipDescription = "REPLACE";
+		String displayLongDescription = "REPLACE";
+		int algorithmID = dbUtility.storeAlgorithm(displayShortName, serviceID, serviceMethod,
+				toolTipDescription, displayLongDescription);
+		return algorithmID;
+	}
+	
 	/** Copies the current algorithm List to the database.
 	 * Used once for initializing the database only, should not be run in normal situations.
 	 */
@@ -142,6 +162,21 @@ public class AlgorithmList implements Serializable{
 		}
 	}
 	
+	/** Adds a single new algorithm parameter to the database. 
+	 * 
+	 * @param param - an initialized AdditionalParameters object.
+	 * @param algID - Primary key of the algorithm this parameter pertains to.
+	 * @return - The primary key of the new entry.
+	 * @author Michael Shipway
+	 */
+	public int addNewAlgorithmParameterToDB(AdditionalParameters param, int algID){
+		Connection dbUtility = ConnectionFactory.createConnection();
+		
+		return dbUtility.storeAlgorithmParameter(param, algID);
+	}
+		
+	
+
 
 	/** populates the availableAlgorithm List from the waveform3 database.
 	 * Instead of from the web service's AlgorithmDetails method.
@@ -150,9 +185,10 @@ public class AlgorithmList implements Serializable{
 		try {
 			Connection dbUtilityConn = ConnectionFactory.createConnection();
 			log.info("Connnection to database:" + dbUtilityConn.getType().toString());
-			List<Algorithm> algList = dbUtilityConn.getAvailableAlgorithmList(-1);
-			availableAlgorithms = algList;
-			log.info("Number of algorithms in list:" + algList.size());
+//			List<Algorithm> algList = dbUtilityConn.getAvailableAlgorithmList(-1);
+			availableAlgorithms.clear();
+			availableAlgorithms = dbUtilityConn.getAvailableAlgorithmList(-1);;
+			log.info("Number of algorithms in list:" + availableAlgorithms.size());
 		} catch(Exception ex) {
 			ex.printStackTrace();
 		}	

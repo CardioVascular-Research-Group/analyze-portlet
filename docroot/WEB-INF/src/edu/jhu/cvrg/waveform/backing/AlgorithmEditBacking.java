@@ -20,7 +20,10 @@ package edu.jhu.cvrg.waveform.backing;
  */
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
@@ -46,14 +49,16 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 	
 	private int selectedAlgorithmID=-1;
 	private Algorithm selectedAlgorithm;
-	private Service selectedService;
+//	private int selectedServiceID;
+//	private Service selectedService;
 
 	private User userModel;
 	
 	private AlgorithmList algorithmList;
 	private ServiceList serviceList;
+	private int newServiceID;
 	private List<FacesMessage> messages;
-	
+
 	@PostConstruct
 	public void init() {
 		// System.out.println("AlgorithmEditBacking.init()");
@@ -64,17 +69,11 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 			}
 			if(algorithmList == null){
 				initAlgorithmList(-1); // always start with default
-//				algorithmList = new AlgorithmList();
-//				if(algorithmList.getAvailableAlgorithms().size()>1){
-//					setSelectedAlgorithm(algorithmList.getAvailableAlgorithms().get(1));
-//					selectedAlgorithmID = getSelectedAlgorithm().getId();
-//				}
 			}
 			messages = new ArrayList<FacesMessage>();
 		}
-		
 	}
-	
+
 	private void initAlgorithmList(int selectedAlgID){
 		algorithmList = new AlgorithmList();
 		if(algorithmList.getAvailableAlgorithms().size()>1){
@@ -85,6 +84,13 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 				}
 			}			
 			selectedAlgorithmID = getSelectedAlgorithm().getId();
+//			selectedServiceID = getSelectedAlgorithm().getServiceID();
+//			for(Service s:serviceList.getAvailableServiceList()){
+//				if(s.getId() == selectedServiceID){
+//					setSelectedService(s);
+//				}
+//			}			
+			
 		}
 	}
 
@@ -121,22 +127,25 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 
     	return;
     }  
-    /*
-    public void saveAlgorithm(SelectEvent event) {  
-    	this.getLog().info("+++ AlgorithmEditBacking.java, saveAlgorithm() +++ ");
-    	
-    	return;
-    }  */
-
-    
     /********************** Button Click handlers ************************/
     // template for 
-    public void doAction() {
-    	this.getLog().info("Done");
-
-//        System.out.println("Done");
-    }
+//    public void doAction() {
+//    	this.getLog().info("Done");
+//    }
     
+    public String editRequiredElements(){
+    	this.getLog().info("+ nextView: editM_Tabpage"); 
+    	return "editM_Tabpage";
+    }
+
+    /** Adds a new (blank) algorithm entry to the database, then reloads the algorithm list, then opens the editing page (editM_Tabpage.xhtml) **/
+    public String addNewAlgorithm(){
+    	int algID = algorithmList.addNewAlgorithmToDB(selectedAlgorithm.getServiceID()); // use the serviceID of the last selected algorithm, as the odds are good it will be the right one. 
+    	initAlgorithmList(algID);
+    	this.getLog().info("+ nextView: editM_Tabpage"); 
+    	return "editM_Tabpage";
+    }
+
     /** Save the current algorithm edit and stays on current page.
      * 
      */
@@ -144,11 +153,36 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
     	this.getLog().info(" saveAlgorithm()");
     	if(selectedAlgorithmID>=0){
     		// edited existing algorithm
+//    		selectedAlgorithm.setServiceID(selectedServiceID);
     		algorithmList.updateAlgorithmToDB(selectedAlgorithm);
     	}else{
     		// new algorithm
     	}
     	initAlgorithmList(selectedAlgorithmID);
+    }
+    
+
+    public void addParameter(){
+    	this.getLog().info(" addParameter()");
+    	AdditionalParameters newParam = new AdditionalParameters();
+    	newParam.setDisplayShortName("REPLACE");
+    	newParam.setLongDescription("REPLACE");
+    	newParam.setParameterFlag("REPLACE");
+    	newParam.setParameterDefaultValue("REPLACE");
+    	newParam.setType("text");
+    	
+    	algorithmList.addNewAlgorithmParameterToDB(newParam, getSelectedAlgorithm().getId());
+    	algorithmList.populateAlgorithmsFromDB();
+    }
+    
+
+    public void addService(){
+    	this.getLog().info(" addService()");
+    	String uiName = "REPLACE";
+    	String wsName = "REPLACE";
+    	String url = "REPLACE";
+    	newServiceID = serviceList.addNewServiceToDB(uiName, wsName, url);
+    	serviceList = new ServiceList(); // reload
     }
     
 	/** Loads the main Algorithm listing view, the start of the edit mode, without saving.
@@ -159,11 +193,6 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
     }
     
     
-    public String editRequiredElements(){
-    	this.getLog().info("+ nextView: editA_RequiredElements"); 
-    	return "editA_RequiredElements";
-    }
-
 	/** Loads the edit screen for the Long algorithm description.
      * Handles onclick event for the button "btnEditLongDesc" in the edit.xhtml view.
      */
@@ -208,13 +237,13 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 
 	public void setSelectedAlgorithm(Algorithm selectedAlgorithm) {
 		this.selectedAlgorithm = selectedAlgorithm;
-		this.selectedAlgorithmID = this.selectedAlgorithm.id;
-		int serviceID = this.selectedAlgorithm.getServiceID();
-		for (Service s:serviceList.getAvailableServiceList()){
-			if(serviceID ==s.id) {
-				this.selectedService = s;
-			}
-		}
+		this.selectedAlgorithmID = getSelectedAlgorithm().getId();
+		int serviceID = getSelectedAlgorithm().getServiceID();
+//		for (Service s:serviceList.getAvailableServiceList()){
+//			if(serviceID ==s.id) {
+//				this.selectedService = s;
+//			}
+//		}
 		// System.out.println("AlgorithmEditBacking.setSelectedAlgorithm() algorithm:" + selectedAlgorithm.getDisplayShortName());
 	}
 	
@@ -228,12 +257,12 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 	}
 
 	public Service getSelectedService() {
-		return selectedService;
+		return serviceList.getServiceByID(selectedAlgorithm.getServiceID());
 	}
 
-	public void setSelectedService(Service selectedService) {
-		this.selectedService = selectedService;
-	}
+//	public void setSelectedService(Service selectedService) {
+//		this.selectedService = selectedService;
+//	}
 
 	public AlgorithmList getAlgorithmList() {
 		return algorithmList;
@@ -254,4 +283,15 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 	public User getUser(){
 		return userModel;
 	}
+
+	public Service getNewService() {
+		return serviceList.getServiceByID(newServiceID);
+	}
+
+//	public int getSelectedServiceID() {
+//		return selectedServiceID;
+//	}
+//	public void setSelectedServiceID(int selectedServiceID) {
+//		this.selectedServiceID = selectedServiceID;
+//	}
 }

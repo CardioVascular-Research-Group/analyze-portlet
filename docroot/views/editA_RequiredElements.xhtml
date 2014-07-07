@@ -9,41 +9,16 @@
 	<h:head />
 	<h:body>
 
-		<h:panelGroup id="mainGroupEdit" layout="block" styleClass="backgroundofContent">
-			<h:form id="formAlgorithmEdit">
+		<h:panelGroup id="requiredAttributesEdit" layout="block" styleClass="backgroundofContent">
+			<h:form id="formRequiredAttributesEdit">
 						<p:panelGrid id="requiredAttributesGrid" >
 							<p:row>
-								<p:column colspan="2">
-									<div align="center" class="ui-widget-header ui-corner-all">
-										<p:commandButton value="Save"
-			               					action="#{algorithmEditBacking.saveAlgorithm()}" />
-										<p:commandButton id="btnEditMain" 
-											value="Home"
-											action="#{algorithmEditBacking.loadMainEdit}"
-											title="Return to the main algorithm edit view." />
-										<p:commandButton id="btnEditLongDesc" 
-											value="Edit Long Description"
-											action="#{algorithmEditBacking.editLongDesc}"
-											title="View and Edit the longer, fuller description." />
-										<p:commandButton id="btnEditParams" 
-											value="Edit Parameters"
-											action="#{algorithmEditBacking.editParameterList}"
-											title="View and Edit optional parameters." />
-										<p:commandButton id="btnEditServices" 
-											value="Edit Services"
-											action="#{algorithmEditBacking.editServiceList}"
-											title="View and Edit Services." />
-									</div>
-								</p:column>
-							</p:row>
-						
-							<p:row>
 								<p:column style="font-weight: bold;" headerText="Name">Display Name</p:column>
-								<p:column><h:inputText size="150" value="#{algorithmEditBacking.selectedAlgorithm.displayShortName}" /></p:column>
+								<p:column><h:inputText size="100" value="#{algorithmEditBacking.selectedAlgorithm.displayShortName}" /></p:column>
 							</p:row>
 							<p:row>
 								<p:column style="font-weight: bold;" >Algorithm ID</p:column>
-								<p:column><h:outputText size="150" value="#{algorithmEditBacking.selectedAlgorithm.id}" /></p:column>
+								<p:column><h:outputText size="100" value="#{algorithmEditBacking.selectedAlgorithm.id}" /></p:column>
 							</p:row>
 							<p:row>
 								<p:column style="font-weight: bold;" >Service ID</p:column>
@@ -52,19 +27,8 @@
 							<p:row>
 								<p:column style="font-weight: bold;" >Service Name</p:column>
 								<p:column>		
-									<h:selectOneRadio id="serviceRadioButton" 
-										value="#{algorithmEditBacking.selectedService}">
-										<f:selectItem itemLabel="PS4" itemValue="PS+" />
-<!--  										<f:selectItems
-											value="#{algorithmEditBacking.serviceList.availableServiceList}" 
-											var="service" 
-											itemLabel="#{service.displayServiceName}" 
-											itemValue="#{service}"/>   
- -->										
-									</h:selectOneRadio>
-<!-- 
 									<h:selectOneMenu id="serviceSelect" 
-										value="#{algorithmEditBacking.selectedService}"  
+										value="#{algorithmEditBacking.selectedAlgorithm.serviceID}"  
 					 					required="true" 
 					 					requiredMessage="Server must be selected." 
 					 					maxlength="150"> 
@@ -75,14 +39,14 @@
 											value="#{algorithmEditBacking.serviceList.availableServiceList}" 
 											var="service" 
 											itemLabel="#{service.displayServiceName}" 
-											itemValue="#{service}"/>   
+											itemValue="#{service.id}"/>   
 									</h:selectOneMenu>
- -->									
+								
 								</p:column>
 							</p:row> 
 							<p:row>
 								<p:column style="font-weight: bold;" >Service Method</p:column>
-								<p:column><h:inputText size="150" value="#{algorithmEditBacking.selectedAlgorithm.serviceMethod}" /></p:column>
+								<p:column><h:inputText size="100" value="#{algorithmEditBacking.selectedAlgorithm.serviceMethod}" /></p:column>
 							</p:row>
 							<p:row>
 								<p:column style="font-weight: bold;" >optional parameters count</p:column>
@@ -90,17 +54,21 @@
 							</p:row> 
 							<p:row>
 								<p:column style="font-weight: bold;" >Short Description</p:column>
-								<p:column><h:inputTextarea rows="3" cols="150" value="#{algorithmEditBacking.selectedAlgorithm.toolTipDescription}" /></p:column>
+								<p:column><h:inputTextarea rows="3" cols="100" value="#{algorithmEditBacking.selectedAlgorithm.toolTipDescription}" /></p:column>
 							</p:row>
+							 <!-- 
 							<p:row>
 								<p:column style="font-weight: bold;" >Result Format</p:column>
 								<p:column>
-									<h:selectOneRadio id="resultformatRadioButton" >
-										<f:selectItem itemLabel="WFDBAnnotation" itemValue="WFDBAnnotation" />
+									<h:outputText value="#{algorithmEditBacking.selectedAlgorithm.type}" />
+									<h:selectOneRadio id="resultformatRadioButton" 
+										value="#{algorithmEditBacking.selectedAlgorithm.type}"
+										style="font-weight: bold;">
+										<f:selectItem itemLabel="WFDBAnnotation" itemValue="WFDBAnnotation"  />
 										<f:selectItem itemLabel="CSV" itemValue="CSV" />
 									</h:selectOneRadio>
 								</p:column>
-							</p:row>
+							</p:row> -->
 						</p:panelGrid>	
 			</h:form>
 		</h:panelGroup>
