@@ -11,102 +11,101 @@
 
 		<h:panelGroup id="paramEdit" layout="block" styleClass="backgroundofContent">
 			<h:form id="formAlgorithmEditParam">
-				
-									<p:dataTable id="optionalParameterTable"
-										var="p"
-										value="#{algorithmEditBacking.parameterList}"
-										rowKey="#{p.displayShortName}"
-										paginator="true" 
-										rows="10"
-										rowIndexVar="indexParam"
-										resizableColumns="true" 
-										resizable="false"										
-										collapsible="false" 
-										paginatorAlwaysVisible="false"
-										paginatorPosition="top"
-										paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-										rowsPerPageTemplate="5,10,15,20" 
-										emptyMessage="No parameter options found for this algorithm">
-										
-			 							<p:column headerText="ID"  style="width:20px;">
-											<h:outputLabel 
-												value="#{p.id}"  
-												title="Optional Parameter's ID in the database (Primary Key)" />
-										</p:column>
-					 
-										<p:column headerText="Name" style="width:100px;">
-											<h:outputLabel 
-												value="#{p.displayShortName}" />
-										</p:column>
+				<p:dataTable id="optionalParameterTable"
+					var="p"
+					value="#{algorithmEditBacking.parameterList}"
+					rowKey="#{p.displayShortName}"
+					paginator="true" 
+					rows="10"
+					rowIndexVar="indexParam"
+					resizableColumns="true" 
+					resizable="false"										
+					collapsible="false" 
+					paginatorAlwaysVisible="false"
+					paginatorPosition="top"
+					paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					rowsPerPageTemplate="5,10,15,20" 
+					emptyMessage="No parameter options found for this algorithm">
 					
-										<p:column headerText="Tooltip" style="width:300px;">
-											<h:outputLabel 
-												value="#{p.toolTipDescription}"
-												title="#{p.longDescription}"/>								
-										</p:column>
+						<p:column headerText="ID"  style="width:20px;">
+						<h:outputLabel 
+							value="#{p.id}"  
+							title="Optional Parameter's ID in the database (Primary Key)" />
+					</p:column>
+ 
+					<p:column headerText="Name" style="width:100px;">
+						<h:outputLabel 
+							value="#{p.displayShortName}" />
+					</p:column>
 
-										<p:column headerText="Description">
-											<h:outputLabel 
-												value="#{p.longDescription}"
-												title="#{p.toolTipDescription}"/>								
-										</p:column>
-										<p:column  style="width:40px;">
-										    <p:commandButton id="BtnParamEdit" value="Edit" type="button" />
-   											<p:overlayPanel id="paramEditPanel" for="BtnParamEdit" hideEffect="fade" dynamic="true" style="width:800px;height:300px"  showCloseIcon="true">
-   												<p:panelGrid>
-												    <f:facet name="header">
-												        <p:row>
-												            <p:column colspan="2">Edit then Save</p:column>
-												        </p:row>												 
-												    </f:facet>   													
-   													
-   													<p:row>
-						 								<p:column width="50px" ><h:outputLabel value ="ID"/> </p:column>
-														<p:column >
-															<h:outputText 
-																value="#{p.id}" 
-																title="Optional Parameter's ID in the database (Primary Key)" />
-														 </p:column>
-								 					</p:row>
-													<p:row>
-						 								<p:column width="50px" ><h:outputLabel value ="Name"/></p:column>
-														<p:column >
-															<h:inputText 
-															value="#{p.displayShortName}" 
-															size="150"/>
-														 </p:column>
-								 					</p:row>
-								
-													<p:row>
-						 								<p:column width="50px" ><h:outputLabel value ="Tooltip"/></p:column>
-														<p:column >
-															<h:inputText 
-															value="#{p.toolTipDescription}"
-															size="150"/>
-														 </p:column>
-								 					</p:row>	
+					<p:column headerText="Tooltip" style="width:300px;">
+						<h:outputLabel 
+							value="#{p.toolTipDescription}"
+							title="#{p.longDescription}"/>								
+					</p:column>
+
+					<p:column headerText="Description">
+						<h:outputLabel 
+							value="#{p.longDescription}"
+							title="#{p.toolTipDescription}"/>								
+					</p:column>
+					<p:column  style="width:40px;">
+					    <p:commandButton id="BtnParamEdit" value="Edit" type="button" />
+									<p:overlayPanel id="paramEditPanel" for="BtnParamEdit" hideEffect="fade" dynamic="true" style="width:800px;height:300px"  showCloseIcon="true">
+										<p:panelGrid>
+							    <f:facet name="header">
+							        <p:row>
+							            <p:column colspan="2">Edit Optional parameter then Update</p:column>
+							        </p:row>												 
+							    </f:facet>   													
+											
+											<p:row>
+	 								<p:column width="50px" ><h:outputLabel value ="ID"/> </p:column>
+									<p:column >
+										<h:outputText 
+											value="#{p.id}" 
+											title="Optional Parameter's ID in the database (Primary Key)" />
+									 </p:column>
+			 					</p:row>
+								<p:row>
+	 								<p:column width="50px" ><h:outputLabel value ="Name"/></p:column>
+									<p:column >
+										<h:inputText 
+										value="#{p.displayShortName}" 
+										size="150"/>
+									 </p:column>
+			 					</p:row>
 			
-													<p:row>
-						 								<p:column width="50px" ><h:outputLabel value ="Description"/></p:column>
-														<p:column >
-															<h:inputText 
-															value="#{p.longDescription}"
-															size="150"/>
-														 </p:column>
-								 					</p:row>
-														
-													<p:row>
-						 								<p:column width="50px" colspan="2">
-							 								<p:commandButton value="Save"
-					                							action="#{algorithmEditBacking.saveAlgorithm()}" />
-														</p:column>
-								 					</p:row>
-														 
-				                				</p:panelGrid>		
-			    							</p:overlayPanel>						
-										</p:column>
-										
-									</p:dataTable>	
+								<p:row>
+	 								<p:column width="50px" ><h:outputLabel value ="Tooltip"/></p:column>
+									<p:column >
+										<h:inputText 
+										value="#{p.toolTipDescription}"
+										size="150"/>
+									 </p:column>
+			 					</p:row>	
+
+								<p:row>
+	 								<p:column width="50px" ><h:outputLabel value ="Description"/></p:column>
+									<p:column >
+										<h:inputText 
+										value="#{p.longDescription}"
+										size="150"/>
+									 </p:column>
+			 					</p:row>
+									
+								<p:row>
+	 								<p:column width="50px" colspan="2">
+		 								<p:commandButton value="Update Option"
+                							action="#{algorithmEditBacking.updateParameter(p.id)}" />
+									</p:column>
+			 					</p:row>
+									 
+               				</p:panelGrid>		
+  							</p:overlayPanel>						
+					</p:column>
+					
+				</p:dataTable>	
 								
 			</h:form>
 		</h:panelGroup>

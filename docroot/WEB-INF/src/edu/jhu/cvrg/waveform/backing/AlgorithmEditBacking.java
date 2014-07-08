@@ -176,6 +176,22 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
     }
     
 
+    public void updateParameter(int id){
+    	this.getLog().info(" updateParameter(" + id + ")");
+    	for(AdditionalParameters ap:selectedAlgorithm.getParameters()){
+    		if(ap.getId() == id){
+    	    	this.getLog().info(" name:" + ap.getDisplayShortName());
+    	    	this.getLog().info(" tooltip:" + ap.getToolTipDescription());
+    	    	this.getLog().info(" longDesc:" + ap.getLongDescription());
+    		
+    	    	algorithmList.updateAlgorithmParameterToDB(ap, getSelectedAlgorithm().getId());
+    	    	algorithmList.populateAlgorithmsFromDB();
+    	    	break;
+    		}
+    	}
+    }
+    
+    
     public void addService(){
     	this.getLog().info(" addService()");
     	String uiName = "REPLACE";

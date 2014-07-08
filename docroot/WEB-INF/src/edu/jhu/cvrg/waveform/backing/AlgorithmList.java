@@ -175,6 +175,19 @@ public class AlgorithmList implements Serializable{
 		return dbUtility.storeAlgorithmParameter(param, algID);
 	}
 		
+	/** Updates a single new algorithm parameter to the database. 
+	 * 
+	 * @param param - an initialized AdditionalParameters object.
+	 * @param algID - Primary key of the algorithm this parameter pertains to.
+	 * @return - The primary key of the new entry.
+	 * @author Michael Shipway
+	 */
+	public int updateAlgorithmParameterToDB(AdditionalParameters param, int algID){
+		Connection dbUtility = ConnectionFactory.createConnection();
+		
+		return dbUtility.updateAlgorithmParameter(param, algID);
+	}
+		
 	
 
 
