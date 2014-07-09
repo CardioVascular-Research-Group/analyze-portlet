@@ -201,6 +201,22 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
     	serviceList = new ServiceList(); // reload
     }
     
+    public void updateService(int id){
+    	this.getLog().info(" updateService(" + id + ")");
+    	for(Service sl:serviceList.getAvailableServiceList()){
+    		if(sl.getId() == id){
+    	    	this.getLog().info(" Display name:" + sl.getDisplayServiceName());
+    	    	this.getLog().info(" Service's Name:" + sl.getServiceName());
+    	    	this.getLog().info(" URL:" + sl.getUrl());
+    		
+    	    	serviceList.updateAlgorithmParameterToDB(sl);
+    	    	algorithmList.populateAlgorithmsFromDB();
+    	    	break;
+    		}
+    	}
+    }
+    
+    
 	/** Loads the main Algorithm listing view, the start of the edit mode, without saving.
      * Handles onclick event for the button "btnEditMain". 
      */

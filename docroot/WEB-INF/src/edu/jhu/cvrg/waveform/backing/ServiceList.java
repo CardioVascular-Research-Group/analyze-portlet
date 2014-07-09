@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
 import edu.jhu.cvrg.dbapi.dto.Service;
 import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
@@ -81,5 +82,20 @@ public class ServiceList implements Serializable{
 		int algorithmID = dbUtility.storeService(uiName, wsName, url);
 		return algorithmID;
 	}
+	
+	/** Updates a single new Web Service4 to the database. 
+	 * 
+	 * @param param - an initialized AdditionalParameters object.
+	 * @param algID - Primary key of the algorithm this parameter pertains to.
+	 * @return - The primary key of the new entry.
+	 * @author Michael Shipway
+	 */
+	public int updateAlgorithmParameterToDB(Service serv){
+		Connection dbUtility = ConnectionFactory.createConnection();
+		
+		return dbUtility.updateWebService(serv);
+	}
+		
+
 	
 }
