@@ -126,6 +126,31 @@
 		          					title="Provided by: #{algorithm.displayServiceName}"/> 
 		      				</p:column> 
 								
+							<p:column headerText="Options">
+<p:commandButton id="BtnParamSet" value="Edit" type="button" />
+<p:overlayPanel id="paramSetPanel" for="BtnParamSet"
+	hideEffect="fade" dynamic="true" 
+	style="width:600px;height:600px" showCloseIcon="true">
+	<h:outputText  value="Setting options for #{algorithm.displayShortName}" />
+	<p:tabView>
+		<p:tab title="Algorithm Options for #{algorithm.displayShortName}"  
+			titletip="This allows advanced capabilities and options of an algorithm to be specified">
+			<ui:include src="viewC_SetParameter.xhtml" />
+		</p:tab>
+
+		<p:tab title="Algorithm Details for #{algorithm.displayShortName}"  titletip="These elements must all be correctly entered in order for the analysis algortithm to be used by Waveform.">
+			<ui:include src="viewA_RequiredElements.xhtml" />
+		</p:tab>
+		<!--
+		<p:tab title="Extra Details"  titletip="These elements provide documentation of the analysis algorithm.">
+			<ui:include src="viewB_ExtraDescription.xhtml" />
+		</p:tab>
+		 -->
+	</p:tabView>
+</p:overlayPanel>
+
+								</p:column>
+								
 							<p:column headerText="Help" style="width:5%">  
 		          				<h:commandLink id="documentationURL" onclick="open_helpwindow('#{algorithm.URLreference}'); return false;">
 								    <h:outputText value="Ref" />

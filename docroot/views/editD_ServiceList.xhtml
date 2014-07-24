@@ -53,7 +53,7 @@
 							title="URL of the web service."/>								
 					</p:column>
 					<p:column style="width:40px;">
-					    <p:commandButton id="BtnServiceEdit" value="Edit" type="button" />
+					    <p:commandButton id="BtnServiceEdit" value="Edit" type="button"/>
 						<p:overlayPanel id="serviceEditPanel" for="BtnServiceEdit" hideEffect="fold" showEffect="explode" showCloseIcon="true"
 							dismissable="false" dynamic="false" style="width:800px;height:250px" >
 							<p:panelGrid>
@@ -63,7 +63,7 @@
 							        </p:row>												 
 							    </f:facet>   													
 											
-											<p:row>
+								<p:row>
 	 								<p:column width="50px" ><h:outputLabel value ="ID"/> </p:column>
 									<p:column >
 										<h:outputText 
@@ -105,7 +105,8 @@
 								<p:row>
 	 								<p:column width="50px" colspan="2">
 		 								<p:commandButton value="Save"
-                							action="#{algorithmEditBacking.updateService(s.id)}" />
+                							action="#{algorithmEditBacking.updateService(s.id)}" 
+                							onclick="jQuery('serviceEditPanel').hide()" />
 									</p:column>
 			 					</p:row>
 									 

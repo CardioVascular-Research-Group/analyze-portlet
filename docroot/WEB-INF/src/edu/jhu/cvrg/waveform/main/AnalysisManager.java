@@ -371,6 +371,81 @@ public class AnalysisManager implements Serializable{
 		retList.add(i++, paramList_V6.get(4)); // sa_V6
 		//*********************************************
 
+		// un-needed code which substitutes value from R' and S' when R or S are zero.
+		// Turned out that this was not the correct thing to do here. (Mike Shipway - July 16, 2014)
+//		List <String> nameList = new ArrayList<String>();
+//		nameList.add("Q-_AMPL"); // dummy place keeper, since Schiller doesn't seem to have negative Q entries
+//		nameList.add("Q-_DUR"); //  dummy place keeper, since Schiller doesn't seem to have negative Q entries
+//		nameList.add("R-_AMPL"); // Negative R_Wave_Amplitude ECGOntology:ECG_000000750
+//		nameList.add("R-_DUR");  // Negative R_Wave_Duration ECGOntology:ECG_000000597
+//		nameList.add("S-_AMPL"); // Negative S_Wave_Amplitude ECGOntology:ECG_000000107
+//		
+//		List<AnnotationDTO> negParamList_I = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 0, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_II = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 1, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_aVL = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 4, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_aVF = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 5, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V1 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 6, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V2 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 7, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V3 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 8, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V4 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 9, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V5 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 10, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V6 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 11, createdBy,  nameList);
+//
+//		List<AnnotationDTO> negList= new ArrayList<AnnotationDTO>();
+//		int n=0;
+//		negList.add(n++, negParamList_I.get(0)); // qa_I
+//		negList.add(n++, negParamList_aVL.get(0)); // qa_aVL
+//		negList.add(n++, negParamList_aVF.get(0)); // qa_aVF
+//		negList.add(n++, negParamList_V1.get(0)); // qa_V1
+//		negList.add(n++, negParamList_V2.get(0)); // qa_V2
+//		negList.add(n++, negParamList_V3.get(0)); // qa_V3
+//		negList.add(n++, negParamList_V4.get(0)); // qa_V4
+//		negList.add(n++, negParamList_V5.get(0)); // qa_V5
+//		negList.add(n++, negParamList_V6.get(0)); // qa_V6
+//		//*********************************************
+//		negList.add(n++, negParamList_I.get(1)); // qd_I
+//		negList.add(n++, negParamList_II.get(1)); // qd_II
+//		negList.add(n++, negParamList_aVL.get(1)); // qd_aVL
+//		negList.add(n++, negParamList_aVF.get(1)); // qd_aVF
+//		negList.add(n++, negParamList_V1.get(1)); // qd_V1
+//		negList.add(n++, negParamList_V2.get(1)); // qd_V2
+//		negList.add(n++, negParamList_V3.get(1)); // qd_V3
+//		negList.add(n++, negParamList_V4.get(1)); // qd_V4
+//		negList.add(n++, negParamList_V5.get(1)); // qd_V5
+//		negList.add(n++, negParamList_V6.get(1)); // qd_V6
+//		//*********************************************
+//		negList.add(n++, negParamList_I.get(2)); // ra_I
+//		negList.add(n++, negParamList_II.get(2)); // ra_II
+//		negList.add(n++, negParamList_aVL.get(2)); // ra_aVL
+//		negList.add(n++, negParamList_aVF.get(2)); // ra_aVF
+//		negList.add(n++, negParamList_V1.get(2)); // ra_V1
+//		negList.add(n++, negParamList_V2.get(2)); // ra_V2
+//		negList.add(n++, negParamList_V3.get(2)); // ra_V3
+//		negList.add(n++, negParamList_V4.get(2)); // ra_V4
+//		negList.add(n++, negParamList_V5.get(2)); // ra_V5
+//		negList.add(n++, negParamList_V6.get(2)); // ra_V6
+//		//*********************************************
+//		negList.add(n++, negParamList_V1.get(3)); // rd_V1
+//		negList.add(n++, negParamList_V2.get(3)); // rd_V2
+//		negList.add(n++, negParamList_V3.get(3)); // rd_V3
+//		//*********************************************
+//		negList.add(n++, negParamList_I.get(4)); // sa_I
+//		negList.add(n++, negParamList_II.get(4)); // sa_II
+//		negList.add(n++, negParamList_aVL.get(4)); // sa_aVL
+//		negList.add(n++, negParamList_aVF.get(4)); // sa_aVF
+//		negList.add(n++, negParamList_V1.get(4)); // sa_V1
+//		negList.add(n++, negParamList_V2.get(4)); // sa_V2
+//		negList.add(n++, negParamList_V3.get(4)); // sa_V3
+//		negList.add(n++, negParamList_V4.get(4)); // sa_V4
+//		negList.add(n++, negParamList_V5.get(4)); // sa_V5
+//		negList.add(n++, negParamList_V6.get(4)); // sa_V6
+//		//*********************************************
+//
+//		for(int c=0;c<retList.size();c++){
+//			if( (retList.get(c).getValue() == "0") && (negList.get(c) != null) ){
+//				retList.set(c, negList.get(c) );
+//			}			
+//		}
 		
 		return retList;
 	}

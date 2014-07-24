@@ -10,6 +10,8 @@
 	<h:body>
 
 		<h:panelGroup id="paramEdit" layout="block" styleClass="backgroundofContent">
+		<h:outputLabel value="Algorithm Options for #{algorithm.displayShortName} size:#{algorithm.parameterList.size()}"/>
+							
 			<h:form id="formAlgorithmEditParam">
 				<p:dataTable id="optionalParameterTable"
 					var="p"
