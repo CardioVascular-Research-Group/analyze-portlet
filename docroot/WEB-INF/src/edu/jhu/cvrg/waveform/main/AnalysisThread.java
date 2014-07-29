@@ -385,34 +385,37 @@ public class AnalysisThread extends Thread{
 				try {
 					double dMilliSec = Double.parseDouble(saAnnot[1])*1000;
 					String conceptId = saAnnot[4];
-					int iLeadIndex = Integer.parseInt(saAnnot[6]);
-					double dMicroVolt = lookupVoltage(dMilliSec,iLeadIndex);
-					
-					Map<String, String> saOntDetails = ontologyCache.get(conceptId);
-					if(saOntDetails == null){
-						saOntDetails = WebServiceUtility.lookupOntology(AnnotationDTO.ECG_TERMS_ONTOLOGY, conceptId, "definition", "prefLabel");
-						ontologyCache.put(conceptId, saOntDetails);
-					}
-					 
-					String termName = "Not found";
-					String fullAnnotation = "Not found";
-					
-					if(saOntDetails != null){
-						termName = saOntDetails.get("prefLabel");
-						fullAnnotation = saOntDetails.get("definition");
-					}
-
-					AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, null/*createdBy*/, "ANNOTATION", termName, 
-																		 conceptId != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY : null , conceptId,
-																		 null/*bioportalRef*/, iLeadIndex, null/*unitMeasurement*/, null/*description*/,fullAnnotation, Calendar.getInstance(), 
-																		 dMilliSec, dMicroVolt, dMilliSec, dMicroVolt, //start and end are the same than this is a single point annotation 
-																		 null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
+					if(conceptId.startsWith("http:")){
+						int iLeadIndex = Integer.parseInt(saAnnot[6]);
+						double dMicroVolt = lookupVoltage(dMilliSec,iLeadIndex);
+						
+						Map<String, String> saOntDetails = ontologyCache.get(conceptId);
+						if(saOntDetails == null){
+							saOntDetails = WebServiceUtility.lookupOntology(AnnotationDTO.ECG_TERMS_ONTOLOGY, conceptId, "definition", "prefLabel");
+							ontologyCache.put(conceptId, saOntDetails);
+						}
+						 
+						String termName = "Not found";
+						String fullAnnotation = "Not found";
+						
+						if(saOntDetails != null){
+							termName = saOntDetails.get("prefLabel");
+							fullAnnotation = saOntDetails.get("definition");
+						}
 	
-					annotationToInsert.setAnalysisJobId(jobId);
-					
-					// Inserting save to XML database
-					toPersist.add(annotationToInsert);
-					
+						AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, null/*createdBy*/, "ANNOTATION", termName, 
+																			 conceptId != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY : null , conceptId,
+																			 null/*bioportalRef*/, iLeadIndex, null/*unitMeasurement*/, null/*description*/,fullAnnotation, Calendar.getInstance(), 
+																			 dMilliSec, dMicroVolt, dMilliSec, dMicroVolt, //start and end are the same than this is a single point annotation 
+																			 null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
+		
+						annotationToInsert.setAnalysisJobId(jobId);
+						
+						// Inserting save to XML database
+						toPersist.add(annotationToInsert);
+					}else{
+						log.error("conceptId:" + conceptId + " is probably wrong. Check the method changePhysioBankToOntology().");
+					}
 				} catch (NumberFormatException e) {
 					ServerUtility.logStackTrace(e, log);
 					throw new AnalyzeFailureException("Error on annotation data read.[dMilliSec="+saAnnot[1]+" | iLeadIndex="+saAnnot[6]+"]", e); 
