@@ -1,7 +1,10 @@
 package edu.jhu.cvrg.waveform.main;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,12 +42,16 @@ public class AnalysisThread extends Thread{
 	private Map<String, Object> map;
 	private Connection dbUtility;
 	private long documentRecordId;
+	
 	private boolean hasWfdbAnnotationOutput;
+	private boolean hasChesnokovOutput = false;
+	
 	private ArrayList<FileEntry> originFiles;
 	private long userId;
 	
 	private String headerFileName;
-	private String annotation;
+	private String targetExtension;
+	private String csvFileName;
 	private Logger log = Logger.getLogger(AnalysisThread.class);
 	
 	private Map<String, Map<String, String>> ontologyCache;
@@ -78,6 +85,10 @@ public class AnalysisThread extends Thread{
 		this.map = params;
 		this.documentRecordId = documentRecordId;
 		this.hasWfdbAnnotationOutput = hasWfdbAnnotationOutput;
+		if("chesnokovWrapperType2".equals(map.get("method"))){
+			hasChesnokovOutput = true;
+		} 
+		
 		this.originFiles = originFiles;
 		this.userId = userId;
 	}
@@ -159,7 +170,13 @@ public class AnalysisThread extends Thread{
 			}
 		}
 		
-		if(hasWfdbAnnotationOutput){
+		if(hasChesnokovOutput){
+			
+			this.initializeLiferayPermissionChecker(userId);
+			this.createTempFiles(jobId, originFiles, filesId);
+			this.storeChesnokovResults(csvFileName, documentRecordId, jobId);
+			
+		}else if(hasWfdbAnnotationOutput){
 			if(ontologyCache == null){
 				ontologyCache = new HashMap<String, Map<String, String>>();
 			}
@@ -169,7 +186,7 @@ public class AnalysisThread extends Thread{
 				this.initializeLiferayPermissionChecker(userId);
 				
 				this.createTempFiles(jobId, originFiles, filesId);
-				List<String[]> result = execute_rdann(headerFileName, annotation);
+				List<String[]> result = execute_rdann(headerFileName, targetExtension);
 				result = this.changePhysioBankToOntology(result);
 				this.storeAnnotationList(result, documentRecordId, jobId);
 			
@@ -278,10 +295,14 @@ public class AnalysisThread extends Thread{
 			for (long fileId : filesId) {
 				FileEntry file = DLAppLocalServiceUtil.getFileEntry(fileId);
 				
-				if(AnalysisThread.isAnotationFile(file.getTitle())){
+				if(hasWfdbAnnotationOutput && AnalysisThread.isAnotationFile(file.getTitle())){
 					wfdbFiles.add(file);
-					annotation = file.getExtension();
-					
+					targetExtension = file.getExtension();
+					break;
+				}
+				if(hasChesnokovOutput){
+					wfdbFiles.add(file);
+					targetExtension = file.getExtension();
 					break;
 				}
 			}
@@ -295,11 +316,16 @@ public class AnalysisThread extends Thread{
 			File targetDirectory = new File(tempPath);
 			
 			String targetFileName = tempPath + liferayFile.getTitle();
-			if(liferayFile.getExtension().equals(annotation)){
+			
+			if(liferayFile.getExtension().equals(targetExtension)){
 				String replacement = '.'+liferayFile.getExtension();
 				String target = ("_"+jobId+replacement);
 						
 				targetFileName = targetFileName.replace(target, replacement);
+				
+				if(hasChesnokovOutput){
+					csvFileName = targetFileName;
+				}
 			}
 			
 			
@@ -458,6 +484,119 @@ public class AnalysisThread extends Thread{
 		}
 		
 	}
+	
+	private void storeChesnokovResults(String csvFile, long recordId, long jobId) {
+		
+		List<String> signalNameList = populateSignalNameList(csvFile, new String[0]);
+		
+		Set<AnnotationDTO> toPersist = new HashSet<AnnotationDTO>();
+		
+		BufferedReader in = null;
+		Long insertedQtd = 0L;
+		try {
+			in = new BufferedReader(new FileReader(csvFile));
+			String line = null;
+			
+			String[] dataHeaders = null;
+			
+			while((line = in.readLine()) != null) {
+            	if(line.trim().length() > 0) {
+            		if(dataHeaders == null){
+	            		System.out.println(line);
+	            		dataHeaders = line.split(",");
+            		}else{
+            			String[] data = line.split(",");
+            			String leadName = null;
+            			int leadIndex = 0;
+            			for (int i = 2; i < data.length; i++) {
+            				if(leadName == null){
+            					leadName = data[i];
+            					for(int s=0;s<signalNameList.size();s++){
+            						if(signalNameList.get(s).equals(leadName)){
+            							leadIndex = s;
+            							break;
+            						}
+            					}
+            				}else{
+            					String[] annotationSubject = dataHeaders[i].split("\\|");
+    							String conceptId = annotationSubject[0].substring(annotationSubject[0].lastIndexOf("/")+1);
+    							
+    							AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, "ChesnokovAnalysis"/*createdBy*/, "ANNOTATION", annotationSubject[1], 
+										 conceptId != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY : null , conceptId,
+										 annotationSubject[0]/*bioportalRef*/, leadIndex , null/*unitMeasurement*/, null/*description*/, data[i], Calendar.getInstance(), 
+										 null, null, null, null, //start and end are the same than this is a single point annotation 
+										 null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
+    							
+    							annotationToInsert.setAnalysisJobId(jobId);
+    							
+    							toPersist.add(annotationToInsert);
+
+            				}
+            			}
+            		}
+            	} 
+            }
+			
+			insertedQtd = dbUtility.storeAnnotations(toPersist);
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+			if(in !=  null){
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				
+			}
+			if(toPersist.size() != insertedQtd) {
+				log.error("Annotation did not save properly");
+			}
+		}
+	}
+
+	/** populates the variable signalNameList using the Physionet library program "signame"
+	 * 
+	 * @param sInputFile
+	 * @param asEnvVar
+	 */
+	private List<String> populateSignalNameList(String sInputFile, String[] asEnvVar){
+		
+		List<String> signalNameList = new ArrayList<String>();
+		try{ 
+			String recordName = sInputFile.substring(0, sInputFile.lastIndexOf("."));
+			String command = "signame -r " + recordName;
+			ServerUtility util = new ServerUtility(false);
+			util.executeCommand(command, asEnvVar, "/");
+			
+			String tempLine = "";
+			int lineNumber=0;
+			
+			while ((tempLine = util.stdInputBuffer.readLine()) != null) {
+		    	if (lineNumber<12){
+		    		System.out.println("signame(); " + lineNumber + ")" + tempLine);
+		    	}
+		    	signalNameList.add(tempLine);
+		    	lineNumber++;
+		    }
+			util.stdErrorHandler();
+		
+		} catch (IOException ioe) {
+			log.error("IOException Message: rdsamp " + ioe.getMessage());
+			ioe.printStackTrace();
+		} catch (Exception e) {
+			System.err.println("Exception Message: rdsamp " + e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return signalNameList;
+	}
+	
 	
 	/** Looks up the voltage value for the specified timestamp on the specified lead index.
 	 * 
