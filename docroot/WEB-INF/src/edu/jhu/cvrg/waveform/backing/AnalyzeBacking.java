@@ -26,10 +26,20 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
 import javax.faces.bean.ViewScoped;
+import javax.faces.component.UISelectItem;
+import javax.faces.component.html.HtmlOutputLabel;
+import javax.faces.component.html.HtmlPanelGrid;
+import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.hibernate.annotations.Parameter;
+import org.jfree.util.Log;
+import org.primefaces.component.inputtext.InputText;
+import org.primefaces.component.selectbooleancheckbox.SelectBooleanCheckbox;
+import org.primefaces.component.selectoneradio.SelectOneRadio;
 import org.primefaces.context.RequestContext;
 import org.primefaces.event.NodeSelectEvent;
 import org.primefaces.event.NodeUnselectEvent;
@@ -39,6 +49,7 @@ import org.primefaces.model.TreeNode;
 
 import com.liferay.portal.model.User;
 
+import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
 import edu.jhu.cvrg.dbapi.dto.Algorithm;
 import edu.jhu.cvrg.dbapi.factory.Connection;
 import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
@@ -47,12 +58,19 @@ import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.model.FileTreeNode;
 import edu.jhu.cvrg.waveform.model.LocalFileTree;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
+//import javax.faces.component.html.HtmlSelectOneRadio;
+//import com.jhu.cvrg.portal.survey.backing.HtmlSelectOneRadio;
+//import com.jhu.cvrg.portal.survey.backing.UISelectItem;
+//import com.jhu.cvrg.portal.survey.backing.SurveyBacking.visiblePanel;
+import edu.jhu.cvrg.waveform.utility.ServerUtility;
 
 @ManagedBean(name = "analyzeBacking")
-@ViewScoped
+@SessionScoped
 public class AnalyzeBacking extends BackingBean implements Serializable {
 
 	private static final long serialVersionUID = -4006126553152259063L;
+
+	private HtmlPanelGroup panelParameterSet;
 
 	private Algorithm[] selectedAlgorithms;
 	private ArrayList<DocumentDragVO> tableList;
@@ -61,6 +79,8 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 	private User userModel;
 	
 	private AlgorithmList algorithmList;
+	private int algorithmToEditID = -1;
+	private boolean setparameterdisplayed=false;
 	private AnalysisManager analysisManager;	
 	private List<FacesMessage> messages;
 	
@@ -77,7 +97,165 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 			this.getLog().info("Number of algorithms in list:" + algorithmList.getAvailableAlgorithms().size());
 			messages = new ArrayList<FacesMessage>();
 		}
+		// TODO: **** testing creating front end controls purely from Java, for parameter editing.
 	}
+
+	private void loadParameterSetPanel(){
+        panelParameterSet = new HtmlPanelGroup();
+        panelParameterSet.setId("panelParameterSet");
+
+        HtmlPanelGrid grid = new HtmlPanelGrid();
+	    grid.setId("gridOne");
+	    grid.setBorder(2);
+	    grid.setColumns(2);
+			grid.getChildren().add(makeLabel("#{algorithm.displayShortName}", "Title"));
+			grid.getChildren().add(makeLabel("Col Two", "Title"));
+			
+			grid.getChildren().add(makeLabel("Input Text", "Title"));
+//			grid.getChildren().add(showInputText("foo bar","input Text Label"));
+			
+			grid.getChildren().add(makeLabel("Checkbox", "Title"));
+//			grid.getChildren().add(showCheckbox());
+			
+			grid.getChildren().add(makeLabel("Radio Options", "Title"));
+			//grid.getChildren().add(showStronglyQuestion());
+
+	    panelParameterSet.getChildren().add(grid);
+	}
+
+	private void loadParameterSetPanel(int selectedAlgID){
+		if (selectedAlgID != (-1)){
+	        panelParameterSet = new HtmlPanelGroup();
+	        panelParameterSet.setId("panelParameterSet");
+	        int algIndex = -1;
+			if(algorithmList.getAvailableAlgorithms().size()>1){
+				for(int i=0;i<algorithmList.getAvailableAlgorithms().size();i++){
+					if(algorithmList.getAvailableAlgorithms().get(i).getId() == selectedAlgID){
+						algIndex = i;
+					}
+				}			
+			}
+			ArrayList<AdditionalParameters> paramList = algorithmList.getAvailableAlgorithms().get(algIndex).getParameters();
+			
+			HtmlPanelGrid grid = new HtmlPanelGrid();
+			grid.setId("gridOne");
+			grid.setBorder(4);
+			grid.setColumns(3);
+	
+			for(AdditionalParameters p:paramList){
+				grid.getChildren().add(makeLabel("(" + p.getParameterFlag() + ") " + p.getDisplayShortName(), p.getToolTipDescription()));
+				
+				String type = p.getType(); /** MUST BE text, integer, float, boolean, select, data_column, or drill_down  BUT NOT genomebuild, hidden, baseurl, file, data. **/
+				if(type.equals("text")){
+					grid.getChildren().add(showInputText(String.valueOf(p.getId()),p.getParameterUserSpecifiedValue(),p.getLongDescription()));
+				}
+				if(type.equals("integer")){
+					grid.getChildren().add(showInputText(String.valueOf(p.getId()),p.getParameterUserSpecifiedValue(),p.getLongDescription()));
+				}
+				if(type.equals("float")){
+					grid.getChildren().add(showInputText(String.valueOf(p.getId()),p.getParameterUserSpecifiedValue(),p.getLongDescription()));
+				}
+				if(type.equals("boolean")){
+					grid.getChildren().add(showCheckbox(String.valueOf(p.getId()), p.getParameterUserSpecifiedValue(),p.getLongDescription()));
+				}
+				if(type.equals("select")){
+	//				grid.getChildren().add(showInputText(String.valueOf(p.getId()),p.getParameterUserSpecifiedValue(),p.getLongDescription()));
+				}
+				if(type.equals("data_column")){
+	//				grid.getChildren().add(showInputText(String.valueOf(p.getId()),p.getParameterUserSpecifiedValue(),p.getLongDescription()));
+				}
+				if(type.equals("drill_down")){
+	//				grid.getChildren().add(showInputText(String.valueOf(p.getId()),p.getParameterUserSpecifiedValue(),p.getLongDescription()));
+				}
+				grid.getChildren().add(makeLabel(p.getLongDescription(), p.getLongDescription()));
+	
+			}
+		    panelParameterSet.getChildren().add(grid);
+		}
+	}
+
+	private HtmlOutputLabel makeLabel(String value, String title){
+        HtmlOutputLabel label = new HtmlOutputLabel();
+        label.setValue(value);
+        label.setTitle(title);
+        return label;
+	}
+	private InputText showInputText(String id, String value, String label){
+		InputText it = new InputText();
+		try {
+			it.setId("text" + id);
+			it.setValue(value);
+			it.setLabel(label);
+		} catch (IllegalArgumentException  e) {
+			e.printStackTrace();
+			this.getLog().fatal("ArgumentException. " + e.getMessage());
+		}catch (Exception e){
+			this.getLog().fatal("Fatal error. " + e.getMessage());
+			ServerUtility.logStackTrace(e, this.getLog());
+		}
+		
+		return it;
+	}
+	
+	private SelectBooleanCheckbox showCheckbox(String id, String value, String label){
+		SelectBooleanCheckbox cb = new SelectBooleanCheckbox();
+		try{
+			cb.setId("boolean" + id);
+			cb.setValue(value);
+			cb.setLabel(label);
+		} catch (IllegalArgumentException  e) {
+			e.printStackTrace();
+			this.getLog().fatal("ArgumentException. " + e.getMessage());
+		}catch (Exception e){
+			this.getLog().fatal("Fatal error. " + e.getMessage());
+			ServerUtility.logStackTrace(e, this.getLog());
+		}
+		
+		return cb;
+	}
+	
+//	private SelectBooleanCheckbox showCheckbox(){
+//		SelectBooleanCheckbox cb = new SelectBooleanCheckbox();
+//		cb.setId("cb1");
+//		cb.setValue("Checkbox1");
+//		cb.setLabel("Checkbox1 Label");
+////		cb.setRendered(true);
+//		
+//		return cb;
+//	}
+
+	private SelectOneRadio showStronglyQuestion(){
+		SelectOneRadio rb = new SelectOneRadio();
+		rb.setRendered(true);
+		
+		UISelectItem itemOne = new UISelectItem();
+		itemOne.setValue("1");
+		itemOne.setItemLabel("Strongly Agree");
+		rb.getChildren().add(itemOne);
+		
+		UISelectItem itemTwo = new UISelectItem();
+		itemTwo.setItemValue("2");
+		itemTwo.setItemLabel("Agree");
+		rb.getChildren().add(itemTwo);
+		
+		UISelectItem itemThree = new UISelectItem();
+		itemThree.setItemValue("3");
+		itemThree.setItemLabel("Neither Agree nor Disagree");
+		rb.getChildren().add(itemThree);
+		
+		UISelectItem itemFour = new UISelectItem();
+		itemFour.setItemValue("4");
+		itemFour.setItemLabel("Disagree");
+		rb.getChildren().add(itemFour);
+		
+		UISelectItem itemFive = new UISelectItem();
+		itemFive.setItemValue("5");
+		itemFive.setItemLabel("Strongly Disagree");
+		rb.getChildren().add(itemFive);
+		
+		return rb;
+	}
+
 
 	public void startAnalysis() {
 		messages.clear();
@@ -103,6 +281,27 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 		
 	}
 
+	public void generateParameterSetting(int algorithmID){
+//int algorithmID = 999;
+		this.getLog().info("algorithmID:" + algorithmID);
+		algorithmToEditID = algorithmID;
+		loadParameterSetPanel(algorithmID);
+
+	}
+	
+	//action listener event
+	public void attrListener(ActionEvent event){
+ 
+		int algorithmid = (Integer) event.getComponent().getAttributes().get("algorithmid");
+		this.getLog().info("attrListener() algorithmid:" + algorithmid);
+	}
+
+	
+    public void updateParameter(int id){
+    	this.getLog().info(" updateParameter(" + id + ")");
+    }
+
+	
 	public void folderSelect(NodeSelectEvent event){
 		TreeNode node = event.getTreeNode();
 		if(!node.getType().equals("document")){
@@ -167,8 +366,39 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 	public User getUser(){
 		return userModel;
 	}
+
+	public HtmlPanelGroup getPanelParameterSet() {
+		this.getLog().info("getPanelParameterSet() algorithmID:" + algorithmToEditID);
+		if(algorithmToEditID !=-1)	{
+			loadParameterSetPanel(algorithmToEditID);
+		}else{
+			loadParameterSetPanel(47);
+		}
+
+    	return panelParameterSet;
+    }
+
+    public void setPanelParameterSet(HtmlPanelGroup panelParameterSet) {
+		this.panelParameterSet = panelParameterSet;
+	}
 	
 	
+	public int getAlgorithmToEditID() {
+		return algorithmToEditID;
+	}
+
+	public void setAlgorithmToEditID(int algorithmToEditID) {
+		this.algorithmToEditID = algorithmToEditID;
+	}
+
+	public boolean isSetparameterdisplayed() {
+		return setparameterdisplayed;
+	}
+
+	public void setSetparameterdisplayed(boolean setparameterdisplayed) {
+		this.setparameterdisplayed = setparameterdisplayed;
+	}
+
 	public void updateProgressBar() {  
     	int progress = 0;
     	if(analysisManager != null){
@@ -257,5 +487,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
     		}
     	}
     }
-    
+//	public void initAlgorithmList(int selectedAlgID){
+//		System.out.println("passed param:" + selectedAlgID);
+//	}
 }

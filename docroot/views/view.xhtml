@@ -67,7 +67,7 @@
 						<p:messages id="messages_prime" showSummary="true" showDetail="true" autoUpdate="true" closable="true" escape="false" />
 						 
 						<p:remoteCommand name="updateProgressBar" action="#{analyzeBacking.updateProgressBar}" />
-			    		<p:remoteCommand name="onComplete" action="#{analyzeBacking.onComplete}" update="availableStudy, availableAlgorithmTable"/>
+			    		<p:remoteCommand name="onComplete" action="#{analyzeBacking.onComplete}" update="@([id$=availableStudy]), @([id$=availableAlgorithmTable])"/>
 			    	
 							
 						<p:dataTable id="availableStudy"
@@ -104,63 +104,70 @@
 								icon="ui-icon-play"
 								action="#{analyzeBacking.startAnalysis}"
 								onclick="cancel();start()" /> 
+			<p:commandButton id="BtnParamSetTEST" 
+			value="Edit#{45}" 
+			type="button" 
+			action="#{analyzeBacking.generateParameterSetting}" />
 						</div>
 						
 							
 					</p:layoutUnit>
 					
 					<p:layoutUnit position="south" size="300" header="Available Algorithms" resizable="true" collapsible="true">
-						<p:dataTable id="availableAlgorithmTable"
-							var="algorithm"
-							value="#{analyzeBacking.algorithmList.availableAlgorithms}"
-							rowKey="#{algorithm.displayShortName}"
-							selection="#{analyzeBacking.selectedAlgorithms}">
-							
-							<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update="availableAlgorithmTable"/>  
-			      			<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update="availableAlgorithmTable"/>  
+							<p:panel title="Algorithm List" rendered="#{!analyzeBacking.setparameterdisplayed}">
+								<p:dataTable id="availableAlgorithmTable"
+									var="algorithm"
+									value="#{analyzeBacking.algorithmList.availableAlgorithms}"
+									rowKey="#{algorithm.displayShortName}"
+									selection="#{analyzeBacking.selectedAlgorithms}">
 									
-							<p:column selectionMode="multiple" style="width:2%"/>
-							
-							<p:column headerText="Name" style="width:20%">  
-		          				<h:outputLabel value="#{algorithm.displayShortName}"
-		          					title="Provided by: #{algorithm.displayServiceName}"/> 
-		      				</p:column> 
+									<p:ajax event="rowSelectCheckbox" listener="#{analyzeBacking.onRowSelect}" update="@([id$=availableAlgorithmTable])"/>  
+					      			<p:ajax event="rowUnselectCheckbox" listener="#{analyzeBacking.onRowUnselect}" update="@([id$=availableAlgorithmTable])"/>  
 								
-							<p:column headerText="Options">
-<p:commandButton id="BtnParamSet" value="Edit" type="button" />
-<p:overlayPanel id="paramSetPanel" for="BtnParamSet"
-	hideEffect="fade" dynamic="true" 
-	style="width:600px;height:600px" showCloseIcon="true">
-	<h:outputText  value="Setting options for #{algorithm.displayShortName}" />
-	<p:tabView>
-		<p:tab title="Algorithm Options for #{algorithm.displayShortName}"  
-			titletip="This allows advanced capabilities and options of an algorithm to be specified">
-			<ui:include src="viewC_SetParameter.xhtml" />
-		</p:tab>
+									<p:column selectionMode="multiple" style="width:2%"/>
+									
+									<p:column headerText="Name" style="width:20%">  
+				          				<h:outputLabel value="#{algorithm.displayShortName}"
+				          					title="Provided by: #{algorithm.displayServiceName}"/> 
+				      				</p:column> 
+										
+									<p:column headerText="Options">
+<p:commandButton id="BtnParamSet#{algorithm.id}" 
+	value="Edit#{algorithm.id}" 
+	action="#{analyzeBacking.generateParameterSetting(algorithm.id)}" 
+	immediate="true" />		
+	 
+<p:commandButton id="BtnParamSetB#{algorithm.id}" 
+	value="TEST#{algorithm.id}" 
+	actionListener="#{analyzeBacking.attrListener}" 
+	onsuccess="accordion.select(1);"
+	immediate="true" 
+	update="@([id$=panelSetting])"
+	rendered="false">		
+		<f:attribute name="algorithmid" value="#{algorithm.id}"/>
+</p:commandButton>
+	 
+									</p:column>
+										
+									<p:column headerText="Help" style="width:5%">  
+				          				<h:commandLink id="documentationURL" onclick="open_helpwindow('#{algorithm.URLreference}'); return false;">
+										    <h:outputText value="Ref" />
+										</h:commandLink>
+				      				</p:column> 
+		
+									<p:column headerText="Description" style="width:73%">  
+				          				<h:outputLabel value="#{algorithm.toolTipDescription}" title="#{algorithm.displayLongDescription}"/>  
+				      				</p:column> 	
+								</p:dataTable>
+							</p:panel>
+<p:panel title="parameter settings" id="settingTab" rendered="#{!analyzeBacking.setparameterdisplayed}">
+	<p:commandButton id="BtnParamSave" value="Save" type="button" onclick="accordion.select(0);"/>
+	<p:commandButton id="BtnParamCancel" value="Cancel" type="button" onclick="accordion.select(0);"/>
+	<p:commandButton value="Reset" type="reset"/>
 
-		<p:tab title="Algorithm Details for #{algorithm.displayShortName}"  titletip="These elements must all be correctly entered in order for the analysis algortithm to be used by Waveform.">
-			<ui:include src="viewA_RequiredElements.xhtml" />
-		</p:tab>
-		<!--
-		<p:tab title="Extra Details"  titletip="These elements provide documentation of the analysis algorithm.">
-			<ui:include src="viewB_ExtraDescription.xhtml" />
-		</p:tab>
-		 -->
-	</p:tabView>
-</p:overlayPanel>
-
-								</p:column>
-								
-							<p:column headerText="Help" style="width:5%">  
-		          				<h:commandLink id="documentationURL" onclick="open_helpwindow('#{algorithm.URLreference}'); return false;">
-								    <h:outputText value="Ref" />
-								</h:commandLink>
-		      				</p:column> 
-
-							<p:column headerText="Description" style="width:73%">  
-		          				<h:outputLabel value="#{algorithm.toolTipDescription}" title="#{algorithm.displayLongDescription}"/>  
-		      				</p:column> 	
-						</p:dataTable>
+	<h:panelGroup id="panelSetting" 
+		binding="#{analyzeBacking.panelParameterSet}"/>
+</p:panel>
 					</p:layoutUnit>
 				</p:layout>
 				<script type="text/javascript">
