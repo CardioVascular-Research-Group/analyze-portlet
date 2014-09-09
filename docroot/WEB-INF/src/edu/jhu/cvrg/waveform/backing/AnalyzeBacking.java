@@ -35,8 +35,6 @@ import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.hibernate.annotations.Parameter;
-import org.jfree.util.Log;
 import org.primefaces.component.inputtext.InputText;
 import org.primefaces.component.selectbooleancheckbox.SelectBooleanCheckbox;
 import org.primefaces.component.selectoneradio.SelectOneRadio;
@@ -58,10 +56,6 @@ import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.model.FileTreeNode;
 import edu.jhu.cvrg.waveform.model.LocalFileTree;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
-//import javax.faces.component.html.HtmlSelectOneRadio;
-//import com.jhu.cvrg.portal.survey.backing.HtmlSelectOneRadio;
-//import com.jhu.cvrg.portal.survey.backing.UISelectItem;
-//import com.jhu.cvrg.portal.survey.backing.SurveyBacking.visiblePanel;
 import edu.jhu.cvrg.waveform.utility.ServerUtility;
 
 @ManagedBean(name = "analyzeBacking")
@@ -368,8 +362,9 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 	}
 
 	public HtmlPanelGroup getPanelParameterSet() {
-		this.getLog().info("getPanelParameterSet() algorithmID:" + algorithmToEditID);
+//		this.getLog().info("getPanelParameterSet() algorithmID:" + algorithmToEditID);
 		if(algorithmToEditID !=-1)	{
+			this.getLog().info("getPanelParameterSet() algorithmID:" + algorithmToEditID);
 			loadParameterSetPanel(algorithmToEditID);
 		}else{
 			loadParameterSetPanel(47);
