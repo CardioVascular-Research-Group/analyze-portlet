@@ -27,7 +27,6 @@ import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
-import javax.faces.bean.ViewScoped;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.html.HtmlOutputLabel;
 import javax.faces.component.html.HtmlPanelGrid;
@@ -47,10 +46,11 @@ import org.primefaces.model.TreeNode;
 
 import com.liferay.portal.model.User;
 
-import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
-import edu.jhu.cvrg.dbapi.dto.Algorithm;
-import edu.jhu.cvrg.dbapi.factory.Connection;
-import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
+import edu.jhu.cvrg.data.dto.AdditionalParametersDTO;
+import edu.jhu.cvrg.data.dto.AlgorithmDTO;
+import edu.jhu.cvrg.data.factory.Connection;
+import edu.jhu.cvrg.data.factory.ConnectionFactory;
+import edu.jhu.cvrg.data.util.DataStorageException;
 import edu.jhu.cvrg.waveform.main.AnalysisManager;
 import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.model.FileTreeNode;
@@ -66,7 +66,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 
 	private HtmlPanelGroup panelParameterSet;
 
-	private Algorithm[] selectedAlgorithms;
+	private AlgorithmDTO[] selectedAlgorithms;
 	private ArrayList<DocumentDragVO> tableList;
 
 	private LocalFileTree fileTree;
@@ -129,14 +129,14 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 					}
 				}			
 			}
-			ArrayList<AdditionalParameters> paramList = algorithmList.getAvailableAlgorithms().get(algIndex).getParameters();
+			ArrayList<AdditionalParametersDTO> paramList = algorithmList.getAvailableAlgorithms().get(algIndex).getParameters();
 			
 			HtmlPanelGrid grid = new HtmlPanelGrid();
 			grid.setId("gridOne");
 			grid.setBorder(4);
 			grid.setColumns(3);
 	
-			for(AdditionalParameters p:paramList){
+			for(AdditionalParametersDTO p:paramList){
 				grid.getChildren().add(makeLabel("(" + p.getParameterFlag() + ") " + p.getDisplayShortName(), p.getToolTipDescription()));
 				
 				String type = p.getType(); /** MUST BE text, integer, float, boolean, select, data_column, or drill_down  BUT NOT genomebuild, hidden, baseurl, file, data. **/
@@ -341,11 +341,11 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 		this.tableList = tableList;
 	}
 
-	public Algorithm[] getSelectedAlgorithms() {
+	public AlgorithmDTO[] getSelectedAlgorithms() {
 		return selectedAlgorithms;
 	}
 
-	public void setSelectedAlgorithms(Algorithm[] selectedAlgorithms) {
+	public void setSelectedAlgorithms(AlgorithmDTO[] selectedAlgorithms) {
 		this.selectedAlgorithms = selectedAlgorithms;
 	}
 
@@ -437,34 +437,38 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
         String type = params.get("type");
         
         if(property!=null && !property.isEmpty()){
-        	Connection con = ConnectionFactory.createConnection();
-        	
-        	if(tableList == null){
-        		tableList = new ArrayList<DocumentDragVO>();
-        	}
-        	
-        	DocumentDragVO vo = null;
-        	
-        	if("leaf".equals(type)){
-        		FileTreeNode node = fileTree.getNodeByReference(property);
-            	if(node != null){
-            		vo = new DocumentDragVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
-            		if(!tableList.contains(vo)){
-            			tableList.add(vo);	
-            		}
-            	}	
-        	}else if("parent".equals(type)){
-        		List<FileTreeNode> nodes = fileTree.getNodesByReference(property);
-            	if(nodes!=null){
-            		for (FileTreeNode node : nodes) {
-            			
-            			vo = new DocumentDragVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
-            			if(!tableList.contains(vo)){
-                    		tableList.add(vo);	
-                    	}			
+        	try {
+				Connection con = ConnectionFactory.createConnection();
+				
+				if(tableList == null){
+					tableList = new ArrayList<DocumentDragVO>();
+				}
+				
+				DocumentDragVO vo = null;
+				
+				if("leaf".equals(type)){
+					FileTreeNode node = fileTree.getNodeByReference(property);
+					if(node != null){
+						vo = new DocumentDragVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
+						if(!tableList.contains(vo)){
+							tableList.add(vo);	
+						}
+					}	
+				}else if("parent".equals(type)){
+					List<FileTreeNode> nodes = fileTree.getNodesByReference(property);
+					if(nodes!=null){
+						for (FileTreeNode node : nodes) {
+							
+							vo = new DocumentDragVO(node, con.getDocumentRecordById(node.getDocumentRecordId()));
+							if(!tableList.contains(vo)){
+				        		tableList.add(vo);	
+				        	}			
+						}
 					}
-            	}
-            }
+				}
+			} catch (DataStorageException e) {
+				this.getLog().error("Error on node2dto conversion. " + e.getMessage());
+			}
         }else{
         	System.err.println("DRAGDROP = ERROR");
         }

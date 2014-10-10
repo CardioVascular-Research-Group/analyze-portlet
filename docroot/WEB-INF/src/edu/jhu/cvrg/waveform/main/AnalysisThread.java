@@ -31,8 +31,9 @@ import com.liferay.portal.security.permission.PermissionThreadLocal;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 
-import edu.jhu.cvrg.dbapi.dto.AnnotationDTO;
-import edu.jhu.cvrg.dbapi.factory.Connection;
+import edu.jhu.cvrg.data.dto.AnnotationDTO;
+import edu.jhu.cvrg.data.factory.Connection;
+import edu.jhu.cvrg.data.util.DataStorageException;
 import edu.jhu.cvrg.waveform.exception.AnalyzeFailureException;
 import edu.jhu.cvrg.waveform.utility.ServerUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
@@ -163,7 +164,13 @@ public class AnalysisThread extends Thread{
 	private void recordAnalysisResults(Long documentRecordId, Long jobId, long[] filesId) throws AnalyzeFailureException {
 		
 		if(filesId != null){
-			boolean status = dbUtility.storeFilesInfo(documentRecordId, filesId, jobId);
+			boolean status = false;
+			
+			try {
+				status = dbUtility.storeFilesInfo(documentRecordId, filesId, jobId);
+			} catch (DataStorageException e) {
+				status = false;
+			}
 			
 			if(!status){
 				throw new AnalyzeFailureException("Failed on FileInfo database persistence");
@@ -452,11 +459,11 @@ public class AnalysisThread extends Thread{
 							fullAnnotation = saOntDetails.get("definition");
 						}
 	
-						AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, null/*createdBy*/, "ANNOTATION", termName, 
+						AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, recordId, null/*createdBy*/, "ANNOTATION", termName, 
 																			 conceptId != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY : null , conceptId,
 																			 null/*bioportalRef*/, iLeadIndex, null/*unitMeasurement*/, null/*description*/,fullAnnotation, Calendar.getInstance(), 
-																			 dMilliSec, dMicroVolt, dMilliSec, dMicroVolt, //start and end are the same than this is a single point annotation 
-																			 null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
+																			 dMilliSec, dMicroVolt, dMilliSec, dMicroVolt //start and end are the same than this is a single point annotation 
+																			 );
 		
 						annotationToInsert.setAnalysisJobId(jobId);
 						
@@ -477,7 +484,12 @@ public class AnalysisThread extends Thread{
 			}
 		}
 		
-		Long insertedQtd = dbUtility.storeAnnotations(toPersist);
+		Long insertedQtd = -1L;
+		try {
+			insertedQtd = dbUtility.storeAnnotations(toPersist);
+		} catch (DataStorageException e) {
+			log.error("Error on Annotations persistence. " + e.getMessage());
+		}
 		
 		if(toPersist.size() != insertedQtd) {
 			log.error("Annotation did not save properly");
@@ -521,11 +533,11 @@ public class AnalysisThread extends Thread{
             					String[] annotationSubject = dataHeaders[i].split("\\|");
     							String conceptId = annotationSubject[0].substring(annotationSubject[0].lastIndexOf("/")+1);
     							
-    							AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, 0L/*groupID*/, 0L/*companyID*/, recordId, "ChesnokovAnalysis"/*createdBy*/, "ANNOTATION", annotationSubject[1], 
+    							AnnotationDTO annotationToInsert = new AnnotationDTO(0L/*userid*/, recordId, "ChesnokovAnalysis"/*createdBy*/, "ANNOTATION", annotationSubject[1], 
 										 conceptId != null ? AnnotationDTO.ECG_TERMS_ONTOLOGY : null , conceptId,
 										 annotationSubject[0]/*bioportalRef*/, leadIndex , null/*unitMeasurement*/, null/*description*/, data[i], Calendar.getInstance(), 
-										 null, null, null, null, //start and end are the same than this is a single point annotation 
-										 null/*newStudyID*/, null/*newRecordName*/, null/*newSubjectID*/);
+										 null, null, null, null //start and end are the same than this is a single point annotation 
+										 );
     							
     							annotationToInsert.setAnalysisJobId(jobId);
     							
@@ -545,6 +557,8 @@ public class AnalysisThread extends Thread{
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (DataStorageException e) {
+			log.error("Error on Chesnokov's Annotations persistence. " + e.getMessage());
 		}finally{
 			if(in !=  null){
 				try {

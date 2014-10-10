@@ -29,17 +29,19 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Node;
-import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
-import edu.jhu.cvrg.dbapi.dto.Algorithm;
-import edu.jhu.cvrg.dbapi.factory.Connection;
-import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
+
+import edu.jhu.cvrg.data.dto.AdditionalParametersDTO;
+import edu.jhu.cvrg.data.dto.AlgorithmDTO;
+import edu.jhu.cvrg.data.factory.Connection;
+import edu.jhu.cvrg.data.factory.ConnectionFactory;
+import edu.jhu.cvrg.data.util.DataStorageException;
 
 public class AlgorithmList implements Serializable{
 	
 	private static final long serialVersionUID = -4006126323152259063L;
 	Logger log = Logger.getLogger(this.getClass());
 	
-	private List<Algorithm> availableAlgorithms = new ArrayList<Algorithm>();
+	private List<AlgorithmDTO> availableAlgorithms = new ArrayList<AlgorithmDTO>();
 
 	public AlgorithmList() {
 
@@ -53,8 +55,8 @@ public class AlgorithmList implements Serializable{
 		}
 	}
 	
-	public Algorithm getAlgorithmByName(String name){
-		for(Algorithm algorithm : availableAlgorithms){
+	public AlgorithmDTO getAlgorithmByName(String name){
+		for(AlgorithmDTO algorithm : availableAlgorithms){
 			if(algorithm.getDisplayShortName().equals(name)){
 				return algorithm;
 			}
@@ -67,8 +69,8 @@ public class AlgorithmList implements Serializable{
 	 * @param id - the primary key, as found in the algorithm database table.
 	 * @return - the selected algorithm.
 	 */
-	public Algorithm getAlgorithmByID(int id){
-		for(Algorithm algorithm : availableAlgorithms){
+	public AlgorithmDTO getAlgorithmByID(int id){
+		for(AlgorithmDTO algorithm : availableAlgorithms){
 			if(algorithm.getId()==id){
 				return algorithm;
 			}
@@ -86,12 +88,16 @@ public class AlgorithmList implements Serializable{
 	 * Used once for initializing the database only, should not be run in normal situations.
 	 */
 	private void persistAlgorithmsToDB(){
+		try{
 		Connection dbUtility = ConnectionFactory.createConnection();
 		
-		for(Algorithm a : availableAlgorithms){
+		for(AlgorithmDTO a : availableAlgorithms){
 			int algorithmID = dbUtility.storeAlgorithm(a.getDisplayShortName(), 1, a.getServiceMethod(),
 					a.getToolTipDescription(), a.getDisplayLongDescription());
 			persistAlgorithmParametersToDB(a, algorithmID);
+		}
+		}catch (DataStorageException e){
+			log.error("Error on Algorithm persistence. " + e.getMessage());
 		}
 	}
 	
@@ -104,20 +110,25 @@ public class AlgorithmList implements Serializable{
 	 * @author Michael Shipway
 	 */
 	public int addNewAlgorithmToDB(int serviceID){
-		Connection dbUtility = ConnectionFactory.createConnection();
-		String displayShortName = "REPLACE";
-		String serviceMethod = "REPLACE";
-		String toolTipDescription = "REPLACE";
-		String displayLongDescription = "REPLACE";
-		int algorithmID = dbUtility.storeAlgorithm(displayShortName, serviceID, serviceMethod,
-				toolTipDescription, displayLongDescription);
+		int algorithmID = -1;
+		try{
+			Connection dbUtility = ConnectionFactory.createConnection();
+			String displayShortName = "REPLACE";
+			String serviceMethod = "REPLACE";
+			String toolTipDescription = "REPLACE";
+			String displayLongDescription = "REPLACE";
+			algorithmID = dbUtility.storeAlgorithm(displayShortName, serviceID, serviceMethod, toolTipDescription, displayLongDescription);
+			
+		}catch (DataStorageException e){
+			log.error("Error on Algorithm persistence. " + e.getMessage());
+		}
 		return algorithmID;
 	}
 	
 	/** Copies the current algorithm List to the database.
 	 * Used once for initializing the database only, should not be run in normal situations.
 	 */
-	public void updateAlgorithmToDB(Algorithm alg){
+	public void updateAlgorithmToDB(AlgorithmDTO alg){
 		
 		log.info("updateAlgorithmToDB() algorithm ID:" + alg.getId());
 		log.info("updateAlgorithmToDB() Display Name:" + alg.getDisplayShortName());
@@ -125,23 +136,25 @@ public class AlgorithmList implements Serializable{
 		log.info("updateAlgorithmToDB() Method:" + alg.getServiceMethod());
 		log.info("updateAlgorithmToDB() URL Ref:" + alg.getURLreference());
 		
-		Connection dbUtility = ConnectionFactory.createConnection();
+		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
 
-		
-			int algorithmID = dbUtility.updateAlgorithm(alg.getId(), alg.getDisplayShortName(), alg.getServiceID(), 
-					alg.getServiceMethod(), alg.getToolTipDescription(), alg.getDisplayLongDescription());
+			
+				int algorithmID = dbUtility.updateAlgorithm(alg.getId(), alg.getDisplayShortName(), alg.getServiceID(), 
+						alg.getServiceMethod(), alg.getToolTipDescription(), alg.getDisplayLongDescription());
 //			persistAlgorithmParametersToDB(alg, algorithmID);
+		} catch (DataStorageException e) {
+			log.error("Error on Algorithm update. " + e.getMessage());
+		}
 	}
 	
 	/** Copies the current algorithm List to the database.
 	 * Used once for initializing the database only, should not be run in normal situations.
 	 */
 	private void persistAllAlgorithmParametersToDB(){
-		Connection dbUtility = ConnectionFactory.createConnection();
-		
 		int algID = 1;
 
-		for(Algorithm a : availableAlgorithms){
+		for(AlgorithmDTO a : availableAlgorithms){
 			persistAlgorithmParametersToDB(a, algID);
 			algID++;
 		}
@@ -150,15 +163,20 @@ public class AlgorithmList implements Serializable{
 	/** Copies a single algorithm to the database.
 	 * Used once for initializing the database only, should not be run in normal situations.
 	 */
-	private void persistAlgorithmParametersToDB(Algorithm a, int algID){
-		Connection dbUtility = ConnectionFactory.createConnection();
+	private void persistAlgorithmParametersToDB(AlgorithmDTO a, int algID){
 		
-		if (a.getParameters() !=null){
-			if (a.getParameters().size() != 0){
-				for(AdditionalParameters param: a.getParameters()){
-					int parameterID = dbUtility.storeAlgorithmParameter(param, algID);
+		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
+			
+			if (a.getParameters() !=null){
+				if (a.getParameters().size() != 0){
+					for(AdditionalParametersDTO param: a.getParameters()){
+						int parameterID = dbUtility.storeAlgorithmParameter(param, algID);
+					}
 				}
 			}
+		} catch (DataStorageException e) {
+			log.error("Error on Algorithm Parameters persistence. " + e.getMessage());
 		}
 	}
 	
@@ -169,10 +187,16 @@ public class AlgorithmList implements Serializable{
 	 * @return - The primary key of the new entry.
 	 * @author Michael Shipway
 	 */
-	public int addNewAlgorithmParameterToDB(AdditionalParameters param, int algID){
-		Connection dbUtility = ConnectionFactory.createConnection();
+	public int addNewAlgorithmParameterToDB(AdditionalParametersDTO param, int algID){
+		int algorithmParameterId = -1;
+		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
+			algorithmParameterId = dbUtility.storeAlgorithmParameter(param, algID);
+		} catch (DataStorageException e) {
+			log.error("Error on Algorithm Parameter persistence. " + e.getMessage());
+		}
 		
-		return dbUtility.storeAlgorithmParameter(param, algID);
+		return algorithmParameterId;
 	}
 		
 	/** Updates a single new algorithm parameter to the database. 
@@ -182,10 +206,17 @@ public class AlgorithmList implements Serializable{
 	 * @return - The primary key of the new entry.
 	 * @author Michael Shipway
 	 */
-	public int updateAlgorithmParameterToDB(AdditionalParameters param, int algID){
-		Connection dbUtility = ConnectionFactory.createConnection();
+	public int updateAlgorithmParameterToDB(AdditionalParametersDTO param, int algID){
+		int algorithmParameterId = -1;
 		
-		return dbUtility.updateAlgorithmParameter(param, algID);
+		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
+			algorithmParameterId = dbUtility.updateAlgorithmParameter(param, algID);
+		} catch (DataStorageException e) {
+			log.error("Error on Algorithm Parameter update. " + e.getMessage());
+		}
+		
+		return algorithmParameterId;
 	}
 		
 	
@@ -219,11 +250,11 @@ public class AlgorithmList implements Serializable{
 		return "";
 	}
 
-	public List<Algorithm> getAvailableAlgorithms() {
+	public List<AlgorithmDTO> getAvailableAlgorithms() {
 		return availableAlgorithms;
 	}
 
-	public void setAvailableAlgorithms(List<Algorithm> availableAlgorithms) {
+	public void setAvailableAlgorithms(List<AlgorithmDTO> availableAlgorithms) {
 		this.availableAlgorithms = availableAlgorithms;
 	}
 }

@@ -4,10 +4,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
-import edu.jhu.cvrg.dbapi.dto.Service;
-import edu.jhu.cvrg.dbapi.factory.Connection;
-import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
+import edu.jhu.cvrg.data.dto.ServiceDTO;
+import edu.jhu.cvrg.data.factory.Connection;
+import edu.jhu.cvrg.data.factory.ConnectionFactory;
+import edu.jhu.cvrg.data.util.DataStorageException;
 
 /** 
  * 
@@ -17,7 +17,7 @@ public class ServiceList implements Serializable{
 	
 	private static final long serialVersionUID = -4006126323152259063L;
 	
-	private List<Service> availableServiceList = new ArrayList<Service>();
+	private List<ServiceDTO> availableServiceList = new ArrayList<ServiceDTO>();
 
 	public ServiceList() {
 
@@ -34,8 +34,8 @@ public class ServiceList implements Serializable{
 	 * @return - the selected algorithm.
 	 * @author Michael Shipway
 	 */
-	public Service getServiceByID(int id){
-		for(Service service : availableServiceList){
+	public ServiceDTO getServiceByID(int id){
+		for(ServiceDTO service : availableServiceList){
 			if(service.getId()==id){
 				return service;
 			}
@@ -51,18 +51,18 @@ public class ServiceList implements Serializable{
 	public void populateServiceListFromDB(){
 		try {
 			Connection dbUtility = ConnectionFactory.createConnection();
-			List<Service> algList = dbUtility.getAvailableServiceList(-1);
+			List<ServiceDTO> algList = dbUtility.getAvailableServiceList(-1);
 			availableServiceList = algList;
 		} catch(Exception ex) {
 			ex.printStackTrace();
 		}	
 	}
 
-	public List<Service> getAvailableServiceList() {
+	public List<ServiceDTO> getAvailableServiceList() {
 		return availableServiceList;
 	}
 
-	public void setAvailableServiceList(List<Service> availableServiceList) {
+	public void setAvailableServiceList(List<ServiceDTO> availableServiceList) {
 		this.availableServiceList = availableServiceList;
 	}
 	
@@ -75,8 +75,9 @@ public class ServiceList implements Serializable{
 	 *        This is used together with “service.wsName” and "algorithm.method”. <BR>
 	 *        e.g. http://128.220.76.170:8080/axis2/services/physionetAnalysisService/sqrsWrapperType2
 	 * @return - the primary key of the new entry in the service table.
+	 * @throws DataStorageException 
 	 **/
-	public int addNewServiceToDB(String uiName, String wsName, String url){
+	public int addNewServiceToDB(String uiName, String wsName, String url) throws DataStorageException{
 		Connection dbUtility = ConnectionFactory.createConnection();
 
 		int algorithmID = dbUtility.storeService(uiName, wsName, url);
@@ -89,8 +90,9 @@ public class ServiceList implements Serializable{
 	 * @param algID - Primary key of the algorithm this parameter pertains to.
 	 * @return - The primary key of the new entry.
 	 * @author Michael Shipway
+	 * @throws DataStorageException 
 	 */
-	public int updateAlgorithmParameterToDB(Service serv){
+	public int updateAlgorithmParameterToDB(ServiceDTO serv) throws DataStorageException{
 		Connection dbUtility = ConnectionFactory.createConnection();
 		
 		return dbUtility.updateWebService(serv);

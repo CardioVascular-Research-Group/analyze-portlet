@@ -37,9 +37,11 @@ import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
 import com.liferay.portal.model.User;
 
-import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
-import edu.jhu.cvrg.dbapi.dto.Algorithm;
-import edu.jhu.cvrg.dbapi.dto.Service;
+import edu.jhu.cvrg.data.dto.AdditionalParametersDTO;
+import edu.jhu.cvrg.data.dto.AlgorithmDTO;
+import edu.jhu.cvrg.data.dto.ServiceDTO;
+import edu.jhu.cvrg.data.util.DataStorageException;
+
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 
 @ManagedBean(name = "algorithmEditBacking")
@@ -48,7 +50,7 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 	private static final long serialVersionUID = 1183266658930656309L;
 	
 	private int selectedAlgorithmID=-1;
-	private Algorithm selectedAlgorithm;
+	private AlgorithmDTO selectedAlgorithm;
 //	private int selectedServiceID;
 //	private Service selectedService;
 
@@ -78,7 +80,7 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 		algorithmList = new AlgorithmList();
 		if(algorithmList.getAvailableAlgorithms().size()>1){
 			setSelectedAlgorithm(algorithmList.getAvailableAlgorithms().get(0)); // default to first in list
-			for(Algorithm a:algorithmList.getAvailableAlgorithms()){
+			for(AlgorithmDTO a:algorithmList.getAvailableAlgorithms()){
 				if(a.getId() == selectedAlgID){
 					setSelectedAlgorithm(a);
 				}
@@ -164,7 +166,7 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 
     public void addParameter(){
     	this.getLog().info(" addParameter()");
-    	AdditionalParameters newParam = new AdditionalParameters();
+    	AdditionalParametersDTO newParam = new AdditionalParametersDTO();
     	newParam.setDisplayShortName("REPLACE");
     	newParam.setLongDescription("REPLACE");
     	newParam.setParameterFlag("REPLACE");
@@ -178,7 +180,7 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 
     public void updateParameter(int id){
     	this.getLog().info(" updateParameter(" + id + ")");
-    	for(AdditionalParameters ap:selectedAlgorithm.getParameters()){
+    	for(AdditionalParametersDTO ap : selectedAlgorithm.getParameters()){
     		if(ap.getId() == id){
     	    	this.getLog().info(" name:" + ap.getDisplayShortName());
     	    	this.getLog().info(" tooltip:" + ap.getToolTipDescription());
@@ -193,27 +195,35 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
     
     
     public void addService(){
-    	this.getLog().info(" addService()");
-    	String uiName = "REPLACE";
-    	String wsName = "REPLACE";
-    	String url = "REPLACE";
-    	newServiceID = serviceList.addNewServiceToDB(uiName, wsName, url);
-    	serviceList = new ServiceList(); // reload
+    	try {
+			this.getLog().info(" addService()");
+			String uiName = "REPLACE";
+			String wsName = "REPLACE";
+			String url = "REPLACE";
+			newServiceID = serviceList.addNewServiceToDB(uiName, wsName, url);
+			serviceList = new ServiceList(); // reload
+		} catch (DataStorageException e) {
+			e.printStackTrace();
+		}
     }
     
     public void updateService(int id){
     	this.getLog().info(" updateService(" + id + ")");
-    	for(Service sl:serviceList.getAvailableServiceList()){
-    		if(sl.getId() == id){
-    	    	this.getLog().info(" Display name:" + sl.getDisplayServiceName());
-    	    	this.getLog().info(" Service's Name:" + sl.getServiceName());
-    	    	this.getLog().info(" URL:" + sl.getUrl());
-    		
-    	    	serviceList.updateAlgorithmParameterToDB(sl);
-    	    	algorithmList.populateAlgorithmsFromDB();
-    	    	break;
-    		}
-    	}
+    	try {
+			for(ServiceDTO sl:serviceList.getAvailableServiceList()){
+				if(sl.getId() == id){
+			    	this.getLog().info(" Display name:" + sl.getDisplayServiceName());
+			    	this.getLog().info(" Service's Name:" + sl.getServiceName());
+			    	this.getLog().info(" URL:" + sl.getUrl());
+				
+			    	serviceList.updateAlgorithmParameterToDB(sl);
+			    	algorithmList.populateAlgorithmsFromDB();
+			    	break;
+				}
+			}
+		} catch (DataStorageException e) {
+			e.printStackTrace();
+		}
     }
     
     
@@ -263,11 +273,11 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 		this.selectedAlgorithmID = algorithmID;
 	}
 
-	public Algorithm getSelectedAlgorithm() {
+	public AlgorithmDTO getSelectedAlgorithm() {
 		return selectedAlgorithm;
 	}
 
-	public void setSelectedAlgorithm(Algorithm selectedAlgorithm) {
+	public void setSelectedAlgorithm(AlgorithmDTO selectedAlgorithm) {
 		this.selectedAlgorithm = selectedAlgorithm;
 		this.selectedAlgorithmID = getSelectedAlgorithm().getId();
 		int serviceID = getSelectedAlgorithm().getServiceID();
@@ -284,11 +294,11 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 		return this.selectedAlgorithm.getParameters().size();
 	}
 	
-	public List<AdditionalParameters> getParameterList(){
+	public List<AdditionalParametersDTO> getParameterList(){
 		return this.selectedAlgorithm.getParameters();
 	}
 
-	public Service getSelectedService() {
+	public ServiceDTO getSelectedService() {
 		return serviceList.getServiceByID(selectedAlgorithm.getServiceID());
 	}
 
@@ -316,7 +326,7 @@ public class AlgorithmEditBacking extends BackingBean implements Serializable {
 		return userModel;
 	}
 
-	public Service getNewService() {
+	public ServiceDTO getNewService() {
 		return serviceList.getServiceByID(newServiceID);
 	}
 

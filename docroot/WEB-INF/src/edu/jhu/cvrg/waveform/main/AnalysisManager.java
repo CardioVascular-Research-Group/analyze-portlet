@@ -36,18 +36,17 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 
-import edu.jhu.cvrg.dbapi.dto.AdditionalParameters;
-import edu.jhu.cvrg.dbapi.dto.Algorithm;
-import edu.jhu.cvrg.dbapi.dto.AnnotationDTO;
-import edu.jhu.cvrg.dbapi.dto.FileTypes;
-import edu.jhu.cvrg.dbapi.enums.EnumFileType;
-import edu.jhu.cvrg.dbapi.factory.Connection;
-import edu.jhu.cvrg.dbapi.factory.ConnectionFactory;
-//import edu.jhu.cvrg.waveform.model.Algorithm;
+import edu.jhu.cvrg.data.dto.AlgorithmDTO;
+import edu.jhu.cvrg.data.dto.AnnotationDTO;
+import edu.jhu.cvrg.data.enums.FileType;
+import edu.jhu.cvrg.data.factory.Connection;
+import edu.jhu.cvrg.data.factory.ConnectionFactory;
+import edu.jhu.cvrg.data.util.DataStorageException;
 import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ThreadController;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
+//import edu.jhu.cvrg.waveform.model.Algorithm;
 
 public class AnalysisManager implements Serializable{
 
@@ -55,7 +54,7 @@ public class AnalysisManager implements Serializable{
 	
 	private ThreadController tController;
 	
-	public boolean performAnalysis(List<DocumentDragVO> selectedNodes, long userId, Algorithm[] selectedAlgorithms ){
+	public boolean performAnalysis(List<DocumentDragVO> selectedNodes, long userId, AlgorithmDTO[] selectedAlgorithms ){
 		
 		try {
 			Connection dbUtility = ConnectionFactory.createConnection();
@@ -69,13 +68,13 @@ public class AnalysisManager implements Serializable{
 			for (DocumentDragVO node : selectedNodes) {
 				
 				FileEntry headerFile = (FileEntry) node.getFileNode().getContent();
-				EnumFileType originalFileType = node.getDocumentRecord().getOriginalFormat();
+				FileType originalFileType = node.getDocumentRecord().getOriginalFormat();
 				long docId = node.getDocumentRecord().getDocumentRecordId();
 				String name = node.getDocumentRecord().getRecordName();
 				String age = node.getDocumentRecord().getAge().toString();
 				String sex = node.getDocumentRecord().getGender();
 								
-				for (Algorithm algorithm : selectedAlgorithms) {
+				for (AlgorithmDTO algorithm : selectedAlgorithms) {
 					
 //					Map<String, String> parameterMap = new HashMap<String, String>();
 					Map<String, Object> parameterMap = new HashMap<String, Object>();
@@ -169,15 +168,17 @@ public class AnalysisManager implements Serializable{
 			e.printStackTrace();
 		} catch (SystemException e) {
 			e.printStackTrace();
+		} catch (DataStorageException e) {
+			e.printStackTrace();
 		}
 		
 		return false;
 	}
 	
-	private ArrayList<FileEntry> getFileList(Algorithm algorithm, List<FileEntry> subFiles) {
+	private ArrayList<FileEntry> getFileList(AlgorithmDTO algorithm, List<FileEntry> subFiles) {
 		ArrayList<FileEntry> retFiles = new ArrayList<FileEntry>();
 		String needExtentions = "";
-		if(algorithm.getType()==null){
+		if(algorithm.getType() == null){
 			needExtentions = ".hea.dat";
 		}else{
 			switch (algorithm.getType()) {
@@ -192,8 +193,6 @@ public class AnalysisManager implements Serializable{
 				case RDSAMP:
 				case SIGAAMP:
 				case CHESNOKOV:
-				case SQRS2CSV:
-				case WQRS2CSV:
 				case SQRS4IHR:
 				case WQRS4IHR:
 				case SQRS4PNNLIST:
@@ -291,88 +290,90 @@ public class AnalysisManager implements Serializable{
 		bioportalClassIdList.add("http://www.cvrgrid.org/files/ECGOntologyv1.owl#ECG_000000107"); // S_Wave_Amplitude ECGOntology:ECG_000000107
 //		bioportalClassIdList.add("ECGOntology:ECG_000000072"); // QRS_Wave_Duration
 		
-		List<AnnotationDTO> paramList_I = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 0, createdBy, bioportalOntologyID, bioportalClassIdList);
-		List<AnnotationDTO> paramList_II = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 1, createdBy, bioportalOntologyID, bioportalClassIdList);
-//		List<AnnotationDTO> paramList_III = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 2, createdBy, bioportalOntologyID, bioportalClassIdList);
-//		List<AnnotationDTO> paramList_aVR = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 3, createdBy, bioportalOntologyID, bioportalClassIdList);
-		List<AnnotationDTO> paramList_aVL = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 4, createdBy, bioportalOntologyID, bioportalClassIdList);
-		List<AnnotationDTO> paramList_aVF = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 5, createdBy, bioportalOntologyID, bioportalClassIdList);
-		List<AnnotationDTO> paramList_V1 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 6, createdBy, bioportalOntologyID, bioportalClassIdList);
-		List<AnnotationDTO> paramList_V2 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 7, createdBy, bioportalOntologyID, bioportalClassIdList);
-		List<AnnotationDTO> paramList_V3 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 8, createdBy, bioportalOntologyID, bioportalClassIdList);
-		List<AnnotationDTO> paramList_V4 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 9, createdBy, bioportalOntologyID, bioportalClassIdList);
-		List<AnnotationDTO> paramList_V5 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 10, createdBy, bioportalOntologyID, bioportalClassIdList);
-		List<AnnotationDTO> paramList_V6 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 11, createdBy, bioportalOntologyID, bioportalClassIdList);
+		try {
+			Connection conn = ConnectionFactory.createConnection();
+			List<AnnotationDTO> paramList_I = conn.getLeadAnnotationListConceptIDList(userId, docId, 0, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_II = conn.getLeadAnnotationListConceptIDList(userId, docId, 1, createdBy, bioportalOntologyID, bioportalClassIdList);
+//		List<AnnotationDTO> paramList_III = conn.getLeadAnnotationListConceptIDList(userId, docId, 2, createdBy, bioportalOntologyID, bioportalClassIdList);
+//		List<AnnotationDTO> paramList_aVR = conn.getLeadAnnotationListConceptIDList(userId, docId, 3, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_aVL = conn.getLeadAnnotationListConceptIDList(userId, docId, 4, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_aVF = conn.getLeadAnnotationListConceptIDList(userId, docId, 5, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V1 = conn.getLeadAnnotationListConceptIDList(userId, docId, 6, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V2 = conn.getLeadAnnotationListConceptIDList(userId, docId, 7, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V3 = conn.getLeadAnnotationListConceptIDList(userId, docId, 8, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V4 = conn.getLeadAnnotationListConceptIDList(userId, docId, 9, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V5 = conn.getLeadAnnotationListConceptIDList(userId, docId, 10, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V6 = conn.getLeadAnnotationListConceptIDList(userId, docId, 11, createdBy, bioportalOntologyID, bioportalClassIdList);
 
-		int i=0;
-		retList.add(i++, paramList_I.get(0)); // qa_I
+			int i=0;
+			retList.add(i++, paramList_I.get(0)); // qa_I
 //		retList.add(i++, paramList_II.get(0)); // qa_II
 //		retList.add(2, paramList_III.get(0)); // qa_III
 //		retList.add(3, paramList_aVR.get(0)); // qa_aVR
-		retList.add(i++, paramList_aVL.get(0)); // qa_aVL
-		retList.add(i++, paramList_aVF.get(0)); // qa_aVF
-		retList.add(i++, paramList_V1.get(0)); // qa_V1
-		retList.add(i++, paramList_V2.get(0)); // qa_V2
-		retList.add(i++, paramList_V3.get(0)); // qa_V3
-		retList.add(i++, paramList_V4.get(0)); // qa_V4
-		retList.add(i++, paramList_V5.get(0)); // qa_V5
-		retList.add(i++, paramList_V6.get(0)); // qa_V6
-		//*********************************************
-		retList.add(i++, paramList_I.get(1)); // qd_I
-		retList.add(i++, paramList_II.get(1)); // qd_II
+			retList.add(i++, paramList_aVL.get(0)); // qa_aVL
+			retList.add(i++, paramList_aVF.get(0)); // qa_aVF
+			retList.add(i++, paramList_V1.get(0)); // qa_V1
+			retList.add(i++, paramList_V2.get(0)); // qa_V2
+			retList.add(i++, paramList_V3.get(0)); // qa_V3
+			retList.add(i++, paramList_V4.get(0)); // qa_V4
+			retList.add(i++, paramList_V5.get(0)); // qa_V5
+			retList.add(i++, paramList_V6.get(0)); // qa_V6
+			//*********************************************
+			retList.add(i++, paramList_I.get(1)); // qd_I
+			retList.add(i++, paramList_II.get(1)); // qd_II
 //		retList.add(14, paramList_III.get(1)); // qd_III
 //		retList.add(15, paramList_aVR.get(1)); // qd_aVR
-		retList.add(i++, paramList_aVL.get(1)); // qd_aVL
-		retList.add(i++, paramList_aVF.get(1)); // qd_aVF
-		retList.add(i++, paramList_V1.get(1)); // qd_V1
-		retList.add(i++, paramList_V2.get(1)); // qd_V2
-		retList.add(i++, paramList_V3.get(1)); // qd_V3
-		retList.add(i++, paramList_V4.get(1)); // qd_V4
-		retList.add(i++, paramList_V5.get(1)); // qd_V5
-		retList.add(i++, paramList_V6.get(1)); // qd_V6
-		//*********************************************
-		retList.add(i++, paramList_I.get(2)); // ra_I
-		retList.add(i++, paramList_II.get(2)); // ra_II
+			retList.add(i++, paramList_aVL.get(1)); // qd_aVL
+			retList.add(i++, paramList_aVF.get(1)); // qd_aVF
+			retList.add(i++, paramList_V1.get(1)); // qd_V1
+			retList.add(i++, paramList_V2.get(1)); // qd_V2
+			retList.add(i++, paramList_V3.get(1)); // qd_V3
+			retList.add(i++, paramList_V4.get(1)); // qd_V4
+			retList.add(i++, paramList_V5.get(1)); // qd_V5
+			retList.add(i++, paramList_V6.get(1)); // qd_V6
+			//*********************************************
+			retList.add(i++, paramList_I.get(2)); // ra_I
+			retList.add(i++, paramList_II.get(2)); // ra_II
 //		retList.add(26, paramList_III.get(2)); // ra_III
 //		retList.add(27, paramList_aVR.get(2)); // ra_aVR
-		retList.add(i++, paramList_aVL.get(2)); // ra_aVL
-		retList.add(i++, paramList_aVF.get(2)); // ra_aVF
-		retList.add(i++, paramList_V1.get(2)); // ra_V1
-		retList.add(i++, paramList_V2.get(2)); // ra_V2
-		retList.add(i++, paramList_V3.get(2)); // ra_V3
-		retList.add(i++, paramList_V4.get(2)); // ra_V4
-		retList.add(i++, paramList_V5.get(2)); // ra_V5
-		retList.add(i++, paramList_V6.get(2)); // ra_V6
-		//*********************************************
+			retList.add(i++, paramList_aVL.get(2)); // ra_aVL
+			retList.add(i++, paramList_aVF.get(2)); // ra_aVF
+			retList.add(i++, paramList_V1.get(2)); // ra_V1
+			retList.add(i++, paramList_V2.get(2)); // ra_V2
+			retList.add(i++, paramList_V3.get(2)); // ra_V3
+			retList.add(i++, paramList_V4.get(2)); // ra_V4
+			retList.add(i++, paramList_V5.get(2)); // ra_V5
+			retList.add(i++, paramList_V6.get(2)); // ra_V6
+			//*********************************************
 //		retList.add(36, paramList_I.get(3)); // rd_I
 //		retList.add(37, paramList_II.get(3)); // rd_II
 //		retList.add(38, paramList_III.get(3)); // rd_III
 //		retList.add(39, paramList_aVR.get(3)); // rd_aVR
 //		retList.add(40, paramList_aVL.get(3)); // rd_aVL
 //		retList.add(41, paramList_aVF.get(3)); // rd_aVF
-		retList.add(i++, paramList_V1.get(3)); // rd_V1
-		retList.add(i++, paramList_V2.get(3)); // rd_V2
-		retList.add(i++, paramList_V3.get(3)); // rd_V3
+			retList.add(i++, paramList_V1.get(3)); // rd_V1
+			retList.add(i++, paramList_V2.get(3)); // rd_V2
+			retList.add(i++, paramList_V3.get(3)); // rd_V3
 //		retList.add(45, paramList_V4.get(3)); // rd_V4
 //		retList.add(46, paramList_V5.get(3)); // rd_V5
 //		retList.add(47, paramList_V6.get(3)); // rd_V6
-		//*********************************************
-		retList.add(i++, paramList_I.get(4)); // sa_I
-		retList.add(i++, paramList_II.get(4)); // sa_II
+			//*********************************************
+			retList.add(i++, paramList_I.get(4)); // sa_I
+			retList.add(i++, paramList_II.get(4)); // sa_II
 //		retList.add(50, paramList_III.get(4)); // sa_III
 //		retList.add(51, paramList_aVR.get(4)); // sa_aVR
-		retList.add(i++, paramList_aVL.get(4)); // sa_aVL
-		retList.add(i++, paramList_aVF.get(4)); // sa_aVF
-		retList.add(i++, paramList_V1.get(4)); // sa_V1
-		retList.add(i++, paramList_V2.get(4)); // sa_V2
-		retList.add(i++, paramList_V3.get(4)); // sa_V3
-		retList.add(i++, paramList_V4.get(4)); // sa_V4
-		retList.add(i++, paramList_V5.get(4)); // sa_V5
-		retList.add(i++, paramList_V6.get(4)); // sa_V6
-		//*********************************************
+			retList.add(i++, paramList_aVL.get(4)); // sa_aVL
+			retList.add(i++, paramList_aVF.get(4)); // sa_aVF
+			retList.add(i++, paramList_V1.get(4)); // sa_V1
+			retList.add(i++, paramList_V2.get(4)); // sa_V2
+			retList.add(i++, paramList_V3.get(4)); // sa_V3
+			retList.add(i++, paramList_V4.get(4)); // sa_V4
+			retList.add(i++, paramList_V5.get(4)); // sa_V5
+			retList.add(i++, paramList_V6.get(4)); // sa_V6
+			//*********************************************
 
-		// un-needed code which substitutes value from R' and S' when R or S are zero.
-		// Turned out that this was not the correct thing to do here. (Mike Shipway - July 16, 2014)
+			// un-needed code which substitutes value from R' and S' when R or S are zero.
+			// Turned out that this was not the correct thing to do here. (Mike Shipway - July 16, 2014)
 //		List <String> nameList = new ArrayList<String>();
 //		nameList.add("Q-_AMPL"); // dummy place keeper, since Schiller doesn't seem to have negative Q entries
 //		nameList.add("Q-_DUR"); //  dummy place keeper, since Schiller doesn't seem to have negative Q entries
@@ -446,6 +447,9 @@ public class AnalysisManager implements Serializable{
 //				retList.set(c, negList.get(c) );
 //			}			
 //		}
+		} catch (DataStorageException e) {
+			e.printStackTrace();
+		}
 		
 		return retList;
 	}
@@ -465,7 +469,13 @@ public class AnalysisManager implements Serializable{
 			bioportalClassIdList.add("ECGOntology:ECG_000000072"); // QRS Duration
 			bioportalClassIdList.add("ECGOntology:ECG_000000838"); // QRS Axis
 			
-			List<AnnotationDTO> paramList_Rec = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, null, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_Rec = null;
+			
+			try {
+				paramList_Rec = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, null, createdBy, bioportalOntologyID, bioportalClassIdList);
+			} catch (DataStorageException e) {
+				e.printStackTrace();
+			}
 
 //			retList.add(0, paramList_Rec.get(0)); // qa_I
 			//*********************************************
