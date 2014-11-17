@@ -385,7 +385,7 @@ public class AnalysisThread extends Thread{
 			sPhysioBankCode = saAnnot[3];
 			String ontID = physioBankToOntology.get(sPhysioBankCode);
 			if(ontID != null){
-				saAnnot[3] = "http://www.cvrgrid.org/files/ECGTermsv1.owl" + ontID;
+				saAnnot[3] = ontID;
 			}
 		}
 		return alistAnnotation;
@@ -399,12 +399,12 @@ public class AnalysisThread extends Thread{
 	public static final Map<String, String> physioBankToOntology = new HashMap<String, String>(){
 		private static final long serialVersionUID = 3855391277386558047L;
 		{
-			put("N", "#ECG_000000023"); // Normal beat
-			put("(", "#ECG_000000703"); // Waveform onset
-			put(")", "#ECG_000000236"); // Waveform end
-			put("p", "#ECG_000000293"); // Peak of P-wave
-			put("t", "#ECG_000000589"); // Peak of T-wave
-			put("u", "#ECG_000000604"); // Peak of U-wave
+			put("N", "ECGTermsv1.owl#ECG_000000023"); // Normal beat
+			put("(", "ECGTermsv1.owl#ECG_000000703"); // Waveform onset
+			put(")", "ECGTermsv1.owl#ECG_000000236"); // Waveform end
+			put("p", "ECGTermsv1.owl#ECG_000000293"); // Peak of P-wave
+			put("t", "ECGTermsv1.owl#ECG_000000589"); // Peak of T-wave
+			put("u", "ECGTermsv1.owl#ECG_000000604"); // Peak of U-wave
 //			put("L", "#xxxxxx"); // Left bundle branch block beat
 //			put("R", "#xxxxxx"); // Right bundle branch block beat
 //			put("B", "#xxxxxx"); // Bundle branch block beat (unspecified)
