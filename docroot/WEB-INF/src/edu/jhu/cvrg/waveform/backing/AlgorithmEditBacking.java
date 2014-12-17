@@ -20,28 +20,23 @@ package edu.jhu.cvrg.waveform.backing;
  */
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
-import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 
-import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.sql.Select;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
+
 import com.liferay.portal.model.User;
 
 import edu.jhu.cvrg.data.dto.AdditionalParametersDTO;
 import edu.jhu.cvrg.data.dto.AlgorithmDTO;
 import edu.jhu.cvrg.data.dto.ServiceDTO;
 import edu.jhu.cvrg.data.util.DataStorageException;
-
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 
 @ManagedBean(name = "algorithmEditBacking")

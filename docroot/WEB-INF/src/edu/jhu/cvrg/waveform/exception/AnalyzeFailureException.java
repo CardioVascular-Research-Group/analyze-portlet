@@ -2,8 +2,6 @@ package edu.jhu.cvrg.waveform.exception;
 
 import org.apache.log4j.Logger;
 
-import edu.jhu.cvrg.waveform.main.AnalysisThread;
-
 public class AnalyzeFailureException extends Exception{
 
 	private static final long serialVersionUID = 6794589448142833475L;

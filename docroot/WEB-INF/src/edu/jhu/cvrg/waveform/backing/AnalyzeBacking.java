@@ -83,7 +83,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 		userModel = ResourceUtility.getCurrentUser();
 		if(userModel != null){
 			if(fileTree == null){
-				fileTree = new LocalFileTree(userModel.getUserId(), "hea");
+				fileTree = new LocalFileTree(userModel.getUserId());
 			}
 			if(algorithmList == null){
 				algorithmList = new AlgorithmList();

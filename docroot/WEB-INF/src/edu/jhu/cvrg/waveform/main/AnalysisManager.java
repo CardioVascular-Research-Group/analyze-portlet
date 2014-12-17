@@ -31,17 +31,16 @@ import java.util.Set;
 
 import org.apache.axiom.om.OMElement;
 
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
-
 import edu.jhu.cvrg.data.dto.AlgorithmDTO;
 import edu.jhu.cvrg.data.dto.AnnotationDTO;
 import edu.jhu.cvrg.data.enums.FileType;
 import edu.jhu.cvrg.data.factory.Connection;
 import edu.jhu.cvrg.data.factory.ConnectionFactory;
 import edu.jhu.cvrg.data.util.DataStorageException;
+import edu.jhu.cvrg.filestore.exception.FSException;
+import edu.jhu.cvrg.filestore.main.FileStoreFactory;
+import edu.jhu.cvrg.filestore.main.FileStorer;
+import edu.jhu.cvrg.filestore.model.FSFile;
 import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ThreadController;
@@ -62,12 +61,15 @@ public class AnalysisManager implements Serializable{
 			Set<AnalysisThread> threadSet = new HashSet<AnalysisThread>();
 			
 			Map<String, Object> jobs = new HashMap<String, Object>();
-			Map<String, FileEntry> filesMap = new HashMap<String, FileEntry>();
+			Map<String, FSFile> filesMap = new HashMap<String, FSFile>();
 			ThreadGroup analysisGroup = new ThreadGroup("AnalysisGroup");
+			
+			String[] args = {String.valueOf(ResourceUtility.getCurrentGroupId()), String.valueOf(ResourceUtility.getCurrentUserId()), String.valueOf(ResourceUtility.getCurrentCompanyId())};
+			FileStorer fileStorer = FileStoreFactory.returnFileStore(ResourceUtility.getFileStorageType(), args);
 			
 			for (DocumentDragVO node : selectedNodes) {
 				
-				FileEntry headerFile = (FileEntry) node.getFileNode().getContent();
+				FSFile headerFile = fileStorer.getFile(node.getFileNode().getUuid(), true); 
 				FileType originalFileType = node.getDocumentRecord().getOriginalFormat();
 				long docId = node.getDocumentRecord().getDocumentRecordId();
 				String name = node.getDocumentRecord().getRecordName();
@@ -81,8 +83,8 @@ public class AnalysisManager implements Serializable{
 					
 					parameterMap.put("userID",  String.valueOf(userId));
 					parameterMap.put("groupID", String.valueOf(ResourceUtility.getCurrentGroupId()));
-					parameterMap.put("folderID", String.valueOf(headerFile.getFolderId()));
-					parameterMap.put("subjectID", headerFile.getFolder().getName());
+					parameterMap.put("folderID", String.valueOf(headerFile.getParentId()));
+					parameterMap.put("subjectID", node.getDocumentRecord().getSubjectId());
 					
 //					for(FileTypes ft:algorithm.getAfInFileTypes()){
 //						if(ft.id==0){
@@ -114,11 +116,11 @@ public class AnalysisManager implements Serializable{
 					
 					//TODO: [Mike] should create a separate filesMap for each analysis server.
 					String fileNameString="";//filename.dat^filename.hea^";
-					List<FileEntry> subFiles = DLAppLocalServiceUtil.getFileEntries(ResourceUtility.getCurrentGroupId(), headerFile.getFolderId());
-					ArrayList<FileEntry> fileList = getFileList(algorithm, subFiles);
-					for (FileEntry fileEntry : fileList) {
-						fileNameString += fileEntry.getTitle() + "^";
-						filesMap.put(fileEntry.getTitle(), fileEntry);
+					List<FSFile> subFiles = fileStorer.getFiles(headerFile.getParentId(), false);
+					ArrayList<FSFile> fileList = getFileList(algorithm, subFiles);
+					for (FSFile fileEntry : fileList) {
+						fileNameString += fileEntry.getName() + "^";
+						filesMap.put(fileEntry.getName(), fileEntry);
 					}
 					parameterMap.put("fileNames", fileNameString); // caret delimited list for backwards compatibility to type1 web services.
 //					ArrayList<AdditionalParameters> commandParameters = algorithm.getParameters();
@@ -141,7 +143,7 @@ public class AnalysisManager implements Serializable{
 					
 					parameterMap.put("jobID", jobID);
 					
-					AnalysisThread t = new AnalysisThread(parameterMap, node.getFileNode().getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility, analysisGroup);
+					AnalysisThread t = new AnalysisThread(parameterMap, node.getFileNode().getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility, analysisGroup, args);
 					
 					threadSet.add(t);
 					
@@ -164,9 +166,7 @@ public class AnalysisManager implements Serializable{
 			}
 			
 			return true;
-		} catch (PortalException e) {
-			e.printStackTrace();
-		} catch (SystemException e) {
+		} catch (FSException e) {
 			e.printStackTrace();
 		} catch (DataStorageException e) {
 			e.printStackTrace();
@@ -175,8 +175,8 @@ public class AnalysisManager implements Serializable{
 		return false;
 	}
 	
-	private ArrayList<FileEntry> getFileList(AlgorithmDTO algorithm, List<FileEntry> subFiles) {
-		ArrayList<FileEntry> retFiles = new ArrayList<FileEntry>();
+	private ArrayList<FSFile> getFileList(AlgorithmDTO algorithm, List<FSFile> subFiles) {
+		ArrayList<FSFile> retFiles = new ArrayList<FSFile>();
 		String needExtentions = "";
 		if(algorithm.getType() == null){
 			needExtentions = ".hea.dat";
@@ -208,7 +208,7 @@ public class AnalysisManager implements Serializable{
 			}
 		}
 		
-		for (FileEntry file : subFiles) {
+		for (FSFile file : subFiles) {
 			if(needExtentions.contains(file.getExtension())){
 				retFiles.add(file);
 			}

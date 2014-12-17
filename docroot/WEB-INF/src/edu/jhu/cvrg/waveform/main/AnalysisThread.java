@@ -22,19 +22,21 @@ import javax.xml.namespace.QName;
 import org.apache.axiom.om.OMElement;
 import org.apache.log4j.Logger;
 
-import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.model.User;
 import com.liferay.portal.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.security.permission.PermissionThreadLocal;
 import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 
 import edu.jhu.cvrg.data.dto.AnnotationDTO;
 import edu.jhu.cvrg.data.factory.Connection;
 import edu.jhu.cvrg.data.util.DataStorageException;
+import edu.jhu.cvrg.filestore.main.FileStoreFactory;
+import edu.jhu.cvrg.filestore.main.FileStorer;
+import edu.jhu.cvrg.filestore.model.FSFile;
 import edu.jhu.cvrg.waveform.exception.AnalyzeFailureException;
+import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ServerUtility;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
 
@@ -47,7 +49,7 @@ public class AnalysisThread extends Thread{
 	private boolean hasWfdbAnnotationOutput;
 	private boolean hasChesnokovOutput = false;
 	
-	private ArrayList<FileEntry> originFiles;
+	private ArrayList<FSFile> originFiles;
 	private long userId;
 	
 	private String headerFileName;
@@ -58,9 +60,10 @@ public class AnalysisThread extends Thread{
 	private Map<String, Map<String, String>> ontologyCache;
 	private boolean done = false;
 	private String errorMessage;
+	private FileStorer fileStorer = null; 
 	
 	
-	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility) {
+	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FSFile> originFiles, long userId, Connection dbUtility) {
 		super((String)params.get("jobID"));
 		this.dbUtility = dbUtility;
 		this.map = params;
@@ -79,8 +82,9 @@ public class AnalysisThread extends Thread{
 	 * @param userId
 	 * @param dbUtility
 	 * @param threadGroup
+	 * @param args 
 	 */
-	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FileEntry> originFiles, long userId, Connection dbUtility, ThreadGroup threadGroup) {
+	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FSFile> originFiles, long userId, Connection dbUtility, ThreadGroup threadGroup, String[] args) {
 		super(threadGroup, (String)params.get("jobID"));
 		this.dbUtility = dbUtility;
 		this.map = params;
@@ -90,6 +94,7 @@ public class AnalysisThread extends Thread{
 			hasChesnokovOutput = true;
 		} 
 		
+		fileStorer = FileStoreFactory.returnFileStore(ResourceUtility.getFileStorageType(), args);
 		this.originFiles = originFiles;
 		this.userId = userId;
 	}
@@ -294,15 +299,16 @@ public class AnalysisThread extends Thread{
 		return alistAnnotation;
 	}
 	
-	private void createTempFiles(long jobId, List<FileEntry> wfdbFiles, long[] filesId ) throws AnalyzeFailureException {
+	private void createTempFiles(long jobId, List<FSFile> wfdbFiles, long[] filesId ) throws AnalyzeFailureException {
 		
 		String tempPath = System.getProperty("java.io.tmpdir") + File.separator + "waveform/a" + File.separator + jobId + File.separator;
 		
 		try{
 			for (long fileId : filesId) {
-				FileEntry file = DLAppLocalServiceUtil.getFileEntry(fileId);
 				
-				if(hasWfdbAnnotationOutput && AnalysisThread.isAnotationFile(file.getTitle())){
+				FSFile file = fileStorer.getFile(fileId, false);
+				
+				if(hasWfdbAnnotationOutput && AnalysisThread.isAnotationFile(file.getName())){
 					wfdbFiles.add(file);
 					targetExtension = file.getExtension();
 					break;
@@ -318,11 +324,11 @@ public class AnalysisThread extends Thread{
 			throw new AnalyzeFailureException("Fail on analysis result file read.", e);
 		}
 		
-		for (FileEntry liferayFile : wfdbFiles) {
+		for (FSFile liferayFile : wfdbFiles) {
 			
 			File targetDirectory = new File(tempPath);
 			
-			String targetFileName = tempPath + liferayFile.getTitle();
+			String targetFileName = tempPath + liferayFile.getName();
 			
 			if(liferayFile.getExtension().equals(targetExtension)){
 				String replacement = '.'+liferayFile.getExtension();
@@ -341,7 +347,7 @@ public class AnalysisThread extends Thread{
 			try {
 				targetDirectory.mkdirs();
 				
-				InputStream fileToSave = liferayFile.getContentStream();
+				InputStream fileToSave = liferayFile.getFileDataAsInputStream();
 				
 				OutputStream fOutStream = new FileOutputStream(targetFile);
 
@@ -363,7 +369,7 @@ public class AnalysisThread extends Thread{
 				log.info("File created? " + targetFile.exists());
 			}
 			
-			if(AnalysisThread.isHeaderFile(liferayFile.getTitle())){
+			if(AnalysisThread.isHeaderFile(liferayFile.getName())){
 				headerFileName = targetFile.getAbsolutePath();
 			}
 		}
