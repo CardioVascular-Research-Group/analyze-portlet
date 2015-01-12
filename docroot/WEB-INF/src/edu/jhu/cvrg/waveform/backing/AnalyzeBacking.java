@@ -59,7 +59,7 @@ import edu.jhu.cvrg.waveform.utility.ResourceUtility;
 import edu.jhu.cvrg.waveform.utility.ServerUtility;
 
 @ManagedBean(name = "analyzeBacking")
-@SessionScoped
+@ViewScoped
 public class AnalyzeBacking extends BackingBean implements Serializable {
 
 	private static final long serialVersionUID = -4006126553152259063L;
@@ -88,7 +88,7 @@ public class AnalyzeBacking extends BackingBean implements Serializable {
 			if(algorithmList == null){
 				algorithmList = new AlgorithmList();
 			}
-			this.getLog().info("Number of algorithms in list:" + algorithmList.getAvailableAlgorithms().size());
+//			this.getLog().info("Number of algorithms in list:" + algorithmList.getAvailableAlgorithms().size());
 			messages = new ArrayList<FacesMessage>();
 		}
 		// TODO: **** testing creating front end controls purely from Java, for parameter editing.

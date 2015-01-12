@@ -305,23 +305,22 @@ public class AnalysisManager implements Serializable{
 		List<AnnotationDTO> paramList_V6 = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, 11, createdBy, bioportalOntologyID, bioportalClassIdList);
 
 		int i=0;
-		retList.add(i++, paramList_I.get(0)); // qa_I
-//		retList.add(i++, paramList_II.get(0)); // qa_II
-//		retList.add(2, paramList_III.get(0)); // qa_III
-//		retList.add(3, paramList_aVR.get(0)); // qa_aVR
-		retList.add(i++, paramList_aVL.get(0)); // qa_aVL
-		retList.add(i++, paramList_aVF.get(0)); // qa_aVF
-		retList.add(i++, paramList_V1.get(0)); // qa_V1
-		retList.add(i++, paramList_V2.get(0)); // qa_V2
-		retList.add(i++, paramList_V3.get(0)); // qa_V3
-		retList.add(i++, paramList_V4.get(0)); // qa_V4
-		retList.add(i++, paramList_V5.get(0)); // qa_V5
-		retList.add(i++, paramList_V6.get(0)); // qa_V6
+		retList.add(i++, adjustAmpUnitOM(paramList_I.get(0))); // qa_I
+		retList.add(i++, adjustAmpUnitOM(paramList_II.get(0))); // qa_II
+//		retList.add(i++, paramList_III.get(0)); // qa_III
+//		retList.add(i++, paramList_aVR.get(0)); // qa_aVR
+		retList.add(i++, adjustAmpUnitOM(paramList_aVL.get(0))); // qa_aVL
+		retList.add(i++, adjustAmpUnitOM(paramList_aVF.get(0))); // qa_aVF
+		retList.add(i++, adjustAmpUnitOM(paramList_V1.get(0))); // qa_V1
+		retList.add(i++, adjustAmpUnitOM(paramList_V2.get(0))); // qa_V3
+		retList.add(i++, adjustAmpUnitOM(paramList_V4.get(0))); // qa_V4
+		retList.add(i++, adjustAmpUnitOM(paramList_V5.get(0))); // qa_V5
+		retList.add(i++, adjustAmpUnitOM(paramList_V6.get(0))); // qa_V6
 		//*********************************************
 		retList.add(i++, paramList_I.get(1)); // qd_I
 		retList.add(i++, paramList_II.get(1)); // qd_II
-//		retList.add(14, paramList_III.get(1)); // qd_III
-//		retList.add(15, paramList_aVR.get(1)); // qd_aVR
+//		retList.add(i++, paramList_III.get(1)); // qd_III
+//		retList.add(i++, paramList_aVR.get(1)); // qd_aVR
 		retList.add(i++, paramList_aVL.get(1)); // qd_aVL
 		retList.add(i++, paramList_aVF.get(1)); // qd_aVF
 		retList.add(i++, paramList_V1.get(1)); // qd_V1
@@ -331,44 +330,44 @@ public class AnalysisManager implements Serializable{
 		retList.add(i++, paramList_V5.get(1)); // qd_V5
 		retList.add(i++, paramList_V6.get(1)); // qd_V6
 		//*********************************************
-		retList.add(i++, paramList_I.get(2)); // ra_I
-		retList.add(i++, paramList_II.get(2)); // ra_II
-//		retList.add(26, paramList_III.get(2)); // ra_III
-//		retList.add(27, paramList_aVR.get(2)); // ra_aVR
-		retList.add(i++, paramList_aVL.get(2)); // ra_aVL
-		retList.add(i++, paramList_aVF.get(2)); // ra_aVF
-		retList.add(i++, paramList_V1.get(2)); // ra_V1
-		retList.add(i++, paramList_V2.get(2)); // ra_V2
-		retList.add(i++, paramList_V3.get(2)); // ra_V3
-		retList.add(i++, paramList_V4.get(2)); // ra_V4
-		retList.add(i++, paramList_V5.get(2)); // ra_V5
-		retList.add(i++, paramList_V6.get(2)); // ra_V6
+		retList.add(i++, adjustAmpUnitOM(paramList_I.get(2))); // ra_I
+		retList.add(i++, adjustAmpUnitOM(paramList_II.get(2))); // ra_II
+//		retList.add(i++, adjustAmpUnitOM(paramList_III.get(2)); // ra_III
+//		retList.add(i++, adjustAmpUnitOM(paramList_aVR.get(2)); // ra_aVR
+		retList.add(i++, adjustAmpUnitOM(paramList_aVL.get(2))); // ra_aVL
+		retList.add(i++, adjustAmpUnitOM(paramList_aVF.get(2))); // ra_aVF
+		retList.add(i++, adjustAmpUnitOM(paramList_V1.get(2))); // ra_V1
+		retList.add(i++, adjustAmpUnitOM(paramList_V2.get(2))); // ra_V2
+		retList.add(i++, adjustAmpUnitOM(paramList_V3.get(2))); // ra_V3
+		retList.add(i++, adjustAmpUnitOM(paramList_V4.get(2))); // ra_V4
+		retList.add(i++, adjustAmpUnitOM(paramList_V5.get(2))); // ra_V5
+		retList.add(i++, adjustAmpUnitOM(paramList_V6.get(2))); // ra_V6
 		//*********************************************
-//		retList.add(36, paramList_I.get(3)); // rd_I
-//		retList.add(37, paramList_II.get(3)); // rd_II
-//		retList.add(38, paramList_III.get(3)); // rd_III
-//		retList.add(39, paramList_aVR.get(3)); // rd_aVR
-//		retList.add(40, paramList_aVL.get(3)); // rd_aVL
-//		retList.add(41, paramList_aVF.get(3)); // rd_aVF
+//		retList.add(i++, paramList_I.get(3)); // rd_I
+//		retList.add(i++, paramList_II.get(3)); // rd_II
+//		retList.add(i++, paramList_III.get(3)); // rd_III
+//		retList.add(i++, paramList_aVR.get(3)); // rd_aVR
+//		retList.add(i++, paramList_aVL.get(3)); // rd_aVL
+//		retList.add(i++, paramList_aVF.get(3)); // rd_aVF
 		retList.add(i++, paramList_V1.get(3)); // rd_V1
 		retList.add(i++, paramList_V2.get(3)); // rd_V2
 		retList.add(i++, paramList_V3.get(3)); // rd_V3
-//		retList.add(45, paramList_V4.get(3)); // rd_V4
-//		retList.add(46, paramList_V5.get(3)); // rd_V5
-//		retList.add(47, paramList_V6.get(3)); // rd_V6
+//		retList.add(i++, paramList_V4.get(3)); // rd_V4
+//		retList.add(i++, paramList_V5.get(3)); // rd_V5
+//		retList.add(i++, paramList_V6.get(3)); // rd_V6
 		//*********************************************
-		retList.add(i++, paramList_I.get(4)); // sa_I
-		retList.add(i++, paramList_II.get(4)); // sa_II
-//		retList.add(50, paramList_III.get(4)); // sa_III
-//		retList.add(51, paramList_aVR.get(4)); // sa_aVR
-		retList.add(i++, paramList_aVL.get(4)); // sa_aVL
-		retList.add(i++, paramList_aVF.get(4)); // sa_aVF
-		retList.add(i++, paramList_V1.get(4)); // sa_V1
-		retList.add(i++, paramList_V2.get(4)); // sa_V2
-		retList.add(i++, paramList_V3.get(4)); // sa_V3
-		retList.add(i++, paramList_V4.get(4)); // sa_V4
-		retList.add(i++, paramList_V5.get(4)); // sa_V5
-		retList.add(i++, paramList_V6.get(4)); // sa_V6
+		retList.add(i++, adjustAmpUnitOM(paramList_I.get(4))); // sa_I
+		retList.add(i++, adjustAmpUnitOM(paramList_II.get(4))); // sa_II
+//		retList.add(i++, adjustAmpUnitOM(paramList_III.get(4)); // sa_III
+//		retList.add(i++, adjustAmpUnitOM(paramList_aVR.get(4)); // sa_aVR
+		retList.add(i++, adjustAmpUnitOM(paramList_aVL.get(4))); // sa_aVL
+		retList.add(i++, adjustAmpUnitOM(paramList_aVF.get(4))); // sa_aVF
+		retList.add(i++, adjustAmpUnitOM(paramList_V1.get(4))); // sa_V1
+		retList.add(i++, adjustAmpUnitOM(paramList_V2.get(4))); // sa_V2
+		retList.add(i++, adjustAmpUnitOM(paramList_V3.get(4))); // sa_V3
+		retList.add(i++, adjustAmpUnitOM(paramList_V4.get(4))); // sa_V4
+		retList.add(i++, adjustAmpUnitOM(paramList_V5.get(4))); // sa_V5
+		retList.add(i++, adjustAmpUnitOM(paramList_V6.get(4))); // sa_V6
 		//*********************************************
 
 		// un-needed code which substitutes value from R' and S' when R or S are zero.
@@ -446,9 +445,34 @@ public class AnalysisManager implements Serializable{
 //				retList.set(c, negList.get(c) );
 //			}			
 //		}
-		
+	
+//		for(AnnotationDTO a:retList){
+//			System.out.println(a.getName() + "-" + a.getLead() + " = " + a.getValue());
+//		}
 		return retList;
 	}
+	
+	/** Converts the unit of measurement is for the value of an amplitude to microVolts.
+	 * If no unit of measurement is found, the assumption is that it is in milliVolts (e.g. from Schiller files)
+	 * STUB: Currently only operates on NOT microvolts, but is only being called for Schiller files.
+	 * 
+	 * @param ann - Annotation Data Transfer Object containing an amplitude measurement.
+	 * @return - Annotation Data Transfer Object with value adjusted to microVolts.
+	 */
+	private AnnotationDTO adjustAmpUnitOM(AnnotationDTO ann){
+		if((ann.getUnitMeasurement() == null) || (!ann.getUnitMeasurement().equalsIgnoreCase("uv")) ) {
+//			String v = ann.getValue();
+//			double d = Double.valueOf(v);
+//			d=d*1000.0;
+//			String st = String.valueOf(d);
+//			ann.setValue(st);
+			ann.setValue( String.valueOf(Math.abs(Double.parseDouble(ann.getValue()))*1000.0) ); 
+		};
+
+		return ann;
+	}
+	
+	
 	
 	/** Gets an ArrayList of whole record annotations, QRS Duration & QRS Axis;
 	 *  which are found in the Magellan text output file.

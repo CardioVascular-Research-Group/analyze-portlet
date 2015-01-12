@@ -197,11 +197,11 @@ public class AlgorithmList implements Serializable{
 	public void populateAlgorithmsFromDB(){
 		try {
 			Connection dbUtilityConn = ConnectionFactory.createConnection();
-			log.info("Connnection to database:" + dbUtilityConn.getType().toString());
+//			log.info("Connnection to database:" + dbUtilityConn.getType().toString());
 //			List<Algorithm> algList = dbUtilityConn.getAvailableAlgorithmList(-1);
 			availableAlgorithms.clear();
 			availableAlgorithms = dbUtilityConn.getAvailableAlgorithmList(-1);;
-			log.info("Number of algorithms in list:" + availableAlgorithms.size());
+//			log.info("Number of algorithms in list:" + availableAlgorithms.size());
 		} catch(Exception ex) {
 			ex.printStackTrace();
 		}	
