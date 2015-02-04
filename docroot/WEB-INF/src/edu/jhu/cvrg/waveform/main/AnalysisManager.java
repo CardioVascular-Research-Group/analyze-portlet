@@ -29,9 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.context.FacesContext;
+import javax.portlet.PortletSession;
+
 import org.apache.axiom.om.OMElement;
 
 import edu.jhu.cvrg.data.dto.AlgorithmDTO;
+import edu.jhu.cvrg.data.dto.AnalysisJobDTO;
+import edu.jhu.cvrg.data.dto.AnalysisStatusDTO;
 import edu.jhu.cvrg.data.dto.AnnotationDTO;
 import edu.jhu.cvrg.data.enums.FileType;
 import edu.jhu.cvrg.data.factory.Connection;
@@ -62,7 +67,7 @@ public class AnalysisManager implements Serializable{
 			
 			Map<String, Object> jobs = new HashMap<String, Object>();
 			Map<String, FSFile> filesMap = new HashMap<String, FSFile>();
-			ThreadGroup analysisGroup = new ThreadGroup("AnalysisGroup");
+			ThreadGroup analysisGroup = ThreadController.createSubGroup("AnalysisGroup");
 			
 			String[] args = {String.valueOf(ResourceUtility.getCurrentGroupId()), String.valueOf(ResourceUtility.getCurrentUserId()), String.valueOf(ResourceUtility.getCurrentCompanyId())};
 			FileStorer fileStorer = FileStoreFactory.returnFileStore(ResourceUtility.getFileStorageType(), args);
@@ -75,6 +80,9 @@ public class AnalysisManager implements Serializable{
 				String name = node.getDocumentRecord().getRecordName();
 				String age = node.getDocumentRecord().getAge().toString();
 				String sex = node.getDocumentRecord().getGender();
+				
+				ThreadGroup fileGroup = new ThreadGroup(analysisGroup, docId + "Group");
+				List<Long> analysisIds = new ArrayList<Long>();
 								
 				for (AlgorithmDTO algorithm : selectedAlgorithms) {
 					
@@ -139,16 +147,24 @@ public class AnalysisManager implements Serializable{
 					parameterMap.put("serviceName", algorithm.getServiceName());
 					parameterMap.put("URL", algorithm.getAnalysisServiceURL());
 					
-					String jobID = "job_" + dbUtility.storeAnalysisJob(node.getFileNode().getDocumentRecordId(), fileList.size(), 0, algorithm.getAnalysisServiceURL(), algorithm.getServiceName(), algorithm.getServiceMethod(), new Date(), ResourceUtility.getCurrentUserId());
+					AnalysisJobDTO analysisJobDTO = dbUtility.storeAnalysisJob(node.getFileNode().getDocumentRecordId(), fileList.size(), 0, algorithm.getAnalysisServiceURL(), algorithm.getServiceName(), algorithm.getServiceMethod(), new Date(), ResourceUtility.getCurrentUserId());
+					
+					String jobID = "job_" + analysisJobDTO.getAnalysisJobId();
 					
 					parameterMap.put("jobID", jobID);
 					
-					AnalysisThread t = new AnalysisThread(parameterMap, node.getFileNode().getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility, analysisGroup, args);
+					AnalysisThread t = new AnalysisThread(parameterMap, node.getFileNode().getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility, fileGroup, args);
 					
 					threadSet.add(t);
 					
 					jobs.put(jobID, fileNameString);
+					
+					analysisIds.add(analysisJobDTO.getAnalysisJobId());
+					
 				}
+				AnalysisStatusDTO dto =  new AnalysisStatusDTO(node.getDocumentRecord().getDocumentRecordId(), node.getDocumentRecord().getRecordName(), analysisIds.size(), 0, 0);
+				dto.setAnalysisIds(analysisIds);
+				this.addToBackgroundQueue(dto);
 			}
 			
 			Map<String, Object> parameterMap = new HashMap<String, Object>();
@@ -161,7 +177,7 @@ public class AnalysisManager implements Serializable{
 			OMElement status  = (OMElement)fileRet.getChildren().next();
 			
 			if(status != null  && Boolean.valueOf(status.getText())){
-				tController = new ThreadController(analysisGroup, threadSet);
+				tController = new ThreadController(threadSet);
 				tController.start();
 			}
 			
@@ -522,6 +538,35 @@ public class AnalysisManager implements Serializable{
 		 
 		 return magellanParameters;
 	 }
+	 
+	 public void setBackgroundQueue(List<AnalysisStatusDTO> backgroundQueue) {
+		PortletSession session = (PortletSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
+		session.setAttribute("analysis.backgroundQueue", backgroundQueue);
+	}
+	 
+	 public static List<AnalysisStatusDTO> getBackgroundQueue(){
+		 PortletSession session = (PortletSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
+		 List<AnalysisStatusDTO> backgroundQueue = (List<AnalysisStatusDTO>) session.getAttribute("analysis.backgroundQueue");
+		 if(backgroundQueue == null){
+			 backgroundQueue = new ArrayList<AnalysisStatusDTO>();
+			 session.setAttribute("analysis.backgroundQueue", backgroundQueue);
+		 }
+		 return backgroundQueue;
+     }
+	 
+	 public void addToBackgroundQueue(AnalysisStatusDTO dto) {
+		if(dto!=null){
+			if(AnalysisManager.getBackgroundQueue() == null){
+				setBackgroundQueue(new ArrayList<AnalysisStatusDTO>());
+			}
+			int index = AnalysisManager.getBackgroundQueue().indexOf(dto);
+			if(index != -1){
+				AnalysisManager.getBackgroundQueue().get(index).update(dto);
+			}else{
+				AnalysisManager.getBackgroundQueue().add(dto);	
+			}
+		}
+	}
 
 	 
 //	 private String buildMagellanText(long docId, String name, String age, String sex, String qrsd, String qrsax, List<AnnotationDTO> magellanLeadAnnotList){

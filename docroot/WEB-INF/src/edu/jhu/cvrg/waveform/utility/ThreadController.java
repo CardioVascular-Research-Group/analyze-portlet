@@ -10,11 +10,11 @@ public class ThreadController extends Thread implements Serializable{
 	private static int threadPoolSize = 50;
 	private static int threadPoolSleepTime = 500;
 	
-	private ThreadGroup group;
+	private static ThreadGroup group = new ThreadGroup("AnalysisGlobalGroup");
+	
 	private Collection<? extends Thread> threads;
 	
-	public ThreadController(ThreadGroup tGroup, Collection<? extends Thread> threadCollection) {
-		group = tGroup;
+	public ThreadController(Collection<? extends Thread> threadCollection) {
 		threads = threadCollection;
 	}
 	
@@ -44,4 +44,7 @@ public class ThreadController extends Thread implements Serializable{
 		return threads;
 	}
 
+	public static ThreadGroup createSubGroup(String groupName){
+		return new ThreadGroup(group, groupName);
+	}
 }

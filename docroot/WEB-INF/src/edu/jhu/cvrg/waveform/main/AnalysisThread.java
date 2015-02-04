@@ -51,6 +51,7 @@ public class AnalysisThread extends Thread{
 	
 	private ArrayList<FSFile> originFiles;
 	private long userId;
+	private Long jobId = null;
 	
 	private String headerFileName;
 	private String targetExtension;
@@ -60,11 +61,11 @@ public class AnalysisThread extends Thread{
 	private Map<String, Map<String, String>> ontologyCache;
 	private boolean done = false;
 	private String errorMessage;
-	private FileStorer fileStorer = null; 
-	
+	private FileStorer fileStorer = null;
 	
 	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FSFile> originFiles, long userId, Connection dbUtility) {
 		super((String)params.get("jobID"));
+		this.jobId = Long.valueOf(((String) params.get("jobID")).replaceAll("\\D", ""));
 		this.dbUtility = dbUtility;
 		this.map = params;
 		this.documentRecordId = documentRecordId;
@@ -86,6 +87,7 @@ public class AnalysisThread extends Thread{
 	 */
 	public AnalysisThread(Map<String, Object> params, long documentRecordId, boolean hasWfdbAnnotationOutput, ArrayList<FSFile> originFiles, long userId, Connection dbUtility, ThreadGroup threadGroup, String[] args) {
 		super(threadGroup, (String)params.get("jobID"));
+		this.jobId = Long.valueOf(((String) params.get("jobID")).replaceAll("\\D", ""));
 		this.dbUtility = dbUtility;
 		this.map = params;
 		this.documentRecordId = documentRecordId;
@@ -101,14 +103,14 @@ public class AnalysisThread extends Thread{
 	
 	@Override
 	public void run() {
+		long startTime = System.currentTimeMillis();
 		try{
-//			OMElement jobResult = WebServiceUtility.callWebService(map,map.get("method"),map.get("serviceName"), map.get("URL"), null, null);
+			
 			OMElement jobResult = WebServiceUtility.callWebServiceComplexParam(map,(String)map.get("method"),(String)map.get("serviceName"), (String)map.get("URL"), null, null);
 			
 			Map<String, OMElement> params = WebServiceUtility.extractParams(jobResult);
 			
 			if(params != null && params.size() > 0){
-				Long jobId = Long.valueOf(((String) map.get("jobID")).replaceAll("\\D", ""));
 				if(params.get("error")!= null){
 					String errorMessage = (String) params.get("error").getText();
 					throw new AnalyzeFailureException(errorMessage);
@@ -142,6 +144,7 @@ public class AnalysisThread extends Thread{
 						}else{
 							throw new AnalyzeFailureException("The number of result files received (" + i + ") did not match the number expected (" + fileCount + ") from web service (" + (String)map.get("method"));
 						}
+						dbUtility.updateAnalysisStatus(jobId, System.currentTimeMillis() - startTime, null);
 					}else{
 						throw new AnalyzeFailureException("The parameter \"fileList\" is missing from web service (" + (String)map.get("method") + " response. There should be " + fileCount + " file names.");
 					}
@@ -153,10 +156,26 @@ public class AnalysisThread extends Thread{
 			errorMessage = e.getMessage();
 			log.error(errorMessage);
 			ServerUtility.logStackTrace(e, log);
+			if(jobId != null){
+				try {
+					dbUtility.updateAnalysisStatus(jobId, null, errorMessage);
+				} catch (DataStorageException e1) {
+					log.error(e1.getMessage());
+					e1.printStackTrace();
+				}
+			}
 		}catch (Exception e){
 			errorMessage = "Fatal error. " + e.getMessage();
 			log.fatal(errorMessage);
 			ServerUtility.logStackTrace(e, log);
+			if(jobId != null){
+				try {
+					dbUtility.updateAnalysisStatus(jobId, null, errorMessage);
+				} catch (DataStorageException e1) {
+					log.error(e1.getMessage());
+					e1.printStackTrace();
+				}
+			}
 		}
 	
 		done = true;
@@ -178,7 +197,7 @@ public class AnalysisThread extends Thread{
 			}
 			
 			if(!status){
-				throw new AnalyzeFailureException("Failed on FileInfo database persistence");
+				throw new AnalyzeFailureException("Failure on FileInfo database persistence");
 			}
 		}
 		
