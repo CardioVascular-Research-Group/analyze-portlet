@@ -195,14 +195,14 @@ public class AnalysisManager implements Serializable{
 		ArrayList<FSFile> retFiles = new ArrayList<FSFile>();
 		String needExtentions = "";
 		if(algorithm.getType() == null){
-			needExtentions = ".hea.dat";
+			needExtentions = ".hea.dat.xyz";
 		}else{
 			switch (algorithm.getType()) {
 				case ANN2RR:
 				case NGUESS:
 				case PNNLIST:
 				case TACH:
-					needExtentions = ".atr.qrs.wqrs.hea.dat"; 
+					needExtentions = ".atr.qrs.wqrs.hea.dat.xyz"; 
 					break;
 				case SQRS:
 				case WQRS:
@@ -213,13 +213,13 @@ public class AnalysisManager implements Serializable{
 				case WQRS4IHR:
 				case SQRS4PNNLIST:
 				case WQRS4PNNLIST:
-					needExtentions = ".hea.dat"; 
+					needExtentions = ".hea.dat.xyz"; 
 					break;
 				case WRSAMP:
 					needExtentions = ".txt"; 
 					break;
 				default: 
-					needExtentions = ".hea.dat";
+					needExtentions = ".hea.dat.xyz";
 					break;
 			}
 		}
