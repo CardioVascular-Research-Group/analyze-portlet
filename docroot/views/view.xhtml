@@ -99,8 +99,6 @@
 			    		<p:layout >
 							<p:layoutUnit position="center">
 								
-								<p:messages id="messages_prime" showSummary="true" showDetail="true" autoUpdate="true" closable="true" escape="false" />
-								
 								<div class="ui-widget-header ui-corner-all principalHeader">
 									<span class="panelHeaderText">Files to be Analyzed</span>
 									<p:commandButton id="startAnalysisButton" value="Start Analysis" 
@@ -216,8 +214,9 @@
 
 									<p:column headerText="Phase" width="33%" styleClass="queuePhaseColumn">
 										<h:panelGroup id="analysisPhase" styleClass="#{item.state}">
-											<h:outputText value="#{item.completed ? 'Done' : 'Processing'}" rendered="#{item.errorAnalysis == 0}"/>
-											<p:commandLink value="#{item.completed ? 'Done' : 'Processing'}" rendered="#{item.errorAnalysis >  0}" onclick="showErrorPanel(#{item.documentRecordId}, this);" />
+											<h:outputText value="#{item.completed ? 'DONE' : 'Processing'}"  rendered="#{item.errorAnalysis == 0}"/>
+											<p:commandLink value="#{item.completed ? 'ERROR' : 'Processing'}" 	 rendered="#{item.errorAnalysis > 0 and item.errorAnalysis == item.totalAnalysis}" onclick="showErrorPanel(#{item.documentRecordId}, this);" />
+											<p:commandLink value="#{item.completed ? 'DONE' : 'Processing'}" rendered="#{item.errorAnalysis > 0 and item.errorAnalysis != item.totalAnalysis}" onclick="showErrorPanel(#{item.documentRecordId}, this);" />
 										</h:panelGroup>
 										<p:commandLink styleClass="ui-icon ui-icon-close" update="backgroundQueue" actionListener="#{analyzeBacking.removeBackgroundQueueItem}" rendered="#{item.completed}">
 											<f:param name="index" value="#{index}"/>
