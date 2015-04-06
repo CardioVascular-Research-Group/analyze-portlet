@@ -1,127 +1,243 @@
 package edu.jhu.cvrg.waveform.backing;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+//import java.io.ByteArrayInputStream;
+//import java.io.InputStream;
+//import java.io.StringWriter;
+//import java.util.LinkedHashMap;
+//import javax.xml.parsers.DocumentBuilder;
+//import javax.xml.parsers.DocumentBuilderFactory;
+//import javax.xml.stream.XMLOutputFactory;
+//import org.apache.axiom.om.OMElement;
+//import org.hsqldb.error.Error;
+//import org.w3c.dom.Document;
+//import org.w3c.dom.NodeList;
+//import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
+//import edu.jhu.cvrg.dbapi.dto.PhysionetMethods;
+//import edu.jhu.cvrg.dbapi.factory.hibernate.Algorithm_AWS;
+//import edu.jhu.cvrg.dbapi.dto.PhysionetMethods;
+//import edu.jhu.cvrg.dbapi.factory.hibernate.Algorithm_AWS;
+//import edu.jhu.cvrg.dbapi.factory.HibernateConnection;
+//import edu.jhu.cvrg.waveform.model.Algorithm;
+//import edu.jhu.cvrg.waveform.model.PhysionetMethods;
+//import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
+//import edu.jhu.cvrg.waveform.utility.ResourceUtility;
+//import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
+
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.stream.XMLOutputFactory;
-
-import org.apache.axiom.om.OMElement;
-import org.w3c.dom.Document;
+import org.apache.log4j.Logger;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.utility.AdditionalParameters;
-import edu.jhu.cvrg.waveform.utility.ResourceUtility;
-import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
+import edu.jhu.cvrg.data.dto.AdditionalParametersDTO;
+import edu.jhu.cvrg.data.dto.AlgorithmDTO;
+import edu.jhu.cvrg.data.factory.Connection;
+import edu.jhu.cvrg.data.factory.ConnectionFactory;
+import edu.jhu.cvrg.data.util.DataStorageException;
 
-@ManagedBean(name = "algorithmList")
-@ViewScoped
 public class AlgorithmList implements Serializable{
 	
 	private static final long serialVersionUID = -4006126323152259063L;
-	private List<Algorithm> availableAlgorithms = new ArrayList<Algorithm>();
+	Logger log = Logger.getLogger(this.getClass());
+	
+	private List<AlgorithmDTO> availableAlgorithms = new ArrayList<AlgorithmDTO>();
 
 	public AlgorithmList() {
 
 		try {
-			populateAlgorithms();
+			availableAlgorithms.clear();
+			populateAlgorithmsFromDB();
+//			persistAlgorithmsToDB();
+//			persistAlgorithmParametersToDB();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public Algorithm getAlgorithmByName(String name){
-		for(Algorithm algorithm : availableAlgorithms){
-			if(algorithm.getsDisplayShortName().equals(name)){
+	public AlgorithmDTO getAlgorithmByName(String name){
+		for(AlgorithmDTO algorithm : availableAlgorithms){
+			if(algorithm.getDisplayShortName().equals(name)){
 				return algorithm;
 			}
 		}
 		return null;
 	}
 	
-	private void populateAlgorithms(){
+	/** Returns a single algorithm based on it's Primary Key.
+	 * 
+	 * @param id - the primary key, as found in the algorithm database table.
+	 * @return - the selected algorithm.
+	 */
+	public AlgorithmDTO getAlgorithmByID(int id){
+		for(AlgorithmDTO algorithm : availableAlgorithms){
+			if(algorithm.getId()==id){
+				return algorithm;
+			}
+		}
+		return null;
+	}
+	
+	/** Old method for populating algorithm list.<BR>
+	 * Partially uses the getAlgorithmDetails method, and partly uses hard coded values.
+	 * Is replaced by populateAlgorithmsFromDB() which uses the postgres database instead.
+	 */
 
-		String xml="";
+	
+	/** Copies the current algorithm List to the database.
+	 * Used once for initializing the database only, should not be run in normal situations.
+	 */
+	private void persistAlgorithmsToDB(){
+		try{
+		Connection dbUtility = ConnectionFactory.createConnection();
+		
+		for(AlgorithmDTO a : availableAlgorithms){
+			int algorithmID = dbUtility.storeAlgorithm(a.getDisplayShortName(), 1, a.getServiceMethod(),
+					a.getToolTipDescription(), a.getDisplayLongDescription());
+			persistAlgorithmParametersToDB(a, algorithmID);
+		}
+		}catch (DataStorageException e){
+			log.error("Error on Algorithm persistence. " + e.getMessage());
+		}
+	}
+	
+	
+	/** Adds a new algorithm entry to the database with blatantly unreal values, so that it can be edited by the user.
+	 * This is the first step of creating a new algorithm entry.
+	 * 
+	 * @param serviceID - the primary key of an existing service entry in this database.  Can be edited later.
+	 * @return - the primary key of the new algorithm entry.
+	 * @author Michael Shipway
+	 */
+	public int addNewAlgorithmToDB(int serviceID){
+		int algorithmID = -1;
+		try{
+			Connection dbUtility = ConnectionFactory.createConnection();
+			String displayShortName = "REPLACE";
+			String serviceMethod = "REPLACE";
+			String toolTipDescription = "REPLACE";
+			String displayLongDescription = "REPLACE";
+			algorithmID = dbUtility.storeAlgorithm(displayShortName, serviceID, serviceMethod, toolTipDescription, displayLongDescription);
+			
+		}catch (DataStorageException e){
+			log.error("Error on Algorithm persistence. " + e.getMessage());
+		}
+		return algorithmID;
+	}
+	
+	/** Copies the current algorithm List to the database.
+	 * Used once for initializing the database only, should not be run in normal situations.
+	 */
+	public void updateAlgorithmToDB(AlgorithmDTO alg){
+		
+		log.info("updateAlgorithmToDB() algorithm ID:" + alg.getId());
+		log.info("updateAlgorithmToDB() Display Name:" + alg.getDisplayShortName());
+		log.info("updateAlgorithmToDB() Service Name:" + alg.getServiceName());
+		log.info("updateAlgorithmToDB() Method:" + alg.getServiceMethod());
+		log.info("updateAlgorithmToDB() URL Ref:" + alg.getURLreference());
+		
 		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
 
-			String sServiceURL = ResourceUtility.getAnalysisServiceURL(); // e.g. "http://icmv058.icm.jhu.edu:8080/axis2/services"
-			String sServiceName = ResourceUtility.getPhysionetAnalysisService(); // e.g. "/physionetAnalysisService"
-			String sMethod = ResourceUtility.getAlgorithmDetailsMethod();
-			LinkedHashMap<String, String> parameterMap = new LinkedHashMap<String, String>();
-			parameterMap.put("verbose", String.valueOf(false));
 			
-			OMElement result = WebServiceUtility.callWebService(parameterMap, sMethod, sServiceName, 
-					sServiceURL, null);
+				int algorithmID = dbUtility.updateAlgorithm(alg.getId(), alg.getDisplayShortName(), alg.getServiceID(), 
+						alg.getServiceMethod(), alg.getToolTipDescription(), alg.getDisplayLongDescription());
+//			persistAlgorithmParametersToDB(alg, algorithmID);
+		} catch (DataStorageException e) {
+			log.error("Error on Algorithm update. " + e.getMessage());
+		}
+	}
+	
+	/** Copies the current algorithm List to the database.
+	 * Used once for initializing the database only, should not be run in normal situations.
+	 */
+	private void persistAllAlgorithmParametersToDB(){
+		int algID = 1;
 
-			StringWriter writer = new StringWriter();
-			result.serialize(XMLOutputFactory.newInstance().createXMLStreamWriter(writer));
-			writer.flush();
-			xml = writer.toString();
+		for(AlgorithmDTO a : availableAlgorithms){
+			persistAlgorithmParametersToDB(a, algID);
+			algID++;
+		}
+	}
+	
+	/** Copies a single algorithm to the database.
+	 * Used once for initializing the database only, should not be run in normal situations.
+	 */
+	private void persistAlgorithmParametersToDB(AlgorithmDTO a, int algID){
+		
+		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
 			
-			InputStream inStream = new ByteArrayInputStream(xml.getBytes("UTF-8"));
-			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-			Document document = docBuilder.parse(inStream);
-			
-			document.getDocumentElement().normalize();
-			
-			NodeList algorithmNodes = document.getElementsByTagName("AlgorithmServiceData");
-			
-			for(int i = 0; i < algorithmNodes.getLength(); i++){
-				Algorithm algorithm = new Algorithm();
-				
-				Node node = algorithmNodes.item(i);
-				
-				for(int s = 0; s < node.getChildNodes().getLength(); s++){
-					Node childNode = node.getChildNodes().item(s);
-
-					if(childNode.getNodeName().equals("sDisplayShortName"))
-						algorithm.setsDisplayShortName(getNodeValue(childNode, "sDisplayShortName").trim());
-					if(childNode.getNodeName().equals("sServiceMethod"))
-						algorithm.setsServiceMethod(getNodeValue(childNode, "sServiceMethod").trim());
-					if(childNode.getNodeName().equals("sServiceName"))
-						algorithm.setsServiceName(getNodeValue(childNode, "sServiceName").trim());
-					if(childNode.getNodeName().equals("sAnalysisServiceURL"))
-						algorithm.setsAnalysisServiceURL(getNodeValue(childNode, "sAnalysisServiceURL").trim());
-					if(childNode.getNodeName().equals("sLongDescription"))
-						algorithm.setsDisplayLongDescription(getNodeValue(childNode, "sLongDescription").trim());
-
-					if(childNode.getNodeName().equals("aParameters")){
-						ArrayList<AdditionalParameters> additionalParametersList = new ArrayList<AdditionalParameters>();
-						for(int a = 0; a < childNode.getChildNodes().getLength(); a++){
-							Node pNode = childNode.getChildNodes().item(a);
-							if(pNode.getNodeName().equals("serviceDescriptionData.AdditionalParameters")){
-								AdditionalParameters additionalParameters = new AdditionalParameters();
-								for(int j = 0; j < pNode.getChildNodes().getLength(); j++){
-									Node iNode = pNode.getChildNodes().item(j);
-									additionalParameters.setsParameterFlag(getNodeValue(iNode, "sParameterFlag"));
-									additionalParameters.setsParameterDefaultValue(getNodeValue(iNode, "sParameterDefaultValue"));
-									additionalParameters.setsToolTipDescription(getNodeValue(iNode, "sToolTipDescription"));
-								}
-								additionalParametersList.add(additionalParameters);
-							}
-						}
-						algorithm.setaParameters(additionalParametersList);
+			if (a.getParameters() !=null){
+				if (a.getParameters().size() != 0){
+					for(AdditionalParametersDTO param: a.getParameters()){
+						int parameterID = dbUtility.storeAlgorithmParameter(param, algID);
 					}
 				}
-				availableAlgorithms.add(algorithm);
 			}
+		} catch (DataStorageException e) {
+			log.error("Error on Algorithm Parameters persistence. " + e.getMessage());
+		}
+	}
+	
+	/** Adds a single new algorithm parameter to the database. 
+	 * 
+	 * @param param - an initialized AdditionalParameters object.
+	 * @param algID - Primary key of the algorithm this parameter pertains to.
+	 * @return - The primary key of the new entry.
+	 * @author Michael Shipway
+	 */
+	public int addNewAlgorithmParameterToDB(AdditionalParametersDTO param, int algID){
+		int algorithmParameterId = -1;
+		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
+			algorithmParameterId = dbUtility.storeAlgorithmParameter(param, algID);
+		} catch (DataStorageException e) {
+			log.error("Error on Algorithm Parameter persistence. " + e.getMessage());
+		}
+		
+		return algorithmParameterId;
+	}
+		
+	/** Updates a single new algorithm parameter to the database. 
+	 * 
+	 * @param param - an initialized AdditionalParameters object.
+	 * @param algID - Primary key of the algorithm this parameter pertains to.
+	 * @return - The primary key of the new entry.
+	 * @author Michael Shipway
+	 */
+	public int updateAlgorithmParameterToDB(AdditionalParametersDTO param, int algID){
+		int algorithmParameterId = -1;
+		
+		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
+			algorithmParameterId = dbUtility.updateAlgorithmParameter(param, algID);
+		} catch (DataStorageException e) {
+			log.error("Error on Algorithm Parameter update. " + e.getMessage());
+		}
+		
+		return algorithmParameterId;
+	}
+		
+	
 
+
+	/** populates the availableAlgorithm List from the waveform3 database.
+	 * Instead of from the web service's AlgorithmDetails method.
+	 */
+	public void populateAlgorithmsFromDB(){
+		try {
+			Connection dbUtilityConn = ConnectionFactory.createConnection();
+			log.info("Connnection to database:" + dbUtilityConn.getType().toString());
+//			List<Algorithm> algList = dbUtilityConn.getAvailableAlgorithmList(-1);
+			availableAlgorithms.clear();
+			availableAlgorithms = dbUtilityConn.getAvailableAlgorithmList(-1);;
+			log.info("Number of algorithms in list:" + availableAlgorithms.size());
 		} catch(Exception ex) {
 			ex.printStackTrace();
 		}	
 	}
-	
+
 	private String getNodeValue(Node node, String name){
 		if(node.getNodeName().equals(name)){
 			if(node.getFirstChild() != null){
@@ -134,11 +250,11 @@ public class AlgorithmList implements Serializable{
 		return "";
 	}
 
-	public List<Algorithm> getAvailableAlgorithms() {
+	public List<AlgorithmDTO> getAvailableAlgorithms() {
 		return availableAlgorithms;
 	}
 
-	public void setAvailableAlgorithms(List<Algorithm> availableAlgorithms) {
+	public void setAvailableAlgorithms(List<AlgorithmDTO> availableAlgorithms) {
 		this.availableAlgorithms = availableAlgorithms;
 	}
 }

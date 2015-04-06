@@ -19,201 +19,219 @@ limitations under the License.
 * 
 */
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.faces.context.FacesContext;
+import javax.portlet.PortletSession;
 
 import org.apache.axiom.om.OMElement;
-import org.apache.log4j.Logger;
 
-import edu.jhu.cvrg.waveform.callbacks.FilesAcquiredCallback;
-import edu.jhu.cvrg.waveform.callbacks.SvcAxisCallback;
-import edu.jhu.cvrg.waveform.model.Algorithm;
-import edu.jhu.cvrg.waveform.utility.AnalysisInProgress;
-import edu.jhu.cvrg.waveform.utility.AnalysisUtility;
-import edu.jhu.cvrg.waveform.utility.ProgressNotification;
+import edu.jhu.cvrg.data.dto.AlgorithmDTO;
+import edu.jhu.cvrg.data.dto.AnalysisJobDTO;
+import edu.jhu.cvrg.data.dto.AnalysisStatusDTO;
+import edu.jhu.cvrg.data.dto.AnnotationDTO;
+import edu.jhu.cvrg.data.enums.FileType;
+import edu.jhu.cvrg.data.factory.Connection;
+import edu.jhu.cvrg.data.factory.ConnectionFactory;
+import edu.jhu.cvrg.data.util.DataStorageException;
+import edu.jhu.cvrg.filestore.exception.FSException;
+import edu.jhu.cvrg.filestore.main.FileStoreFactory;
+import edu.jhu.cvrg.filestore.main.FileStorer;
+import edu.jhu.cvrg.filestore.model.FSFile;
+import edu.jhu.cvrg.waveform.model.DocumentDragVO;
 import edu.jhu.cvrg.waveform.utility.ResourceUtility;
+import edu.jhu.cvrg.waveform.utility.ThreadController;
 import edu.jhu.cvrg.waveform.utility.WebServiceUtility;
+//import edu.jhu.cvrg.waveform.model.Algorithm;
 
 public class AnalysisManager implements Serializable{
 
-	private static final long serialVersionUID = 1L;
-	static org.apache.log4j.Logger logger = Logger.getLogger(AnalysisManager.class);
-
-	private boolean verbose = false;
-	private AnalysisInProgress aIP;
-	private AnalysisUtility anUtil;
-	private String MISSING_VALUE = "0";
-
-	public AnalysisManager(boolean verbose){	
+	private static final long serialVersionUID = -6155747608247379918L;
+	
+	private ThreadController tController;
+	
+	public boolean performAnalysis(List<DocumentDragVO> selectedNodes, long userId, AlgorithmDTO[] selectedAlgorithms ){
 		
-		String dbUser = ResourceUtility.getDbUser();
-		String dbPassword = ResourceUtility.getDbPassword();
-		String dbUri = ResourceUtility.getDbURI();
-		String dbDriver = ResourceUtility.getDbDriver();
-		String dbMainDatabase = ResourceUtility.getDbMainDatabase();
-		
-		if(dbUser.equals(MISSING_VALUE) || 
-				dbPassword.equals(MISSING_VALUE) || 
-				dbUri.equals(MISSING_VALUE) || 
-				dbDriver.equals(MISSING_VALUE) ||
-				dbMainDatabase.equals(MISSING_VALUE)){
+		try {
+			Connection dbUtility = ConnectionFactory.createConnection();
 			
-			logger.error("Missing one or more configuration values for the database.");
-			return;	
+			Set<AnalysisThread> threadSet = new HashSet<AnalysisThread>();
+			
+			Map<String, Object> jobs = new HashMap<String, Object>();
+			Map<String, FSFile> filesMap = new HashMap<String, FSFile>();
+			ThreadGroup analysisGroup = ThreadController.createSubGroup("AnalysisGroup");
+			
+			String[] args = {String.valueOf(ResourceUtility.getCurrentGroupId()), String.valueOf(ResourceUtility.getCurrentUserId()), String.valueOf(ResourceUtility.getCurrentCompanyId())};
+			FileStorer fileStorer = FileStoreFactory.returnFileStore(ResourceUtility.getFileStorageType(), args);
+			
+			for (DocumentDragVO node : selectedNodes) {
+				
+				FSFile headerFile = fileStorer.getFile(node.getFileNode().getUuid(), true); 
+				FileType originalFileType = node.getDocumentRecord().getOriginalFormat();
+				long docId = node.getDocumentRecord().getDocumentRecordId();
+				String name = node.getDocumentRecord().getRecordName();
+				String age = node.getDocumentRecord().getAge().toString();
+				String sex = node.getDocumentRecord().getGender();
+				
+				ThreadGroup fileGroup = new ThreadGroup(analysisGroup, docId + "Group");
+				List<Long> analysisIds = new ArrayList<Long>();
+								
+				for (AlgorithmDTO algorithm : selectedAlgorithms) {
+					
+//					Map<String, String> parameterMap = new HashMap<String, String>();
+					Map<String, Object> parameterMap = new HashMap<String, Object>();
+					
+					parameterMap.put("userID",  String.valueOf(userId));
+					parameterMap.put("groupID", String.valueOf(ResourceUtility.getCurrentGroupId()));
+					parameterMap.put("folderID", String.valueOf(headerFile.getParentId()));
+					parameterMap.put("subjectID", node.getDocumentRecord().getSubjectId());
+					
+//					for(FileTypes ft:algorithm.getAfInFileTypes()){
+//						if(ft.id==0){
+//							
+//						}
+//					}
+
+					LinkedHashMap<String, String> parameterlistMap = new LinkedHashMap<String, String>();					
+					if( (originalFileType.getLabel().equals("Schiller")) && (algorithm.getDisplayShortName().contentEquals("QRS-Score")) ){
+//					if( (algorithm.getDisplayShortName().contentEquals("QRS-Score")) ){
+						 List<AnnotationDTO> magellanAnnot = getMagellanLeadAnnotationList(userId, docId, "Schiller Upload", "ECGT");
+						 List<AnnotationDTO> magellanRecAnnot = getMagellanRecordAnnotationList(userId, docId, "Schiller Upload", "ECGT");
+						 String qrsd=null, qrsax=null;
+						 
+						 if(magellanRecAnnot.get(0) != null){
+							 qrsd = magellanRecAnnot.get(0).getValue();
+						 }
+						 if(magellanRecAnnot.get(1) != null){
+							 qrsax = magellanRecAnnot.get(1).getValue();
+						 }
+						 
+//						 String magellanText = buildMagellanText(docId, name, age, sex, qrsd, qrsax, magellanAnnot);
+//						 LinkedHashMap<String, String>  QRS_ScoreParameterlistMap = buildQRS_ScoreParameterListMap(docId, name, age, sex, qrsd, qrsax, magellanAnnot);
+//						 QRS_ScoreParameterlistMap.put("testParam1", "2.0 qrs_score");
+//						 parameterMap.put("parameterlist", QRS_ScoreParameterlistMap);	
+//						 parameterlistMap.putAll(QRS_ScoreParameterlistMap);
+						 parameterlistMap = buildQRS_ScoreParameterListMap(docId, name, age, sex, qrsd, qrsax, magellanAnnot);
+					}
+					
+					//TODO: [Mike] should create a separate filesMap for each analysis server.
+					String fileNameString="";//filename.dat^filename.hea^";
+					List<FSFile> subFiles = fileStorer.getFiles(headerFile.getParentId(), false);
+					ArrayList<FSFile> fileList = getFileList(algorithm, subFiles);
+					for (FSFile fileEntry : fileList) {
+						fileNameString += fileEntry.getName() + "^";
+						filesMap.put(fileEntry.getName(), fileEntry);
+					}
+					parameterMap.put("fileNames", fileNameString); // caret delimited list for backwards compatibility to type1 web services.
+//					ArrayList<AdditionalParameters> commandParameters = algorithm.getParameters();
+//					if(commandParameters != null){
+//						for(AdditionalParameters parameter : commandParameters){
+//							parameterlistMap.put(parameter.getParameterFlag(), parameter.getParameterUserSpecifiedValue());
+//						}
+//					}
+//					parameterlistMap.put("testParam1", "1.0");
+//					parameterlistMap.put("testParam2", "true");
+//					parameterlistMap.put("testParam3", "foo");
+//					parameterlistMap.put("testParam4", "bar");
+					parameterMap.put("parameterlist", parameterlistMap);
+					
+					parameterMap.put("method", algorithm.getServiceMethod());
+					parameterMap.put("serviceName", algorithm.getServiceName());
+					parameterMap.put("URL", algorithm.getAnalysisServiceURL());
+					
+					AnalysisJobDTO analysisJobDTO = dbUtility.storeAnalysisJob(node.getFileNode().getDocumentRecordId(), fileList.size(), 0, algorithm.getAnalysisServiceURL(), algorithm.getServiceName(), algorithm.getServiceMethod(), new Date(), ResourceUtility.getCurrentUserId());
+					
+					String jobID = "job_" + analysisJobDTO.getAnalysisJobId();
+					
+					parameterMap.put("jobID", jobID);
+					
+					AnalysisThread t = new AnalysisThread(parameterMap, node.getFileNode().getDocumentRecordId(), algorithm.hasWfdbAnnotationOutput(), fileList, ResourceUtility.getCurrentUserId(), dbUtility, fileGroup, args);
+					
+					threadSet.add(t);
+					
+					jobs.put(jobID, fileNameString);
+					
+					analysisIds.add(analysisJobDTO.getAnalysisJobId());
+					
+				}
+				AnalysisStatusDTO dto =  new AnalysisStatusDTO(node.getDocumentRecord().getDocumentRecordId(), node.getDocumentRecord().getRecordName(), analysisIds.size(), 0, 0);
+				dto.setAnalysisIds(analysisIds);
+				this.addToBackgroundQueue(dto);
+			}
+			
+			Map<String, Object> parameterMap = new HashMap<String, Object>();
+			
+			parameterMap.put("jobs", jobs);
+			
+			//TODO: AnalysisThread() should be given the AnalysisServiceURL from the algorithm description (database) not from the ResourceUtility properties in the waveform-utilities.jar
+			OMElement fileRet = WebServiceUtility.callWebServiceComplexParam(parameterMap, "receiveAnalysisTempFiles", ResourceUtility.getDataTransferServiceName(), ResourceUtility.getAnalysisServiceURL(), null, filesMap);
+			
+			OMElement status  = (OMElement)fileRet.getChildren().next();
+			
+			if(status != null  && Boolean.valueOf(status.getText())){
+				tController = new ThreadController(threadSet);
+				tController.start();
+			}
+			
+			return true;
+		} catch (FSException e) {
+			e.printStackTrace();
+		} catch (DataStorageException e) {
+			e.printStackTrace();
 		}
 		
-		anUtil = new AnalysisUtility(dbUser, dbPassword, dbUri, dbDriver, dbMainDatabase);
-		
-		this.verbose = verbose;
-		aIP = new AnalysisInProgress();
+		return false;
 	}
-
-	/** Step 0
-	 * The initialization of an analysis Job. Creates an entry in the Jobs-in-Flight database, 
-	 * then calls step 1A, to transfer the data files.
-	 * 
-	 */
-	public boolean performAnalysis(String sSubjectId, String sUserId, Algorithm alDetails,
-			String DatasetName, int iFileCount, String[] saFileNameList, String sFtpRelativePath){
-
-		this.aIP.setUserId(sUserId);
-		this.aIP.setSubjectId(sSubjectId);
-		this.aIP.setServiceName( alDetails.getsServiceName());
-		this.aIP.setDatasetName(DatasetName);
-		this.aIP.setAnalysisServiceURL(ResourceUtility.getAnalysisServiceURL());		
-		String ftpHost = ResourceUtility.getFtpHost();
-		String ftpUser = ResourceUtility.getFtpUser();
-		String ftpPassword = ResourceUtility.getFtpPassword();
-		String ftpRoot = ResourceUtility.getFtpRoot();
-		
-		if(ftpHost.equals(MISSING_VALUE) || ftpUser.equals(MISSING_VALUE) || 
-				ftpPassword.equals(MISSING_VALUE) || ftpRoot.equals(MISSING_VALUE)){
-			logger.error("Missing one or more configuration values for FTP.");
-			return false;
+	
+	private ArrayList<FSFile> getFileList(AlgorithmDTO algorithm, List<FSFile> subFiles) {
+		ArrayList<FSFile> retFiles = new ArrayList<FSFile>();
+		String needExtentions = "";
+		if(algorithm.getType() == null){
+			needExtentions = ".hea.dat.xyz";
+		}else{
+			switch (algorithm.getType()) {
+				case ANN2RR:
+				case NGUESS:
+				case PNNLIST:
+				case TACH:
+					needExtentions = ".atr.qrs.wqrs.hea.dat.xyz"; 
+					break;
+				case SQRS:
+				case WQRS:
+				case RDSAMP:
+				case SIGAAMP:
+				case CHESNOKOV:
+				case SQRS4IHR:
+				case WQRS4IHR:
+				case SQRS4PNNLIST:
+				case WQRS4PNNLIST:
+					needExtentions = ".hea.dat.xyz"; 
+					break;
+				case WRSAMP:
+					needExtentions = ".txt"; 
+					break;
+				default: 
+					needExtentions = ".hea.dat.xyz";
+					break;
+			}
 		}
-
-		String[] saFilePathNameList = new String[saFileNameList.length];
-		for(String fileName : saFileNameList){
-			fileName = sFtpRelativePath + "/" + fileName;
-		}
-		this.aIP.setDataFileList(saFilePathNameList);
 		
-		sFtpRelativePath = ftpRoot + sFtpRelativePath;
-
-		String sJobID = anUtil.createAnalysisJob(aIP, alDetails);
-		this.aIP.setJobID(sJobID);
-		DateFormat displayFormat = new SimpleDateFormat("MM/dd/yyyy");
-		Calendar theCalendar = Calendar.getInstance();
-		Date currentTime = theCalendar.getTime();
-		String analysisDate = displayFormat.format(currentTime);
-		ProgressNotification.step0_jobSubmitted(sUserId, analysisDate);
-
-		return importDataFiles(ftpHost, ftpUser, ftpPassword, iFileCount, saFileNameList, sFtpRelativePath, sJobID);
+		for (FSFile file : subFiles) {
+			if(needExtentions.contains(file.getExtension())){
+				retFiles.add(file);
+			}
+		}
+	
+		return retFiles;
 	}
-
-	/** Step 1A Tells analysis server to ftp the data files from the ftpHost. 
-	 * Handles call from ECGridToolkit.processDynamicAnalysisCheckedBoxes() method
-	 * @param ftpHost - ftp server which contains the data files
-	 * @param ftpUser - userID to used by the service when connecting to ftp
-	 * @param ftpPassword - password to used by the service when connecting to ftp
-	 * @param analysisServiceURL - URL of the Analysis Web Service to send data files to.
-	 * @param asFileNameList - files to be uploaded, without path.
-	 * @param ftpRelativePath - path relative to the FTP server's starting directory.
-	 * 
-	 * @return - dummy value, empty NodeBrokerData class.
-	 */ 
-	private boolean importDataFiles(String ftpHost, String ftpUser, String ftpPassword, int fileCount, 
-			String[] asFileNameList, String ftpRelativePath, String sJobID) {
-
-		//******** old version takes a caret delimited list ************
-		String fileNameString="";//filename.dat^filename.hea^";
-		for(String fn:asFileNameList){
-			fileNameString += fn + "^";
-		}
-		//*********************Should be replaced with the following when the Web service is updated *********
-		//**** create the file subnodes of the fileNameList node. ************
-		/*
-		LinkedHashMap<String, String> fileMap = new LinkedHashMap<String, String>();
-		int f=0;
-		for(String fn:asFileNameList){
-//			fileNameList += "\t\t<filename>" + fn + "</filename>\n";
-			fileMap.put("fileName_" + f, fn);
-			f++;
-		} */
-		//************************************
-
-//		LinkedHashMap<String, Object> parameterMap = new LinkedHashMap<String, Object>();
-		LinkedHashMap<String, String> parameterMap = new LinkedHashMap<String, String>();
-
-		parameterMap.put("service", ResourceUtility.getDataTransferClass()); // "DataTransfer"
-		parameterMap.put("fileCount", Integer.toString(fileCount)); // 
-//		parameterMap.put("fileNameList", fileMap);
-		parameterMap.put("fileNameList", fileNameString);
-		parameterMap.put("relativePath", ftpRelativePath);
-		parameterMap.put("ftpHost", ftpHost);
-		parameterMap.put("ftpUser", ftpUser);
-		parameterMap.put("ftpPassword", ftpPassword);
-		parameterMap.put("jobID", sJobID);
-		parameterMap.put("verbose", String.valueOf(verbose));
-
-		SvcAxisCallback callback = new FilesAcquiredCallback();
-
-		WebServiceUtility.callWebService(parameterMap, 
-				ResourceUtility.getCopyFilesMethod(), // Method of the service which implements the copy. e.g. "copyDataFilesToAnalysis"
-				ResourceUtility.getDataTransferServiceName(), // Name of the web service. e.g. "dataTransferService"
-				ResourceUtility.getAnalysisServiceURL(), // URL of the Analysis Web Service to send data files to. e.g. "http://icmv058.icm.jhu.edu:8080/axis2/services/";
-				callback);
-		
-		DateFormat displayFormat = new SimpleDateFormat("MM/dd/yyyy");
-		Calendar theCalendar = Calendar.getInstance();
-		Date currentTime = theCalendar.getTime();
-		String analysisDate = displayFormat.format(currentTime);
-		ProgressNotification.step1A_TransferDataFilesToAnalysisCB(this.aIP.getUserId(), analysisDate);
-		return true;	
-	}
-
-	/** Calls the web service which copies the data files from the FTP repository to the analysis server (the one containing the analysis algorithm).
-	 * 
-	 * @param analysisBrokerURL - URL of the analysis web service. Should also contain the ICM provided "data-transfer-webservice" service.
-	 * @param subjectId
-	 * @param analysisName
-	 * @param fileCount
-	 * @param fileNameList
-	 * @param ftpRelativePath
-	 * @return
-	 */
-	/*public AnalysisInProgress transferDataFilesToAnalysis(String analysisBrokerURL, 
-			String subjectId, String analysisName, int fileCount, 
-			String fileNameList, String ftpRelativePath) {
-
-		String[] SuccessfullList ={"one","two"};
-		AnalysisInProgress aIP = new AnalysisInProgress();
-		aIP.setSubjectId(subjectId);
-		aIP.setServiceName(analysisName);
-		aIP.setAnalysisServiceURL(analysisBrokerURL);
-
-		OMElement omeResult;
-
-		LinkedHashMap<String, String> parameterMap = new LinkedHashMap<String, String>();
-
-		parameterMap.put("service", propsUtil.getDataTransferClass());
-		parameterMap.put("fileCount", Integer.toString(fileCount));
-		parameterMap.put("fileNameList", fileNameList);
-		parameterMap.put("relativePath", ftpRelativePath);
-		parameterMap.put("verbose", String.valueOf(verbose));
-
-		omeResult = WebServiceUtility.callWebService(parameterMap, false, propsUtil.getTransferToAnalysisMethod(), propsUtil.getDataTransferServiceName(), null);
-
-		Map<String, Object> paramMap = util.buildParamMap(omeResult);
-		OMElement filenamelist = (OMElement) paramMap.get("filenamelist");
-		SuccessfullList = util.buildChildArray(filenamelist);
-
-		aIP.setDataFileList(SuccessfullList);
-		return aIP;		
-	}*/
 
 	public String retrievePrimaryData(String chesnokovSubjectIds, String chesnokovFiles, String uId, boolean isPublic) {
 
@@ -227,39 +245,389 @@ public class AnalysisManager implements Serializable{
 		parameterMap.put("publicprivatefolder", String.valueOf(isPublic));
 		parameterMap.put("service", ResourceUtility.getDataTransferClass());
 		parameterMap.put("logindatetime", new Long(System.currentTimeMillis()).toString());
-		parameterMap.put("verbose", String.valueOf(verbose));
-
+		
 		omeResult = WebServiceUtility.callWebService(parameterMap, isPublic, ResourceUtility.getConsolidatePrimaryAndDerivedDataMethod(), ResourceUtility.getNodeDataServiceName(), null);
 		return omeResult.getText();
 	}	
 
-	/*public String fetchAlgorithmDetail(String brokerURL) throws Exception {
+	public int getTotal() {
+		return tController.getThreadCount();
+	}
 
-		String xml="";
+	
+	public int getDone() {
+		int done = 0;
+		if(tController != null){
+			Collection<AnalysisThread> tCollection = (Collection<AnalysisThread>) tController.getThreads();
+			for (AnalysisThread aThread : tCollection) {
+				if(aThread.isDone()){
+					done++;
+				}
+			}
+		}
+		return done;
+	}
+	
+	public List<String> getMessages() {
+		List<String> messages = null;
+		if(tController != null){
+			Collection<AnalysisThread> tCollection = (Collection<AnalysisThread>) tController.getThreads();
+			for (AnalysisThread t : tCollection) {
+				if(!t.isAlive()){
+					if(t.hasError()){
+						if(messages == null){
+							messages = new ArrayList<String>();
+						}
+						
+						messages.add(t.getErrorMessage());
+					}
+				}
+			}
+		}
+		return messages;
+	}
 
+	/** Gets an ArrayList of lead annotations, on all the standard 12 leads for Q_Wave_Amplitude, Q_Wave_Duration, R_Wave_Amplitude, R_Wave_Duration, S_Wave_Amplitude;
+	 *  which are found in the Magellan text output file.
+	 * 
+	 * @param userId - Id of the user who owns this data.
+	 * @param docId - Document ID
+	 * @param createdBy - Either original file format identifier, algorithm identifier, or user ID in the case of manual annotations.
+	 * @param bioportalOntologyID - Identifier of the Ontology, e.g. "ECGT"
+	 **/
+	private List<AnnotationDTO> getMagellanLeadAnnotationList(long userId, long docId, String createdBy, String bioportalOntologyID){
+		List<AnnotationDTO> retList= new ArrayList<AnnotationDTO>();
+		
+		List <String> bioportalClassIdList = new ArrayList<String>();
+		bioportalClassIdList.add("http://www.cvrgrid.org/files/ECGOntologyv1.owl#ECG_000000652"); // Q_Wave_Amplitude ECGOntology:ECG_000000652
+		bioportalClassIdList.add("http://www.cvrgrid.org/files/ECGOntologyv1.owl#ECG_000000551"); // Q_Wave_Duration ECGOntology:ECG_000000551
+		bioportalClassIdList.add("http://www.cvrgrid.org/files/ECGOntologyv1.owl#ECG_000000750"); // R_Wave_Amplitude ECGOntology:ECG_000000750
+		bioportalClassIdList.add("http://www.cvrgrid.org/files/ECGOntologyv1.owl#ECG_000000597"); // R_Wave_Duration ECGOntology:ECG_000000597
+		bioportalClassIdList.add("http://www.cvrgrid.org/files/ECGOntologyv1.owl#ECG_000000107"); // S_Wave_Amplitude ECGOntology:ECG_000000107
+//		bioportalClassIdList.add("ECGOntology:ECG_000000072"); // QRS_Wave_Duration
+		
 		try {
+			Connection conn = ConnectionFactory.createConnection();
+			List<AnnotationDTO> paramList_I = conn.getLeadAnnotationListConceptIDList(userId, docId, 0, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_II = conn.getLeadAnnotationListConceptIDList(userId, docId, 1, createdBy, bioportalOntologyID, bioportalClassIdList);
+//		List<AnnotationDTO> paramList_III = conn.getLeadAnnotationListConceptIDList(userId, docId, 2, createdBy, bioportalOntologyID, bioportalClassIdList);
+//		List<AnnotationDTO> paramList_aVR = conn.getLeadAnnotationListConceptIDList(userId, docId, 3, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_aVL = conn.getLeadAnnotationListConceptIDList(userId, docId, 4, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_aVF = conn.getLeadAnnotationListConceptIDList(userId, docId, 5, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V1 = conn.getLeadAnnotationListConceptIDList(userId, docId, 6, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V2 = conn.getLeadAnnotationListConceptIDList(userId, docId, 7, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V3 = conn.getLeadAnnotationListConceptIDList(userId, docId, 8, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V4 = conn.getLeadAnnotationListConceptIDList(userId, docId, 9, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V5 = conn.getLeadAnnotationListConceptIDList(userId, docId, 10, createdBy, bioportalOntologyID, bioportalClassIdList);
+			List<AnnotationDTO> paramList_V6 = conn.getLeadAnnotationListConceptIDList(userId, docId, 11, createdBy, bioportalOntologyID, bioportalClassIdList);
+
+			int i=0;
+			retList.add(i++, paramList_I.get(0)); // qa_I
+//		retList.add(i++, paramList_II.get(0)); // qa_II
+//		retList.add(2, paramList_III.get(0)); // qa_III
+//		retList.add(3, paramList_aVR.get(0)); // qa_aVR
+			retList.add(i++, paramList_aVL.get(0)); // qa_aVL
+			retList.add(i++, paramList_aVF.get(0)); // qa_aVF
+			retList.add(i++, paramList_V1.get(0)); // qa_V1
+			retList.add(i++, paramList_V2.get(0)); // qa_V2
+			retList.add(i++, paramList_V3.get(0)); // qa_V3
+			retList.add(i++, paramList_V4.get(0)); // qa_V4
+			retList.add(i++, paramList_V5.get(0)); // qa_V5
+			retList.add(i++, paramList_V6.get(0)); // qa_V6
+			//*********************************************
+			retList.add(i++, paramList_I.get(1)); // qd_I
+			retList.add(i++, paramList_II.get(1)); // qd_II
+//		retList.add(14, paramList_III.get(1)); // qd_III
+//		retList.add(15, paramList_aVR.get(1)); // qd_aVR
+			retList.add(i++, paramList_aVL.get(1)); // qd_aVL
+			retList.add(i++, paramList_aVF.get(1)); // qd_aVF
+			retList.add(i++, paramList_V1.get(1)); // qd_V1
+			retList.add(i++, paramList_V2.get(1)); // qd_V2
+			retList.add(i++, paramList_V3.get(1)); // qd_V3
+			retList.add(i++, paramList_V4.get(1)); // qd_V4
+			retList.add(i++, paramList_V5.get(1)); // qd_V5
+			retList.add(i++, paramList_V6.get(1)); // qd_V6
+			//*********************************************
+			retList.add(i++, paramList_I.get(2)); // ra_I
+			retList.add(i++, paramList_II.get(2)); // ra_II
+//		retList.add(26, paramList_III.get(2)); // ra_III
+//		retList.add(27, paramList_aVR.get(2)); // ra_aVR
+			retList.add(i++, paramList_aVL.get(2)); // ra_aVL
+			retList.add(i++, paramList_aVF.get(2)); // ra_aVF
+			retList.add(i++, paramList_V1.get(2)); // ra_V1
+			retList.add(i++, paramList_V2.get(2)); // ra_V2
+			retList.add(i++, paramList_V3.get(2)); // ra_V3
+			retList.add(i++, paramList_V4.get(2)); // ra_V4
+			retList.add(i++, paramList_V5.get(2)); // ra_V5
+			retList.add(i++, paramList_V6.get(2)); // ra_V6
+			//*********************************************
+//		retList.add(36, paramList_I.get(3)); // rd_I
+//		retList.add(37, paramList_II.get(3)); // rd_II
+//		retList.add(38, paramList_III.get(3)); // rd_III
+//		retList.add(39, paramList_aVR.get(3)); // rd_aVR
+//		retList.add(40, paramList_aVL.get(3)); // rd_aVL
+//		retList.add(41, paramList_aVF.get(3)); // rd_aVF
+			retList.add(i++, paramList_V1.get(3)); // rd_V1
+			retList.add(i++, paramList_V2.get(3)); // rd_V2
+			retList.add(i++, paramList_V3.get(3)); // rd_V3
+//		retList.add(45, paramList_V4.get(3)); // rd_V4
+//		retList.add(46, paramList_V5.get(3)); // rd_V5
+//		retList.add(47, paramList_V6.get(3)); // rd_V6
+			//*********************************************
+			retList.add(i++, paramList_I.get(4)); // sa_I
+			retList.add(i++, paramList_II.get(4)); // sa_II
+//		retList.add(50, paramList_III.get(4)); // sa_III
+//		retList.add(51, paramList_aVR.get(4)); // sa_aVR
+			retList.add(i++, paramList_aVL.get(4)); // sa_aVL
+			retList.add(i++, paramList_aVF.get(4)); // sa_aVF
+			retList.add(i++, paramList_V1.get(4)); // sa_V1
+			retList.add(i++, paramList_V2.get(4)); // sa_V2
+			retList.add(i++, paramList_V3.get(4)); // sa_V3
+			retList.add(i++, paramList_V4.get(4)); // sa_V4
+			retList.add(i++, paramList_V5.get(4)); // sa_V5
+			retList.add(i++, paramList_V6.get(4)); // sa_V6
+			//*********************************************
+
+			// un-needed code which substitutes value from R' and S' when R or S are zero.
+			// Turned out that this was not the correct thing to do here. (Mike Shipway - July 16, 2014)
+//		List <String> nameList = new ArrayList<String>();
+//		nameList.add("Q-_AMPL"); // dummy place keeper, since Schiller doesn't seem to have negative Q entries
+//		nameList.add("Q-_DUR"); //  dummy place keeper, since Schiller doesn't seem to have negative Q entries
+//		nameList.add("R-_AMPL"); // Negative R_Wave_Amplitude ECGOntology:ECG_000000750
+//		nameList.add("R-_DUR");  // Negative R_Wave_Duration ECGOntology:ECG_000000597
+//		nameList.add("S-_AMPL"); // Negative S_Wave_Amplitude ECGOntology:ECG_000000107
+//		
+//		List<AnnotationDTO> negParamList_I = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 0, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_II = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 1, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_aVL = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 4, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_aVF = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 5, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V1 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 6, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V2 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 7, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V3 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 8, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V4 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 9, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V5 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 10, createdBy,  nameList);
+//		List<AnnotationDTO> negParamList_V6 = ConnectionFactory.createConnection().getLeadAnnotationbyNameList(userId, docId, 11, createdBy,  nameList);
+//
+//		List<AnnotationDTO> negList= new ArrayList<AnnotationDTO>();
+//		int n=0;
+//		negList.add(n++, negParamList_I.get(0)); // qa_I
+//		negList.add(n++, negParamList_aVL.get(0)); // qa_aVL
+//		negList.add(n++, negParamList_aVF.get(0)); // qa_aVF
+//		negList.add(n++, negParamList_V1.get(0)); // qa_V1
+//		negList.add(n++, negParamList_V2.get(0)); // qa_V2
+//		negList.add(n++, negParamList_V3.get(0)); // qa_V3
+//		negList.add(n++, negParamList_V4.get(0)); // qa_V4
+//		negList.add(n++, negParamList_V5.get(0)); // qa_V5
+//		negList.add(n++, negParamList_V6.get(0)); // qa_V6
+//		//*********************************************
+//		negList.add(n++, negParamList_I.get(1)); // qd_I
+//		negList.add(n++, negParamList_II.get(1)); // qd_II
+//		negList.add(n++, negParamList_aVL.get(1)); // qd_aVL
+//		negList.add(n++, negParamList_aVF.get(1)); // qd_aVF
+//		negList.add(n++, negParamList_V1.get(1)); // qd_V1
+//		negList.add(n++, negParamList_V2.get(1)); // qd_V2
+//		negList.add(n++, negParamList_V3.get(1)); // qd_V3
+//		negList.add(n++, negParamList_V4.get(1)); // qd_V4
+//		negList.add(n++, negParamList_V5.get(1)); // qd_V5
+//		negList.add(n++, negParamList_V6.get(1)); // qd_V6
+//		//*********************************************
+//		negList.add(n++, negParamList_I.get(2)); // ra_I
+//		negList.add(n++, negParamList_II.get(2)); // ra_II
+//		negList.add(n++, negParamList_aVL.get(2)); // ra_aVL
+//		negList.add(n++, negParamList_aVF.get(2)); // ra_aVF
+//		negList.add(n++, negParamList_V1.get(2)); // ra_V1
+//		negList.add(n++, negParamList_V2.get(2)); // ra_V2
+//		negList.add(n++, negParamList_V3.get(2)); // ra_V3
+//		negList.add(n++, negParamList_V4.get(2)); // ra_V4
+//		negList.add(n++, negParamList_V5.get(2)); // ra_V5
+//		negList.add(n++, negParamList_V6.get(2)); // ra_V6
+//		//*********************************************
+//		negList.add(n++, negParamList_V1.get(3)); // rd_V1
+//		negList.add(n++, negParamList_V2.get(3)); // rd_V2
+//		negList.add(n++, negParamList_V3.get(3)); // rd_V3
+//		//*********************************************
+//		negList.add(n++, negParamList_I.get(4)); // sa_I
+//		negList.add(n++, negParamList_II.get(4)); // sa_II
+//		negList.add(n++, negParamList_aVL.get(4)); // sa_aVL
+//		negList.add(n++, negParamList_aVF.get(4)); // sa_aVF
+//		negList.add(n++, negParamList_V1.get(4)); // sa_V1
+//		negList.add(n++, negParamList_V2.get(4)); // sa_V2
+//		negList.add(n++, negParamList_V3.get(4)); // sa_V3
+//		negList.add(n++, negParamList_V4.get(4)); // sa_V4
+//		negList.add(n++, negParamList_V5.get(4)); // sa_V5
+//		negList.add(n++, negParamList_V6.get(4)); // sa_V6
+//		//*********************************************
+//
+//		for(int c=0;c<retList.size();c++){
+//			if( (retList.get(c).getValue() == "0") && (negList.get(c) != null) ){
+//				retList.set(c, negList.get(c) );
+//			}			
+//		}
+		} catch (DataStorageException e) {
+			e.printStackTrace();
+		}
+		
+		return retList;
+	}
+	
+	/** Gets an ArrayList of whole record annotations, QRS Duration & QRS Axis;
+	 *  which are found in the Magellan text output file.
+	 * 
+	 * @param userId - Id of the user who owns this data.
+	 * @param docId - Document ID
+	 * @param createdBy - Either original file format identifier, algorithm identifier, or user ID in the case of manual annotations.
+	 * @param bioportalOntologyID - Identifier of the Ontology, e.g. "ECGT"
+	 **/
+	 private List<AnnotationDTO>  getMagellanRecordAnnotationList(long userId, long docId, String createdBy, String bioportalOntologyID){
+//			List<AnnotationDTO> retList= new ArrayList<AnnotationDTO>();
 			
-			LinkedHashMap<String, String> parameterMap = new LinkedHashMap<String, String>();
-			parameterMap.put("verbose", "true");
+			List <String> bioportalClassIdList = new ArrayList<String>();
+			bioportalClassIdList.add("ECGOntology:ECG_000000072"); // QRS Duration
+			bioportalClassIdList.add("ECGOntology:ECG_000000838"); // QRS Axis
+			
+			List<AnnotationDTO> paramList_Rec = null;
+			
+			try {
+				paramList_Rec = ConnectionFactory.createConnection().getLeadAnnotationListConceptIDList(userId, docId, null, createdBy, bioportalOntologyID, bioportalClassIdList);
+			} catch (DataStorageException e) {
+				e.printStackTrace();
+			}
 
-			OMElement result = WebServiceUtility.callWebService(parameterMap, true, propsUtil.getAlgorithmDetailsMethod(), propsUtil.getPhysionetService(), null);
+//			retList.add(0, paramList_Rec.get(0)); // qa_I
+			//*********************************************
+			
+			return paramList_Rec;
+	 }
+	 
+	 
+	 /** Builds the parameterList needed for Strauss-Selvester QRS-Score algorithm.
+	  * 
+	  * @param docId
+	  * @param name
+	  * @param age
+	  * @param sex
+	  * @param qrsd
+	  * @param qrsax
+	  * @param magellanLeadAnnotList
+	  * @return
+	  */
+	 private LinkedHashMap<String, String>  buildQRS_ScoreParameterListMap(long docId, String name, String age, String sex, String qrsd, String qrsax, List<AnnotationDTO> magellanLeadAnnotList){
+		 LinkedHashMap<String, String>  magellanParameters = new LinkedHashMap<String, String>();		
+		 
+		 magellanParameters.put("Name", name);
+		 magellanParameters.put("ID", String.valueOf(docId) );
+		 magellanParameters.put("age", age);
+		 magellanParameters.put("sex", sex);
+		 magellanParameters.put("ECG_000000072", qrsd);
+		 magellanParameters.put("ECG_000000838", qrsax);
+		 
+		 for (AnnotationDTO a:magellanLeadAnnotList){
+			 if(a != null){
+				 int numIndex = a.getBioportalClassId().lastIndexOf("#");
+				 String idNumber = a.getBioportalClassId().substring(numIndex+1);
+				 
+				 if(a.getValue() == null){
+//					 magellanParameters.put(a.getBioportalClassId() + "_" + a.getLead(), "0 "); // Magellan used zeros to mark unknown or incalculable values.
+					 magellanParameters.put(idNumber + "_" + a.getLead(), "0 "); // Magellan used zeros to mark unknown or incalculable values.
+				 }else{
+//					 magellanParameters.put(a.getBioportalClassId() + "_" + a.getLead(), a.getValue());
+					 magellanParameters.put(idNumber + "_" + a.getLead(), a.getValue());
+				 }
+			 }
+		 }
+		 
+		 return magellanParameters;
+	 }
+	 
+	 public void setBackgroundQueue(List<AnalysisStatusDTO> backgroundQueue) {
+		PortletSession session = (PortletSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
+		session.setAttribute("analysis.backgroundQueue", backgroundQueue);
+	}
+	 
+	 public static List<AnalysisStatusDTO> getBackgroundQueue(){
+		 PortletSession session = (PortletSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
+		 List<AnalysisStatusDTO> backgroundQueue = (List<AnalysisStatusDTO>) session.getAttribute("analysis.backgroundQueue");
+		 if(backgroundQueue == null){
+			 backgroundQueue = new ArrayList<AnalysisStatusDTO>();
+			 session.setAttribute("analysis.backgroundQueue", backgroundQueue);
+		 }
+		 return backgroundQueue;
+     }
+	 
+	 public void addToBackgroundQueue(AnalysisStatusDTO dto) {
+		if(dto!=null){
+			if(AnalysisManager.getBackgroundQueue() == null){
+				setBackgroundQueue(new ArrayList<AnalysisStatusDTO>());
+			}
+			int index = AnalysisManager.getBackgroundQueue().indexOf(dto);
+			if(index != -1){
+				AnalysisManager.getBackgroundQueue().get(index).update(dto);
+			}else{
+				AnalysisManager.getBackgroundQueue().add(dto);	
+			}
+		}
+	}
 
-			// extract the XStream generated XML from the result.
-			StringWriter writer = new StringWriter();
-			result.serialize(XMLOutputFactory.newInstance().createXMLStreamWriter(writer));
-			writer.flush();
-			xml = writer.toString();
-
-		} catch (XMLStreamException xe) {
-			xe.printStackTrace();
-			throw xe;
-		}  catch(Exception ex) {
-			ex.printStackTrace();
-			throw ex;
-		}	
-
-		return xml;
-	}*/
-
-
+	 
+//	 private String buildMagellanText(long docId, String name, String age, String sex, String qrsd, String qrsax, List<AnnotationDTO> magellanLeadAnnotList){
+//		 StringBuffer sb = new StringBuffer();
+//		 sb.append("13\n"
+//					+"\n"
+//					+"Age\n" 
+//					+"Sex \n"
+//					+"vrate \n"
+//					+"arate \n"
+//					+"pr \n"
+//					+"qrsd \n"
+//					+"qt \n"
+//					+"qtc \n"
+//					+"pax \n"
+//					+"qrsax \n"
+//					+"tax \n"
+//					+"pdur \n"
+//					+"qrstangle\n" 
+//					+"\n"
+//					+"8 \n"
+//					+"\n"
+//					+"pa  0  0  0  0  0  1  1  0  0  0  0  0\n"  
+//					+"qa  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+//					+"qd  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+//					+"ra  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+//					+"rd  0  0  0  0  0  0  1  1  1  0  0  0  \n"
+//					+"sa  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+//					+"rpa  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+//					+"spa  1  1  0  0  1  1  1  1  1  1  1  1  \n"
+//					+"\n"
+//					+"\n"
+//					+"2 \n"
+//					+"\n"
+//					+"No_scode\n"  
+//					+"scode\n");
+//		 sb.append(name + " "); // Name
+//		 sb.append(docId + " "); // ID
+//		 sb.append("05/14/2010_01:59  C:/FAKEdir/FAKE.ECG "); // Date/Time, FilePath
+//		 sb.append(age + " ");// age
+//		 sb.append(sex + " ");// sex
+//		 sb.append("0 0 0 ");// vrate, arate, pr
+//		 sb.append(qrsd + " ");// qrsd
+//		 sb.append("0 0 0 "); // qt, qtc, pax
+//		 sb.append(qrsax + " ");// qrsax
+//		 sb.append("0 0 0 0 "); // tax, pdur, qrstangle, pa_aVF, pa_V1		 		 
+//		 for (AnnotationDTO a:magellanLeadAnnotList){
+//			 if(a ==null){
+//				 sb.append("0 "); // Magellan used zeros to mark unknown or incalculable values.
+//			 }else{
+//				 sb.append(a.getValue() + " ");
+//			 }
+//		 }
+//		 sb.append("0 0 0 0 0 "); // rpa_I, rpa_II, rpa_aVL, rpa_aVF	
+//		 sb.append("0 0 0 0 0 0 "); // rpa_V1, rpa_V2, rpa_V3, rpa_V4, rpa_V5, rpa_V6	
+//		 sb.append("0 0 0 0 0 "); // spa_I, spa_II, spa_aVL, spa_aVF	
+//		 sb.append("0 0 0 0 0 0 "); // spa_V1, spa_V2, spa_V3, spa_V4, spa_V5, spa_V6	
+//		 sb.append("0 "); // No_scode, scode
+//
+//		 sb.append("\n");
+//		 
+//		 return sb.toString();
+//	 }
 }
