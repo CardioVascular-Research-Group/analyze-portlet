@@ -539,7 +539,7 @@ public class AnalysisThread extends Thread{
 			while((line = in.readLine()) != null) {
             	if(line.trim().length() > 0) {
             		if(dataHeaders == null){
-	            		System.out.println(line);
+	            		log.info(line);
 	            		dataHeaders = line.split(",");
             		}else{
             			String[] data = line.split(",");
@@ -618,7 +618,7 @@ public class AnalysisThread extends Thread{
 			
 			while ((tempLine = util.stdInputBuffer.readLine()) != null) {
 		    	if (lineNumber<12){
-		    		System.out.println("signame(); " + lineNumber + ")" + tempLine);
+		    		log.info("signame(); " + lineNumber + ")" + tempLine);
 		    	}
 		    	signalNameList.add(tempLine);
 		    	lineNumber++;
