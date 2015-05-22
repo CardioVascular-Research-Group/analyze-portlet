@@ -5,5 +5,25 @@
 	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/com.liferay.ide.eclipse.server.tomcat.runtimeClasspathProvider/Liferay v6.1 CE (Tomcat 7)"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="com.liferay.ide.eclipse.server.plugin.container/portlet"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cvrg-filestore"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cvrg-analysisHub"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cvrg-annotations"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cvrg-authenticator"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cvrg-dataStorage"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cvrg-ext"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cvrg-opentsdb-client"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cvrg-services"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/download-portlet"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ECG_Converter4"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/hl7aECG"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/java_nexus_client"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/jsierraecg"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/liferay-ws-client"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/runGalaxyWorkflow"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/schiller-data"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/upload-portlet"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/visualize-portlet"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/welcome-portlet"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/waveform-utilities"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

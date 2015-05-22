@@ -113,6 +113,9 @@ public class AnalysisThread extends Thread{
 			if(params != null && params.size() > 0){
 				if(params.get("error")!= null){
 					String errorMessage = (String) params.get("error").getText();
+					if (errorMessage.length()<300) {
+						errorMessage = errorMessage.substring(0, 295) + "...";
+					}
 					throw new AnalyzeFailureException(errorMessage);
 				}
 
