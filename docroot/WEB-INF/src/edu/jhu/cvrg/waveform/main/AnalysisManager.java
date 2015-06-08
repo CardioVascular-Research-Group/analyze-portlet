@@ -93,7 +93,7 @@ public class AnalysisManager implements Serializable{
 					parameterMap.put("groupID", String.valueOf(ResourceUtility.getCurrentGroupId()));
 					parameterMap.put("folderID", String.valueOf(headerFile.getParentId()));
 					parameterMap.put("subjectID", node.getDocumentRecord().getSubjectId());
-					
+					parameterMap.put("durationSec",node.getDocumentRecord().getDurationSec());
 //					for(FileTypes ft:algorithm.getAfInFileTypes()){
 //						if(ft.id==0){
 //							

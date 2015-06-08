@@ -105,7 +105,9 @@ public class AnalysisThread extends Thread{
 	public void run() {
 		long startTime = System.currentTimeMillis();
 		try{
-			
+			if(Float.parseFloat((String)map.get("durationSec")) <= 1){
+				throw new AnalyzeFailureException("Duration of (" + (String)map.get("subjectID") + ") is (" + (String)map.get("durationSec") + ") seconds, but must be > 1.0");
+			}
 			OMElement jobResult = WebServiceUtility.callWebServiceComplexParam(map,(String)map.get("method"),(String)map.get("serviceName"), (String)map.get("URL"), null, null);
 			
 			Map<String, OMElement> params = WebServiceUtility.extractParams(jobResult);
