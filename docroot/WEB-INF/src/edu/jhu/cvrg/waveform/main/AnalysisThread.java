@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -105,8 +106,9 @@ public class AnalysisThread extends Thread{
 	public void run() {
 		long startTime = System.currentTimeMillis();
 		try{
-			if(Float.parseFloat((String)map.get("durationSec")) <= 1){
-				throw new AnalyzeFailureException("Duration of (" + (String)map.get("subjectID") + ") is (" + (String)map.get("durationSec") + ") seconds, but must be > 1.0");
+			if((Double)map.get("durationSec") <= 1){
+				log.error("Duration of " + (String)map.get("subjectID") + " is " + (Double)map.get("durationSec") + " seconds, but must be > 1.0");
+				// throw new AnalyzeFailureException("Duration of " + (String)map.get("subjectID") + " is " + (Double)map.get("durationSec") + " seconds, but must be > 1.0");
 			}
 			OMElement jobResult = WebServiceUtility.callWebServiceComplexParam(map,(String)map.get("method"),(String)map.get("serviceName"), (String)map.get("URL"), null, null);
 			
@@ -116,7 +118,10 @@ public class AnalysisThread extends Thread{
 				if(params.get("error")!= null){
 					String errorMessage = (String) params.get("error").getText();
 					if (errorMessage.length()>300) {
+						log.info("errorMessage: " + errorMessage);
+						log.info("errorMessage.length(): " + errorMessage.length());
 						errorMessage = errorMessage.substring(0, 295) + "...";
+						log.info("errorMessage: " + errorMessage);
 					}
 					throw new AnalyzeFailureException(errorMessage);
 				}
