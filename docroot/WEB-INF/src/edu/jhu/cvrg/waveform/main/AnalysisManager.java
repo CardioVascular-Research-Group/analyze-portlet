@@ -38,6 +38,7 @@ import edu.jhu.cvrg.data.dto.AlgorithmDTO;
 import edu.jhu.cvrg.data.dto.AnalysisJobDTO;
 import edu.jhu.cvrg.data.dto.AnalysisStatusDTO;
 import edu.jhu.cvrg.data.dto.AnnotationDTO;
+import edu.jhu.cvrg.data.dto.FileInfoDTO;
 import edu.jhu.cvrg.data.enums.FileType;
 import edu.jhu.cvrg.data.factory.Connection;
 import edu.jhu.cvrg.data.factory.ConnectionFactory;
@@ -74,7 +75,9 @@ public class AnalysisManager implements Serializable{
 			
 			for (DocumentDragVO node : selectedNodes) {
 				
-				FSFile headerFile = fileStorer.getFile(node.getFileNode().getUuid(), true); 
+				List<FileInfoDTO> files = dbUtility.getAllFilesByDocumentRecordId(node.getDocumentRecord().getDocumentRecordId());
+				
+				FSFile headerFile = fileStorer.getFile(files.get(0).getFileEntryId(), true);
 				FileType originalFileType = node.getDocumentRecord().getOriginalFormat();
 				long docId = node.getDocumentRecord().getDocumentRecordId();
 				String name = node.getDocumentRecord().getRecordName();
@@ -93,7 +96,7 @@ public class AnalysisManager implements Serializable{
 					parameterMap.put("groupID", String.valueOf(ResourceUtility.getCurrentGroupId()));
 					parameterMap.put("folderID", String.valueOf(headerFile.getParentId()));
 					parameterMap.put("subjectID", node.getDocumentRecord().getSubjectId());
-					
+					parameterMap.put("durationSec",node.getDocumentRecord().getDurationSec());
 //					for(FileTypes ft:algorithm.getAfInFileTypes()){
 //						if(ft.id==0){
 //							
