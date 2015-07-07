@@ -105,7 +105,10 @@ public class AnalysisThread extends Thread{
 	public void run() {
 		long startTime = System.currentTimeMillis();
 		try{
-			
+			if((Double)map.get("durationSec") <= 1){
+				log.error("Duration of " + (String)map.get("subjectID") + " is " + (Double)map.get("durationSec") + " seconds, but must be > 1.0");
+				// throw new AnalyzeFailureException("Duration of " + (String)map.get("subjectID") + " is " + (Double)map.get("durationSec") + " seconds, but must be > 1.0");
+			}
 			OMElement jobResult = WebServiceUtility.callWebServiceComplexParam(map,(String)map.get("method"),(String)map.get("serviceName"), (String)map.get("URL"), null, null);
 			
 			Map<String, OMElement> params = WebServiceUtility.extractParams(jobResult);
@@ -113,6 +116,12 @@ public class AnalysisThread extends Thread{
 			if(params != null && params.size() > 0){
 				if(params.get("error")!= null){
 					String errorMessage = (String) params.get("error").getText();
+					if (errorMessage.length()>300) {
+						log.info("errorMessage: " + errorMessage);
+						log.info("errorMessage.length(): " + errorMessage.length());
+						errorMessage = errorMessage.substring(0, 295) + "...";
+						log.info("errorMessage: " + errorMessage);
+					}
 					throw new AnalyzeFailureException(errorMessage);
 				}
 
